@@ -1,6 +1,7 @@
 package aviator_test
 
 import (
+	"fmt"
 	. "masterjulz/aviator/aviator"
 
 	. "github.com/onsi/ginkgo"
@@ -155,7 +156,7 @@ fly:
 			It("should spruce base.yml with each file in a specified directory seperately", func() {
 				avi := ReadYaml([]byte(file))
 				ForEachIn(avi.Spruce[0])
-
+				fmt.Println("WHHHHHHHHAAATTTTTT")
 				Expect("../integration/tmp/sub1_file1.yml").To(BeAnExistingFile())
 				Expect("../integration/tmp/sub1_file2.yml").To(BeAnExistingFile())
 			})
@@ -193,6 +194,44 @@ fly:
 
 				Expect("../integration/tmp/sub1_file1.yml").To(BeAnExistingFile())
 				Expect("../integration/tmp/sub1_file2.yml").To(BeAnExistingFile())
+				Expect("../integration/tmp/sub2_file1.yml").To(BeAnExistingFile())
+			})
+		})
+
+		Context("Cleanup", func() {
+			It("Should delete all files in tmp", func() {
+				Cleanup("../integration/tmp/")
+				Expect("../integration/tmp/sub1_file1.yml").ShouldNot(BeAnExistingFile())
+				Expect("../integration/tmp/sub1_file2.yml").ShouldNot(BeAnExistingFile())
+				Expect("../integration/tmp/sub2_file1.yml").ShouldNot(BeAnExistingFile())
+			})
+		})
+	})
+
+	Context("Integration Tests: Spruce base.yml for each file in all subdirecotries", func() {
+
+		BeforeEach(func() {
+			file = `spruce:
+- base: ../integration/yamls/base.yml
+  prune:
+  - meta
+  walk_through: ../integration/yamls/addons/
+  to_dir: ../integration/tmp/
+  regexp: file1
+
+fly:
+  config: pipeline.yml
+  vars:
+  - personal.yml`
+		})
+
+		Context("Walk", func() {
+			It("should only create files which matches the regexp", func() {
+				avi := ReadYaml([]byte(file))
+				Walk(avi.Spruce[0])
+
+				Expect("../integration/tmp/sub1_file1.yml").To(BeAnExistingFile())
+				Expect("../integration/tmp/sub1_file2.yml").NotTo(BeAnExistingFile())
 				Expect("../integration/tmp/sub2_file1.yml").To(BeAnExistingFile())
 			})
 		})

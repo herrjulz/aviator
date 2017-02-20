@@ -4,7 +4,7 @@ Aviator is a small CLI tool to run genereic **Aviator** Concourse pipelines.
 
 ## Installation (Mac Only)
 
-Download Aviator [here](https://ibm.box.com/s/hoz7v6x9tlx1yothmrwox90wa94ezhu8)
+Download Aviator [here](https://ibm.box.com/s/oii3d7mbu6ur9suo0nbsa9surk193p98)
 
 and run:
 
@@ -17,9 +17,11 @@ $ install ~/Downloads/aviator /usr/local/bin
 - [Spruce](https://github.com/geofffranks/spruce) CLI Tool
 - [Fly](https://github.com/concourse/fly) CLI Tool
 
-## Usage
+## Aviator Properties
 
 **aviator.yml**
+
+Example:
 
 ```
 spruce:
@@ -32,6 +34,7 @@ spruce:
   to: result.yml
 - base: result.yml
   for_each_in: path/to/dir/
+  regexp: match-string
   to_dir: path/to/destination/
 - base: another-base.yml
   walk_through: will/walt/through/subdirs
@@ -44,7 +47,34 @@ fly:
  - personal.yml
 ```
 
-**Run Aviator**
+### Spruce
+
+**base (string):** This is the base yml file you want to spruce into.
+
+**prune (array):** Here you can list all properties you want to prune.
+
+**with (array):** List specific files you want to spruce on top of the base.
+
+**with_in (string):** You can also include all files within a dir to the spruce command by using this proerty.
+
+**to (string):** Filename you want to save the spruced file to.
+
+**to_dir (string):** Path you want to save the spruced files to. Use this property only in combination with `for_each`, `for_each_in`, and `walk_through`.
+
+**for_each (array):** List all files which need to be spruced with a base file seperately.
+
+**for_each_in (string):** Specify a dir which contains all files a base needs to be spruced with.
+
+**walk_through (string):** Same as `for_each_in`, but it walks through all subdirectories.
+
+**regexp (string):** will include only files matching the regexp.
+
+### Fly
+
+**config (string):** the pipeline config file (yml)
+**vars (array):** List of all property files (-l)
+
+## Usage
 
 ```
 $ aviator -t <target> -p <pipeline-name>

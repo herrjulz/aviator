@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -30,6 +31,7 @@ type SpruceConfig struct {
 	Walk      string   `yaml:"walk_through"`
 	DestFile  string   `yaml:"to"`
 	DestDir   string   `yaml:"to_dir"`
+	Regexp    string   `yaml:"regexp"`
 }
 
 type FlyConfig struct {
@@ -117,20 +119,21 @@ func ForEachFile(conf SpruceConfig) {
 
 func ForEachIn(conf SpruceConfig) {
 	files, _ := ioutil.ReadDir(conf.ForEachIn)
+	regex := getRegexp(conf)
 	for _, f := range files {
 		cmd := CreateSpruceCommand(conf)
-		f.Name()
-
-		chunked := strings.Split(conf.ForEachIn, "/")
-		var prefix string
-		if chunked[len(chunked)-1] == "" {
-			prefix = chunked[len(chunked)-2]
-		} else {
-			prefix = chunked[len(chunked)-1]
+		matched, _ := regexp.MatchString(regex, f.Name())
+		if matched {
+			chunked := strings.Split(conf.ForEachIn, "/")
+			var prefix string
+			if chunked[len(chunked)-1] == "" {
+				prefix = chunked[len(chunked)-2]
+			} else {
+				prefix = chunked[len(chunked)-1]
+			}
+			cmd = append(cmd, conf.ForEachIn+f.Name())
+			SpruceToFile(cmd, conf.DestDir+prefix+"_"+f.Name())
 		}
-
-		cmd = append(cmd, conf.ForEachIn+f.Name())
-		SpruceToFile(cmd, conf.DestDir+prefix+"_"+f.Name())
 	}
 }
 
@@ -140,13 +143,25 @@ func Walk(conf SpruceConfig) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	regex := getRegexp(conf)
 
 	for _, f := range sl {
-		cmd := CreateSpruceCommand(conf)
 		fileName := ConcatFileName(f)
-		cmd = append(cmd, f)
-		SpruceToFile(cmd, conf.DestDir+fileName)
+		matched, _ := regexp.MatchString(regex, fileName)
+		if matched {
+			cmd := CreateSpruceCommand(conf)
+			cmd = append(cmd, f)
+			SpruceToFile(cmd, conf.DestDir+fileName)
+		}
 	}
+}
+
+func getRegexp(conf SpruceConfig) string {
+	regex := ".*"
+	if conf.Regexp != "" {
+		regex = conf.Regexp
+	}
+	return regex
 }
 
 func ConcatFileName(path string) string {
@@ -176,9 +191,12 @@ func CreateSpruceCommand(spruce SpruceConfig) []string {
 
 	if spruce.FileDir != "" {
 		files, _ := ioutil.ReadDir(spruce.FileDir)
+		regex := getRegexp(spruce)
 		for _, f := range files {
-			f.Name()
-			spruceCmd = append(spruceCmd, spruce.FileDir+f.Name())
+			matched, _ := regexp.MatchString(regex, f.Name())
+			if matched {
+				spruceCmd = append(spruceCmd, spruce.FileDir+f.Name())
+			}
 		}
 	}
 
