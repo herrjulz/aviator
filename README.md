@@ -49,30 +49,30 @@ fly:
 
 ### Spruce
 
-**base (string):** This is the base yml file you want to spruce into.
+- **base (string):** This is the base yml file you want to spruce into.
 
-**prune (array):** Here you can list all properties you want to prune.
+- **prune (array):** Here you can list all properties you want to prune.
 
-**with (array):** List specific files you want to spruce on top of the base.
+- **with (array):** List specific files you want to spruce on top of the base.
 
-**with_in (string):** You can also include all files within a dir to the spruce command by using this proerty.
+- **with_in (string):** You can also include all files within a dir to the spruce command by using this proerty.
 
-**to (string):** Filename you want to save the spruced file to.
+- **to (string):** Filename you want to save the spruced file to.
 
-**to_dir (string):** Path you want to save the spruced files to. Use this property only in combination with `for_each`, `for_each_in`, and `walk_through`.
+- **to_dir (string):** Path you want to save the spruced files to. Use this property only in combination with `for_each`, `for_each_in`, and `walk_through`.
 
-**for_each (array):** List all files which need to be spruced with a base file seperately.
+- **for_each (array):** List all files which need to be spruced with a base file seperately.
 
-**for_each_in (string):** Specify a dir which contains all files a base needs to be spruced with.
+- **for_each_in (string):** Specify a dir which contains all files a base needs to be spruced with.
 
-**walk_through (string):** Same as `for_each_in`, but it walks through all subdirectories.
+- **walk_through (string):** Same as `for_each_in`, but it walks through all subdirectories.
 
-**regexp (string):** will include only files matching the regexp.
+- **regexp (string):** will include only files matching the regexp.
 
 ### Fly
 
-**config (string):** the pipeline config file (yml)
-**vars (array):** List of all property files (-l)
+- **config (string):** the pipeline config file (yml)
+- **vars (array):** List of all property files (-l)
 
 ## Usage
 
