@@ -55,7 +55,7 @@ fly:
 
 - **with (array):** List specific files you want to spruce on top of the base.
 
-- **with_in (string):** You can also include all files within a dir to the spruce command by using this proerty.
+- **with_in (string):** You can also include all files within a dir to the spruce command by using this property.
 
 - **to (string):** Filename you want to save the spruced file to.
 
@@ -66,6 +66,11 @@ fly:
 - **for_each_in (string):** Specify a dir which contains all files a base needs to be spruced with.
 
 - **walk_through (string):** Same as `for_each_in`, but it walks through all subdirectories.
+
+  - **for_all (string):** Adds an outer-loop to the walk_through loop
+  - **enable_matching (bool):**
+  - **copy_parents (bool):** parent directories will be copied to destination
+
 
 - **regexp (string):** will include only files matching the regexp.
 

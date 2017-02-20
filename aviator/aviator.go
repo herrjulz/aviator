@@ -21,17 +21,20 @@ type Aviator struct {
 }
 
 type SpruceConfig struct {
-	Base      string   `yaml:"base"`
-	Files     []string `yaml:"with"`
-	FileDir   string   `yaml:"with_in"`
-	Prune     []string `yaml:"prune"`
-	Folder    string   `yaml:"dir"`
-	ForEach   []string `yaml:"for_each"`
-	ForEachIn string   `yaml:"for_each_in"`
-	Walk      string   `yaml:"walk_through"`
-	DestFile  string   `yaml:"to"`
-	DestDir   string   `yaml:"to_dir"`
-	Regexp    string   `yaml:"regexp"`
+	Base           string   `yaml:"base"`
+	Files          []string `yaml:"with"`
+	FileDir        string   `yaml:"with_in"`
+	Prune          []string `yaml:"prune"`
+	Folder         string   `yaml:"dir"`
+	ForEach        []string `yaml:"for_each"`
+	ForEachIn      string   `yaml:"for_each_in"`
+	Walk           string   `yaml:"walk_through"`
+	ForAll         string   `yaml:"for_all"`
+	CopyParents    bool     `yaml:"copy_parents"`
+	EnableMatching bool     `yaml:"enable_matching"`
+	DestFile       string   `yaml:"to"`
+	DestDir        string   `yaml:"to_dir"`
+	Regexp         string   `yaml:"regexp"`
 }
 
 type FlyConfig struct {
@@ -85,7 +88,11 @@ func ProcessSpruceChain(spruce []SpruceConfig) {
 			ForEachIn(conf)
 		}
 		if conf.Walk != "" {
-			Walk(conf)
+			if conf.ForAll != "" {
+				ForAll(conf)
+			} else {
+				Walk(conf, "")
+			}
 		}
 	}
 }
@@ -111,7 +118,7 @@ func straight(conf SpruceConfig) {
 func ForEachFile(conf SpruceConfig) {
 	for _, val := range conf.ForEach {
 		cmd := CreateSpruceCommand(conf)
-		fileName := ConcatFileName(val)
+		fileName, _ := ConcatFileName(val)
 		cmd = append(cmd, val)
 		SpruceToFile(cmd, conf.DestDir+fileName)
 	}
@@ -124,36 +131,93 @@ func ForEachIn(conf SpruceConfig) {
 		cmd := CreateSpruceCommand(conf)
 		matched, _ := regexp.MatchString(regex, f.Name())
 		if matched {
-			chunked := strings.Split(conf.ForEachIn, "/")
-			var prefix string
-			if chunked[len(chunked)-1] == "" {
-				prefix = chunked[len(chunked)-2]
-			} else {
-				prefix = chunked[len(chunked)-1]
-			}
+			prefix := Chunk(conf.ForEachIn)
 			cmd = append(cmd, conf.ForEachIn+f.Name())
 			SpruceToFile(cmd, conf.DestDir+prefix+"_"+f.Name())
 		}
 	}
 }
 
-func Walk(conf SpruceConfig) {
-	sl := []string{}
-	err := filepath.Walk(conf.Walk, fillSliceWithFiles(&sl))
-	if err != nil {
-		log.Fatal(err)
+func ForEachInner(conf SpruceConfig, outer string) {
+	files, _ := ioutil.ReadDir(conf.ForEachIn)
+	regex := getRegexp(conf)
+	for _, f := range files {
+		cmd := CreateSpruceCommand(conf)
+		matched, _ := regexp.MatchString(regex, f.Name())
+		if matched {
+			prefix := Chunk(conf.ForEachIn)
+			cmd = append(cmd, conf.ForEachIn+f.Name())
+			cmd = append(cmd, outer)
+			SpruceToFile(cmd, conf.DestDir+prefix+"_"+f.Name())
+		}
 	}
+}
+
+func ForAll(conf SpruceConfig) {
+	if conf.ForAll != "" {
+		files, _ := ioutil.ReadDir(conf.ForAll)
+		for _, f := range files {
+			//ForEachInner(conf, conf.ForAll+f.Name())
+			Walk(conf, conf.ForAll+f.Name())
+		}
+	}
+}
+
+func isMatchingEnabled(conf SpruceConfig, match string) string {
+	if !conf.EnableMatching {
+		match = ""
+	}
+	return match
+}
+
+func Chunk(path string) string {
+	chunked := strings.Split(path, "/")
+	var prefix string
+	if chunked[len(chunked)-1] == "" {
+		prefix = chunked[len(chunked)-2]
+	} else {
+		prefix = chunked[len(chunked)-1]
+	}
+	return prefix
+}
+
+func Walk(conf SpruceConfig, outer string) {
+	sl := getAllFilesInSubDirs(conf.Walk)
 	regex := getRegexp(conf)
 
 	for _, f := range sl {
-		fileName := ConcatFileName(f)
-		matched, _ := regexp.MatchString(regex, fileName)
-		if matched {
-			cmd := CreateSpruceCommand(conf)
-			cmd = append(cmd, f)
-			SpruceToFile(cmd, conf.DestDir+fileName)
+		filename, parent := ConcatFileName(f)
+		match := isMatchingEnabled(conf, parent)
+		if strings.Contains(outer, match) {
+			matched, _ := regexp.MatchString(regex, filename)
+			if matched {
+				cmd := CreateSpruceCommand(conf)
+				cmd = append(cmd, f)
+				cmd = append(cmd, outer)
+				if conf.CopyParents {
+					CreateDir(conf.DestDir + parent)
+				} else {
+					parent = ""
+				}
+				SpruceToFile(cmd, conf.DestDir+parent+"/"+filename)
+			}
 		}
 	}
+}
+
+func CreateDir(path string) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.Mkdir(path, 0711)
+	}
+}
+
+func getAllFilesInSubDirs(path string) []string {
+	sl := []string{}
+	err := filepath.Walk(path, fillSliceWithFiles(&sl))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return sl
 }
 
 func getRegexp(conf SpruceConfig) string {
@@ -164,10 +228,11 @@ func getRegexp(conf SpruceConfig) string {
 	return regex
 }
 
-func ConcatFileName(path string) string {
+func ConcatFileName(path string) (string, string) {
 	chunked := strings.Split(path, "/")
 	fileName := chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
-	return fileName
+	parent := chunked[len(chunked)-2]
+	return fileName, parent
 }
 
 func fillSliceWithFiles(files *[]string) filepath.WalkFunc {
@@ -246,3 +311,19 @@ func Cleanup(path string) {
 		}
 	}
 }
+
+// func Walk(conf SpruceConfig) {
+// 	sl := getAllFilesInSubDirs(conf.Walk)
+// 	regex := getRegexp(conf)
+//
+// 	for _, f := range sl {
+// 		filename, parent := ConcatFileName(f)
+// 		matched, _ := regexp.MatchString(regex, filename)
+// 		if matched {
+// 			cmd := CreateSpruceCommand(conf)
+// 			cmd = append(cmd, f)
+// 			CreateDir(conf.DestDir + parent)
+// 			SpruceToFile(cmd, conf.DestDir+parent+"/"+filename)
+// 		}
+// 	}
+// }
