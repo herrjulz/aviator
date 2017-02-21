@@ -51,7 +51,8 @@ fly:
 		Context("ConcatFileName", func() {
 			It("should concat a file name concatinaed by the parant folder name and the file name", func() {
 				filePath := "path/to/some/file.yml"
-				Expect(ConcatFileName(filePath)).To(Equal("some_file.yml"))
+				fn, _ := ConcatFileName(filePath)
+				Expect(fn).To(Equal("some_file.yml"))
 			})
 		})
 	})
@@ -190,7 +191,7 @@ fly:
 		Context("Walk", func() {
 			It("should spruce base.yml with each file in all subdirectories seperately", func() {
 				avi := ReadYaml([]byte(file))
-				Walk(avi.Spruce[0])
+				Walk(avi.Spruce[0], "")
 
 				Expect("../integration/tmp/sub1_file1.yml").To(BeAnExistingFile())
 				Expect("../integration/tmp/sub1_file2.yml").To(BeAnExistingFile())
@@ -228,7 +229,7 @@ fly:
 		Context("Walk", func() {
 			It("should only create files which matches the regexp", func() {
 				avi := ReadYaml([]byte(file))
-				Walk(avi.Spruce[0])
+				Walk(avi.Spruce[0], "")
 
 				Expect("../integration/tmp/sub1_file1.yml").To(BeAnExistingFile())
 				Expect("../integration/tmp/sub1_file2.yml").NotTo(BeAnExistingFile())

@@ -4,7 +4,7 @@ Aviator is a small CLI tool to run genereic **Aviator** Concourse pipelines.
 
 ## Installation (Mac Only)
 
-Download Aviator [here](https://ibm.box.com/s/oii3d7mbu6ur9suo0nbsa9surk193p98)
+Download Aviator [HERE](https://ibm.box.com/s/hy48rcj0wefinzopz01j8a80auom1ct4)
 
 and run:
 
