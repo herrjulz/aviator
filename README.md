@@ -23,8 +23,9 @@ spruce:
   prune:
   - meta
   with:
-  - another.yml
-  - yet-another.yml
+    files:
+    - another.yml
+    - yet-another.yml
   to: result.yml
 - base: result.yml
   for_each_in: path/to/dir/
@@ -47,7 +48,11 @@ fly:
 
 - **prune (array):** Here you can list all properties you want to prune.
 
-- **with (array):** List specific files you want to spruce on top of the base.
+- **with (array):**
+
+    - **files** List specific files you want to spruce on top of the base.
+    - **in_dir** (optional) If specified, each file in `files` will be prefixed with this string. This allows to specify specific file in a directory.
+
 
 - **with_in (string):** You can also include all files within a dir to the spruce command by using this property.
 
@@ -68,12 +73,22 @@ fly:
 
 - **regexp (string):** will include only files matching the regexp.
 
-### Fly
+### Fly (Optional)
 
 - **config (string):** the pipeline config file (yml)
 - **vars (array):** List of all property files (-l)
 
 ## Usage
+
+make sure to have the `aviator.yml` in your directory. Then execute aviator:
+
+**Spruce only**
+
+```
+$ aviator
+```
+
+**With Fly**
 
 ```
 $ aviator -t <target> -p <pipeline-name>
