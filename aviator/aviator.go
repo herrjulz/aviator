@@ -22,7 +22,7 @@ type Aviator struct {
 
 type SpruceConfig struct {
 	Base           string   `yaml:"base"`
-	Files          []string `yaml:"with"`
+	With           With     `yaml:"with"`
 	FileDir        string   `yaml:"with_in"`
 	Prune          []string `yaml:"prune"`
 	Folder         string   `yaml:"dir"`
@@ -37,6 +37,11 @@ type SpruceConfig struct {
 	Regexp         string   `yaml:"regexp"`
 }
 
+type With struct {
+	Files []string `yaml:"files"`
+	InDir string   `yaml:"in_dir"`
+}
+
 type FlyConfig struct {
 	Config string   `yaml:"config"`
 	Vars   []string `yaml:"vars"`
@@ -45,7 +50,7 @@ type FlyConfig struct {
 func ReadYaml(ymlBytes []byte) Aviator {
 	var yml Aviator
 
-	fmt.Printf("%s", ymlBytes)
+	// fmt.Printf("%s", ymlBytes)
 
 	err := yaml.Unmarshal(ymlBytes, &yml)
 	if err != nil {
@@ -76,9 +81,11 @@ func FlyPipeline(fly FlyConfig, target string, pipeline string) {
 }
 
 func ProcessSpruceChain(spruce []SpruceConfig) {
+	fmt.Println("proccess")
 	for _, conf := range spruce {
 		verifySpruceConfig(conf)
 		if conf.ForEachIn == "" && len(conf.ForEach) == 0 && conf.Walk == "" {
+			fmt.Println("straight")
 			straight(conf)
 		}
 		if len(conf.ForEach) != 0 {
@@ -250,7 +257,10 @@ func CreateSpruceCommand(spruce SpruceConfig) []string {
 		spruceCmd = append(spruceCmd, "--prune", prune)
 	}
 	spruceCmd = append(spruceCmd, spruce.Base)
-	for _, file := range spruce.Files {
+	for _, file := range spruce.With.Files {
+		if spruce.With.InDir != "" {
+			file = spruce.With.InDir + file
+		}
 		spruceCmd = append(spruceCmd, file)
 	}
 
