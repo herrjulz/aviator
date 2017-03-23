@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"masterjulz/aviator/aviator"
 	"os"
+
+	"github.com/JulzDiverse/aviator/aviator"
 
 	"github.com/urfave/cli"
 )
@@ -14,21 +15,16 @@ func main() {
 	cmd := setCli()
 
 	cmd.Action = func(c *cli.Context) error {
+		target := ""
+		pipeline := ""
+
 		if c.String("t") == "" {
-			fmt.Println("Please specify target")
-			os.Exit(1)
+			target = c.String("target")
 		}
 
 		if c.String("p") == "" {
-			fmt.Println("Please specify a pipline name")
-			os.Exit(1)
+			pipeline = c.String("pipeline")
 		}
-
-		target := c.String("target")
-
-		pipeline := c.String("pipeline")
-
-		fmt.Println("Target set to", target)
 
 		aviatorFile := "./aviator.yml"
 
@@ -42,7 +38,12 @@ func main() {
 			}
 			yml = aviator.ReadYaml(ymlBytes)
 			aviator.ProcessSpruceChain(yml.Spruce)
-			aviator.FlyPipeline(yml.Fly, target, pipeline)
+
+			if target != "" {
+				fmt.Println("Target set to", target)
+				aviator.FlyPipeline(yml.Fly, target, pipeline)
+			}
+
 		}
 
 		return nil
