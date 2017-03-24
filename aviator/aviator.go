@@ -23,7 +23,7 @@ type Aviator struct {
 type SpruceConfig struct {
 	Base           string   `yaml:"base"`
 	With           With     `yaml:"with"`
-	FileDir        string   `yaml:"with_in"`
+	WithIn         string   `yaml:"with_in"`
 	Prune          []string `yaml:"prune"`
 	Folder         string   `yaml:"dir"`
 	ForEach        []string `yaml:"for_each"`
@@ -262,13 +262,13 @@ func CreateSpruceCommand(spruce SpruceConfig) []string {
 		spruceCmd = append(spruceCmd, file)
 	}
 
-	if spruce.FileDir != "" {
-		files, _ := ioutil.ReadDir(spruce.FileDir)
+	if spruce.WithIn != "" {
+		files, _ := ioutil.ReadDir(spruce.WithIn)
 		regex := getRegexp(spruce)
 		for _, f := range files {
 			matched, _ := regexp.MatchString(regex, f.Name())
 			if matched {
-				spruceCmd = append(spruceCmd, spruce.FileDir+f.Name())
+				spruceCmd = append(spruceCmd, spruce.WithIn+f.Name())
 			}
 		}
 	}
@@ -290,6 +290,8 @@ func SpruceToFile(argv []string, fileName string) {
 		panic(err)
 	}
 
+	scanStderr(cmd)
+
 	writer := bufio.NewWriter(outfile)
 	defer writer.Flush()
 
@@ -306,7 +308,7 @@ func SpruceToFile(argv []string, fileName string) {
 	}
 }
 
-func scanStderr(cmd exec.Cmd) {
+func scanStderr(cmd *exec.Cmd) {
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
 		panic(err)
