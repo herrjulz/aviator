@@ -81,11 +81,9 @@ func FlyPipeline(fly FlyConfig, target string, pipeline string) {
 }
 
 func ProcessSpruceChain(spruce []SpruceConfig) {
-	fmt.Println("proccess")
 	for _, conf := range spruce {
 		verifySpruceConfig(conf)
 		if conf.ForEachIn == "" && len(conf.ForEach) == 0 && conf.Walk == "" {
-			fmt.Println("straight")
 			straight(conf)
 		}
 		if len(conf.ForEach) != 0 {
@@ -301,7 +299,25 @@ func SpruceToFile(argv []string, fileName string) {
 	}
 
 	go io.Copy(writer, stdoutPipe)
-	cmd.Wait()
+
+	err = cmd.Wait()
+	if err != nil {
+		os.Exit(1)
+	}
+}
+
+func scanStderr(cmd exec.Cmd) {
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		panic(err)
+	}
+
+	errorScanner := bufio.NewScanner(stderrPipe)
+	go func() {
+		for errorScanner.Scan() {
+			fmt.Printf("%s\n", errorScanner.Text())
+		}
+	}()
 }
 
 func Cleanup(path string) {
