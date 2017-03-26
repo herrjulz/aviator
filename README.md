@@ -91,7 +91,7 @@ The `spruce` section is an Array of merge steps. Each merge step merges several 
         merge $base with $element_2, $element_1 to $to
         od
           od
-  ```
+    ```
 
     - **enable_matching [bool] (optional)** this will spruce only those files, which contain the same substring.
     - **copy_parents [bool] (optional)** copies parent directories of each file to the destination specified with `to`.
