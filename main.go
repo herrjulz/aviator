@@ -18,11 +18,11 @@ func main() {
 		target := ""
 		pipeline := ""
 
-		if c.String("t") == "" {
+		if c.String("t") != "" {
 			target = c.String("target")
 		}
 
-		if c.String("p") == "" {
+		if c.String("p") != "" {
 			pipeline = c.String("pipeline")
 		}
 
