@@ -22,7 +22,7 @@ The `aviator` CLI is a command line tool to execute `aviator.yml` files. To use 
 $ aviator
 ```
 
-If you use it with for `Concourse` pipelines, you need to specify an target and a pipeline name:
+If you use it for `Concourse` pipelines, you need to specify a target and a pipeline name:
 
 ```
 $ aviator -t <target> -p <pipeline-name>
