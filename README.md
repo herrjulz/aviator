@@ -30,7 +30,7 @@ $ aviator -t <target> -p <pipeline-name>
 
 ## Configure an Aviator YAML
 
-Aviator YAMLs provide plans on how yaml files should be merged. Such a plan is configured in up to two sections: `spruce` (required) and `fly` (optional). The `spruce` section specifies the files and the order they need to be merged. The `fly` section specifies the fly command which needs to be executed for a specific (`concourse`) YAML file. The following code snippet shows an example of an `aviator.yml` file:  <To do this `aviator` gives you several configuration options.>  
+Aviator YAMLs provide plans on how yaml files should be merged. Such a plan is configured in up to two sections: `spruce` (required) and `fly` (optional). The `spruce` section specifies the files and the order they need to be merged. The `fly` section specifies the fly command which needs to be executed for a specific (`concourse`) YAML file. The following code snippet shows an example of an `aviator.yml` file:  
 
 ```
 spruce:
