@@ -1,8 +1,11 @@
 # Aviator
 
-Aviator is a small CLI tool to run genereic **Aviator** Concourse pipelines.
+Aviator is a CLI tool based on `spruce` to run **Aviator** YAML files. An `aviator.yml` is  a configuration file to
 
-## Installation (Mac Only)
+- merge YAML files (e.g. Bosh Manifest Files)
+- generate generic `Concourse` Pipelines
+
+## Installation
 
 comming soon ...
 
@@ -11,11 +14,23 @@ comming soon ...
 - [Spruce](https://github.com/geofffranks/spruce) CLI Tool
 - [Fly](https://github.com/concourse/fly) CLI Tool
 
-## Aviator Properties
+## The Aviator CLI
 
-**aviator.yml**
+The `aviator` CLI is a command line tool to execute `aviator.yml` files. To use `aviator`, simply navigate to a directory containing an `aviator.yml` and execute it with:
 
-Example:
+```
+$ aviator
+```
+
+If you use it with for `Concourse` pipelines, you need to specify an target and a pipeline name:
+
+```
+$ aviator -t <target> -p <pipeline-name>
+```
+
+## Configure an Aviator YAML
+
+Aviator YAMLs provide plans on how yaml files should be merged. Such a plan is configured in up to two sections: `spruce` (required) and `fly` (optional). The `spruce` section specifies the files and the order they need to be merged. The `fly` section specifies the fly command which needs to be executed for a specific (`concourse`) YAML file. The following code snippet shows an example of an `aviator.yml` file:  <To do this `aviator` gives you several configuration options.>  
 
 ```
 spruce:
@@ -42,54 +57,68 @@ fly:
  - personal.yml
 ```
 
-### Spruce
+### The `spruce` section
 
-- **base (string):** This is the base yml file you want to spruce into.
+The `spruce` section is an Array of merge steps. Each merge step merges several files to an resulting file. The properties you can use to merge files are the following:
 
-- **prune (array):** Here you can list all properties you want to prune.
+- **base [string] (required)** specifies the base YAML. All other specified YAMLs will be merged on top of this file.
 
-- **with (array):**
+- **prune [array] (optional):** lists all properties, that needs to be pruned from the merged files.
 
-    - **files** List specific files you want to spruce on top of the base.
-    - **in_dir** (optional) If specified, each file in `files` will be prefixed with this string. This allows to specify specific file in a directory.
+- **with [map] (optional)** specifies either specific files from different locations or from a specific location.
 
-
-- **with_in (string):** You can also include all files within a dir to the spruce command by using this property.
-
-- **to (string):** Filename you want to save the spruced file to.
-
-- **to_dir (string):** Path you want to save the spruced files to. Use this property only in combination with `for_each`, `for_each_in`, and `walk_through`.
-
-- **for_each (array):** List all files which need to be spruced with a base file seperately.
-
-- **for_each_in (string):** Specify a dir which contains all files a base needs to be spruced with.
-
-- **walk_through (string):** Same as `for_each_in`, but it walks through all subdirectories.
-
-  - **for_all (string):** Adds an outer-loop to the walk_through loop
-  - **enable_matching (bool):**
-  - **copy_parents (bool):** parent directories will be copied to destination
+    - **files [array] (required)** lists specific files you want to spruce on top of the base YAML.
+    - **in_dir [string] (optional)**  specifies the location you want to pick specific files.
 
 
-- **regexp (string):** will include only files matching the regexp.
+- **with_in [string] (optional)** picks up each file in a given directory.
 
-### Fly (Optional)
+- **for_each** OR **for_each_in** OR **walk_through**:
+
+  - **for_each [array] (optional)** lists files, which will be merged with the `base` YAML file seperately.
+
+  - **for_each_in [string] (optional)** (similar to `for_each`) specifies a direcotry, where each file within this direcotry will be merged with the `base` YAML.
+
+  - **walk_through [string] (optional):** Same principle as `for_each_in`, with the difference that it walks through all subdirectories.
+
+    - **for_all [string] (optional)** will merge all files, which was merged with `walk_through` with all files within the directory speciefied with `for_all`.
+
+    Example (pseudo-code):
+
+    ```
+    for $element_1 in $for_all do
+      for $element_2 in $walk_through do
+        merge $base with $element_2, $element_1 to $to
+        od
+          od
+  ```
+
+    - **enable_matching [bool] (optional)** this will spruce only those files, which contain the same substring.
+    - **copy_parents [bool] (optional)** copies parent directories of each file to the destination specified with `to`.
+
+
+- **regexp [string] (optional):** will include only files matching the regexp.
+
+- **to** OR **to_dir** (one is required)
+
+  - **to [string]** specifies the filename you want to save the result to.
+
+  - **to_dir [string]** is the path you want to save the spruced files to. Use this property only in combination with `for_each`, `for_each_in`, and `walk_through`.
+
+### The `fly` section (Optional)
 
 - **config (string):** the pipeline config file (yml)
 - **vars (array):** List of all property files (-l)
 
-## Usage
 
-make sure to have the `aviator.yml` in your directory. Then execute aviator:
-
-**Spruce only**
+# Development
 
 ```
-$ aviator
+$ go get github.com/JulzDiverse/aviator
 ```
 
-**With Fly**
+Navigate to `aviator` directory
 
 ```
-$ aviator -t <target> -p <pipeline-name>
+$ godep save
 ```

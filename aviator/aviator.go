@@ -290,7 +290,7 @@ func SpruceToFile(argv []string, fileName string) {
 		panic(err)
 	}
 
-	scanStderr(cmd)
+	printStderr(cmd)
 
 	writer := bufio.NewWriter(outfile)
 	defer writer.Flush()
@@ -308,7 +308,7 @@ func SpruceToFile(argv []string, fileName string) {
 	}
 }
 
-func scanStderr(cmd *exec.Cmd) {
+func printStderr(cmd *exec.Cmd) {
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
 		panic(err)
