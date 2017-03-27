@@ -21,10 +21,11 @@ type Aviator struct {
 }
 
 type SpruceConfig struct {
+	// With           With     `yaml:"with"`
 	Base           string   `yaml:"base"`
-	With           With     `yaml:"with"`
-	WithIn         string   `yaml:"with_in"`
 	Prune          []string `yaml:"prune"`
+	Chain          []Chain  `yaml:"chain"`
+	WithIn         string   `yaml:"with_in"`
 	Folder         string   `yaml:"dir"`
 	ForEach        []string `yaml:"for_each"`
 	ForEachIn      string   `yaml:"for_each_in"`
@@ -35,6 +36,12 @@ type SpruceConfig struct {
 	DestFile       string   `yaml:"to"`
 	DestDir        string   `yaml:"to_dir"`
 	Regexp         string   `yaml:"regexp"`
+}
+
+type Chain struct {
+	With   With   `yaml:"with"`
+	WithIn string `yaml:"with_in"`
+	Regexp string `yaml:"regexp"`
 }
 
 type With struct {
@@ -80,7 +87,7 @@ func FlyPipeline(fly FlyConfig, target string, pipeline string) {
 	}
 }
 
-func ProcessSpruceChain(spruce []SpruceConfig) {
+func ProcessSprucePlan(spruce []SpruceConfig) {
 	for _, conf := range spruce {
 		verifySpruceConfig(conf)
 		if conf.ForEachIn == "" && len(conf.ForEach) == 0 && conf.Walk == "" {
@@ -116,13 +123,25 @@ func verifySpruceConfig(conf SpruceConfig) {
 }
 
 func straight(conf SpruceConfig) {
-	cmd := CreateSpruceCommand(conf)
+	cmd := ProcessChain(conf)
 	SpruceToFile(cmd, conf.DestFile)
+}
+
+func ProcessChain(conf SpruceConfig) []string {
+	cmd := createBaseCommand(conf)
+	for _, val := range conf.Chain {
+		tmp := CreateSpruceCommand(val)
+		for _, str := range tmp {
+			cmd = append(cmd, str)
+		}
+	}
+	return cmd
 }
 
 func ForEachFile(conf SpruceConfig) {
 	for _, val := range conf.ForEach {
-		cmd := CreateSpruceCommand(conf)
+		// cmd := CreateSpruceCommand(conf.Chain)
+		cmd := ProcessChain(conf)
 		fileName, _ := ConcatFileName(val)
 		cmd = append(cmd, val)
 		SpruceToFile(cmd, conf.DestDir+fileName)
@@ -133,7 +152,8 @@ func ForEachIn(conf SpruceConfig) {
 	files, _ := ioutil.ReadDir(conf.ForEachIn)
 	regex := getRegexp(conf)
 	for _, f := range files {
-		cmd := CreateSpruceCommand(conf)
+		// cmd := CreateSpruceCommand(conf)
+		cmd := ProcessChain(conf)
 		matched, _ := regexp.MatchString(regex, f.Name())
 		if matched {
 			prefix := Chunk(conf.ForEachIn)
@@ -147,7 +167,8 @@ func ForEachInner(conf SpruceConfig, outer string) {
 	files, _ := ioutil.ReadDir(conf.ForEachIn)
 	regex := getRegexp(conf)
 	for _, f := range files {
-		cmd := CreateSpruceCommand(conf)
+		// cmd := CreateSpruceCommand(conf)
+		cmd := ProcessChain(conf)
 		matched, _ := regexp.MatchString(regex, f.Name())
 		if matched {
 			prefix := Chunk(conf.ForEachIn)
@@ -196,7 +217,8 @@ func Walk(conf SpruceConfig, outer string) {
 		if strings.Contains(outer, match) {
 			matched, _ := regexp.MatchString(regex, filename)
 			if matched {
-				cmd := CreateSpruceCommand(conf)
+				// cmd := CreateSpruceCommand(conf)
+				cmd := ProcessChain(conf)
 				cmd = append(cmd, f)
 				cmd = append(cmd, outer)
 				if conf.CopyParents {
@@ -233,6 +255,14 @@ func getRegexp(conf SpruceConfig) string {
 	return regex
 }
 
+func getChainRegexp(conf Chain) string {
+	regex := ".*"
+	if conf.Regexp != "" {
+		regex = conf.Regexp
+	}
+	return regex
+}
+
 func ConcatFileName(path string) (string, string) {
 	chunked := strings.Split(path, "/")
 	fileName := chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
@@ -249,26 +279,31 @@ func fillSliceWithFiles(files *[]string) filepath.WalkFunc {
 	}
 }
 
-func CreateSpruceCommand(spruce SpruceConfig) []string {
+func createBaseCommand(conf SpruceConfig) []string {
 	spruceCmd := []string{"--concourse", "merge"}
-	for _, prune := range spruce.Prune {
+	for _, prune := range conf.Prune {
 		spruceCmd = append(spruceCmd, "--prune", prune)
 	}
-	spruceCmd = append(spruceCmd, spruce.Base)
-	for _, file := range spruce.With.Files {
-		if spruce.With.InDir != "" {
-			file = spruce.With.InDir + file
+	spruceCmd = append(spruceCmd, conf.Base)
+	return spruceCmd
+}
+
+func CreateSpruceCommand(chain Chain) []string {
+	var spruceCmd []string
+	for _, file := range chain.With.Files {
+		if chain.With.InDir != "" {
+			file = chain.With.InDir + file
 		}
 		spruceCmd = append(spruceCmd, file)
 	}
 
-	if spruce.WithIn != "" {
-		files, _ := ioutil.ReadDir(spruce.WithIn)
-		regex := getRegexp(spruce)
+	if chain.WithIn != "" {
+		files, _ := ioutil.ReadDir(chain.WithIn)
+		regex := getChainRegexp(chain)
 		for _, f := range files {
 			matched, _ := regexp.MatchString(regex, f.Name())
 			if matched {
-				spruceCmd = append(spruceCmd, spruce.WithIn+f.Name())
+				spruceCmd = append(spruceCmd, chain.WithIn+f.Name())
 			}
 		}
 	}
@@ -278,7 +313,7 @@ func CreateSpruceCommand(spruce SpruceConfig) []string {
 
 func SpruceToFile(argv []string, fileName string) {
 	cmd := exec.Command("spruce", argv...)
-	fmt.Println("EXEC SPRUCE:", cmd.Args)
+	fmt.Println("EXEC SPRUCE:", cmd.Args, "to", fileName)
 	outfile, err := os.Create(fileName)
 	if err != nil {
 		panic(err)

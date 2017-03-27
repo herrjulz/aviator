@@ -65,13 +65,13 @@ The `spruce` section is an Array of merge steps. Each merge step merges several 
 
 - **prune [array] (optional):** lists all properties, that needs to be pruned from the merged files.
 
-- **with [map] (optional)** specifies either specific files from different locations or from a specific location.
+- **chain** is an array containing `with` and `with_in` properties
 
-    - **files [array] (required)** lists specific files you want to spruce on top of the base YAML.
-    - **in_dir [string] (optional)**  specifies the location you want to pick specific files.
+  - **with [map] (optional)** specifies either specific files from different locations or from a specific location.
+      - **files [array] (required)** lists specific files you want to spruce on top of the base YAML.
+      - **in_dir [string] (optional)**  specifies the location you want to pick specific files.
 
-
-- **with_in [string] (optional)** picks up each file in a given directory.
+  - **with_in [string] (optional)** picks up each file in a given directory.
 
 - **for_each** OR **for_each_in** OR **walk_through**:
 
