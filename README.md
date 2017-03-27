@@ -37,10 +37,11 @@ spruce:
 - base: base.yml
   prune:
   - meta
-  with:
-    files:
-    - another.yml
-    - yet-another.yml
+  chain:
+  - with:
+      files:
+      - another.yml
+      - yet-another.yml
   to: result.yml
 - base: result.yml
   for_each_in: path/to/dir/
