@@ -16,10 +16,11 @@ var _ = Describe("Aviator", func() {
 		BeforeEach(func() {
 			file = `spruce:
   - base: base.yml
-    with:
-      files:
-      - another.yml
-      to: some/destination/file.yml
+    chain:
+    - with:
+        files:
+        - another.yml
+    to: some/destination/file.yml
 
 fly:
   config: pipeline.yml
@@ -41,7 +42,7 @@ fly:
 
 		Context("CreateSpruceCommand", func() {
 			It("Should create an expected spruce command", func() {
-				command := CreateSpruceCommand(ReadYaml([]byte(file)).Spruce[0])
+				command := ProcessChain(ReadYaml([]byte(file)).Spruce[0])
 				Expect(command).NotTo(BeEmpty())
 				Expect(command).Should(HaveLen(4))
 				Expect(command[2]).To(Equal("base.yml"))
@@ -62,30 +63,34 @@ fly:
 		BeforeEach(func() {
 			file = `spruce:
 - base: ../integration/yamls/base.yml
-  with:
-    files:
-    - another.yml
-    in_dir: ../integration/yamls/
+  chain:
+  - with:
+      files:
+      - another.yml
+      in_dir: ../integration/yamls/
+  - with:
+      files:
+      - ../integration/yamls/addons/sub1/file1.yml
   to: ../integration/tmp/tmp.yml
 - base: ../integration/tmp/tmp.yml
-  with:
-    files:
-    - ../integration/yamls/yet-another.yml
+  chain:
+  - with:
+      files:
+      - ../integration/yamls/yet-another.yml
   to: ../integration/tmp/result.yml`
-
 		})
 
 		Context("SpruceToFile", func() {
 			It("Should generate a file", func() {
 				avi := ReadYaml([]byte(file))
-				SpruceToFile(CreateSpruceCommand(avi.Spruce[0]), avi.Spruce[0].DestFile)
+				SpruceToFile(ProcessChain(avi.Spruce[0]), avi.Spruce[0].DestFile)
 				Expect("../integration/tmp/tmp.yml").To(BeAnExistingFile())
 			})
 		})
 
 		Context("ProcessSpruceChain", func() {
 			It("Should generate a result.yml file", func() {
-				ProcessSpruceChain(ReadYaml([]byte(file)).Spruce)
+				ProcessSprucePlan(ReadYaml([]byte(file)).Spruce)
 				Expect("../integration/tmp/result.yml").To(BeAnExistingFile())
 			})
 		})
