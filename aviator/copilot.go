@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 func verifySpruceConfig(conf SpruceConfig) {
@@ -125,4 +127,21 @@ func hasEnvVar(str ...string) bool {
 		}
 	}
 	return false
+}
+
+func beautifyPrint(args []string, dest string) {
+	y := color.New(color.FgYellow, color.Bold)
+	r := color.New(color.FgHiRed)
+	c := color.New(color.FgHiCyan)
+	fmt.Println("EXEC SPRUCE:", args[0], args[1], args[2])
+	for i := 3; i < len(args); i++ {
+		if args[i] == "--prune" {
+			r.Printf("\t%s ", args[i])
+			i++
+			c.Printf("%s \n", args[i])
+			continue
+		}
+		fmt.Printf("\t%s \n", args[i])
+	}
+	y.Printf("\tto:%s \n\n", dest)
 }

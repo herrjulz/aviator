@@ -127,7 +127,7 @@ func ProcessChain(conf SpruceConfig) []string {
 }
 
 func ForEachFile(conf SpruceConfig) {
-	dest := resolveVar(conf.DestFile)
+	dest := resolveVar(conf.DestDir)
 
 	for _, val := range conf.ForEach {
 		// cmd := CreateSpruceCommand(conf.Chain)
@@ -141,7 +141,7 @@ func ForEachFile(conf SpruceConfig) {
 
 func ForEachIn(conf SpruceConfig) {
 	forEachIn := resolveVar(conf.ForEachIn)
-	dest := resolveVar(conf.DestFile)
+	dest := resolveVar(conf.DestDir)
 	files, _ := ioutil.ReadDir(forEachIn)
 	regex := getRegexp(conf)
 	for _, f := range files {
@@ -186,7 +186,7 @@ func ForAll(conf SpruceConfig) {
 }
 
 func Walk(conf SpruceConfig, outer string) {
-	dest := resolveVar(conf.DestFile)
+	dest := resolveVar(conf.DestDir)
 	walk := resolveVar(conf.Walk)
 	sl := getAllFilesInSubDirs(walk)
 	regex := getRegexp(conf)
@@ -250,7 +250,8 @@ func CreateSpruceCommand(chain Chain) []string {
 
 func SpruceToFile(argv []string, fileName string) {
 	cmd := exec.Command("spruce", argv...)
-	fmt.Println("EXEC SPRUCE:", cmd.Args, "to", fileName)
+	// fmt.Println("EXEC SPRUCE:", cmd.Args, "to", fileName)
+	beautifyPrint(cmd.Args, fileName)
 	outfile, err := os.Create(fileName)
 	if err != nil {
 		panic(err)
