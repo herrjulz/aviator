@@ -145,3 +145,10 @@ func beautifyPrint(args []string, dest string) {
 	}
 	y.Printf("\tto:%s \n\n", dest)
 }
+
+func fileExists(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}

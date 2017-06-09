@@ -43,8 +43,9 @@ type Chain struct {
 }
 
 type With struct {
-	Files []string `yaml:"files"`
-	InDir string   `yaml:"in_dir"`
+	Files    []string `yaml:"files"`
+	InDir    string   `yaml:"in_dir"`
+	Existing bool     `yaml:"skip_non_existing"`
 }
 
 type FlyConfig struct {
@@ -230,7 +231,9 @@ func CreateSpruceCommand(chain Chain) []string {
 			dir := resolveVar(chain.With.InDir)
 			file = dir + file
 		}
-		spruceCmd = append(spruceCmd, file)
+		if !chain.With.Existing || fileExists(file) {
+			spruceCmd = append(spruceCmd, file)
+		}
 	}
 
 	if chain.WithIn != "" {
