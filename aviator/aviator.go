@@ -1,15 +1,15 @@
 package aviator
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/JulzDiverse/aviator/spruce"
 
 	"gopkg.in/yaml.v2"
 )
@@ -22,7 +22,7 @@ type Aviator struct {
 type SpruceConfig struct {
 	Base           string   `yaml:"base"`
 	Prune          []string `yaml:"prune"`
-	Chain          []Chain  `yaml:"chain"`
+	Chain          []Chain  `yaml:"merge"`
 	WithIn         string   `yaml:"with_in"`
 	Folder         string   `yaml:"dir"`
 	ForEach        []string `yaml:"for_each"`
@@ -92,7 +92,7 @@ func ProcessSprucePlan(spruce []SpruceConfig) {
 		verifySpruceConfig(conf)
 
 		if conf.ForEachIn == "" && len(conf.ForEach) == 0 && conf.Walk == "" {
-			straight(conf)
+			simpleMerge(conf)
 		}
 		if len(conf.ForEach) != 0 {
 			ForEachFile(conf)
@@ -110,86 +110,87 @@ func ProcessSprucePlan(spruce []SpruceConfig) {
 	}
 }
 
-func straight(conf SpruceConfig) {
-	cmd := ProcessChain(conf)
-	dest := resolveVar(conf.DestFile)
-	SpruceToFile(cmd, dest)
+func simpleMerge(conf SpruceConfig) {
+	files := collectFiles(conf)
+	mergeConf := spruce.MergeOpts{
+		Files: files,
+		Prune: conf.Prune,
+	}
+	spruceToFile(mergeConf, conf.DestFile)
 }
 
-func ProcessChain(conf SpruceConfig) []string {
-	cmd := createBaseCommand(conf)
+func collectFiles(conf SpruceConfig) []string {
+	files := []string{}
 	for _, val := range conf.Chain {
-		tmp := CreateSpruceCommand(val)
+		tmp := collectFromMergeSection(val)
 		for _, str := range tmp {
-			cmd = append(cmd, str)
+			files = append(files, str)
 		}
 	}
-	return cmd
+	return files
 }
 
 func ForEachFile(conf SpruceConfig) {
-	dest := resolveVar(conf.DestDir)
-
 	for _, val := range conf.ForEach {
-		// cmd := CreateSpruceCommand(conf.Chain)
-		val = resolveVar(val)
-		cmd := ProcessChain(conf)
+		files := collectFiles(conf)
 		fileName, _ := ConcatFileName(val)
-		cmd = append(cmd, val)
-		SpruceToFile(cmd, dest+fileName)
+		files = append(files, val)
+		mergeConf := spruce.MergeOpts{
+			Files: files,
+			Prune: conf.Prune,
+		}
+		spruceToFile(mergeConf, conf.DestDir+fileName)
 	}
 }
 
 func ForEachIn(conf SpruceConfig) {
-	forEachIn := resolveVar(conf.ForEachIn)
-	dest := resolveVar(conf.DestDir)
-	files, _ := ioutil.ReadDir(forEachIn)
+	filePaths, _ := ioutil.ReadDir(conf.ForEachIn)
 	regex := getRegexp(conf)
-	for _, f := range files {
-		// cmd := CreateSpruceCommand(conf)
-		cmd := ProcessChain(conf)
+	for _, f := range filePaths {
+		files := collectFiles(conf)
 		matched, _ := regexp.MatchString(regex, f.Name())
 		if matched {
 			prefix := Chunk(conf.ForEachIn)
-			cmd = append(cmd, forEachIn+f.Name())
-			SpruceToFile(cmd, dest+prefix+"_"+f.Name())
+			files = append(files, conf.ForEachIn+f.Name())
+			mergeConf := spruce.MergeOpts{
+				Files: files,
+				Prune: conf.Prune,
+			}
+			spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
 		}
 	}
 }
 
 func ForEachInner(conf SpruceConfig, outer string) {
-	// forEachIn := resolveVar(conf.ForEachIn)
-	dest := resolveVar(conf.DestFile)
-	files, _ := ioutil.ReadDir(conf.ForEachIn)
+	filePaths, _ := ioutil.ReadDir(conf.ForEachIn)
 	regex := getRegexp(conf)
-	for _, f := range files {
-		// cmd := CreateSpruceCommand(conf)
-		cmd := ProcessChain(conf)
+	for _, f := range filePaths {
+		files := collectFiles(conf)
 		matched, _ := regexp.MatchString(regex, f.Name())
 		if matched {
 			prefix := Chunk(conf.ForEachIn)
-			cmd = append(cmd, conf.ForEachIn+f.Name())
-			cmd = append(cmd, outer)
-			SpruceToFile(cmd, dest+prefix+"_"+f.Name())
+			files = append(files, conf.ForEachIn+f.Name())
+			files = append(files, outer)
+			mergeConf := spruce.MergeOpts{
+				Files: files,
+				Prune: conf.Prune,
+			}
+			spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
 		}
 	}
 }
 
 func ForAll(conf SpruceConfig) {
-	forAll := resolveVar(conf.ForAll)
-	if forAll != "" {
-		files, _ := ioutil.ReadDir(forAll)
+	if conf.ForAll != "" {
+		files, _ := ioutil.ReadDir(conf.ForAll)
 		for _, f := range files {
-			//ForEachInner(conf, conf.ForAll+f.Name())
-			Walk(conf, forAll+f.Name())
+			Walk(conf, conf.ForAll+f.Name())
 		}
 	}
 }
 
 func Walk(conf SpruceConfig, outer string) {
-	dest := resolveVar(conf.DestDir)
-	walk := resolveVar(conf.Walk)
-	sl := getAllFilesInSubDirs(walk)
+	sl := getAllFilesInSubDirs(conf.Walk)
 	regex := getRegexp(conf)
 
 	for _, f := range sl {
@@ -198,90 +199,56 @@ func Walk(conf SpruceConfig, outer string) {
 		if strings.Contains(outer, match) {
 			matched, _ := regexp.MatchString(regex, filename)
 			if matched {
-				// cmd := CreateSpruceCommand(conf)
-				cmd := ProcessChain(conf)
-				cmd = append(cmd, f)
-				cmd = append(cmd, outer)
+				files := collectFiles(conf)
+				files = append(files, f)
+				files = append(files, outer)
 				if conf.CopyParents {
-					CreateDir(dest + parent)
+					CreateDir(conf.DestDir + parent)
 				} else {
 					parent = ""
 				}
-				SpruceToFile(cmd, dest+parent+"/"+filename)
+				mergeConf := spruce.MergeOpts{
+					Files: files,
+					Prune: conf.Prune,
+				}
+				spruceToFile(mergeConf, conf.DestDir+parent+"/"+filename)
 			}
 		}
 	}
 }
 
-func createBaseCommand(conf SpruceConfig) []string {
-	spruceCmd := []string{"--concourse", "merge"}
-	for _, prune := range conf.Prune {
-		spruceCmd = append(spruceCmd, "--prune", prune)
-	}
-	base := resolveVar(conf.Base)
-	spruceCmd = append(spruceCmd, base)
-	return spruceCmd
-}
-
-func CreateSpruceCommand(chain Chain) []string {
-	var spruceCmd []string
+func collectFromMergeSection(chain Chain) []string {
+	var result []string
 	for _, file := range chain.With.Files {
-		file = resolveVar(file)
 		if chain.With.InDir != "" {
-			dir := resolveVar(chain.With.InDir)
+			dir := chain.With.InDir
 			file = dir + file
 		}
 		if !chain.With.Existing || fileExists(file) {
-			spruceCmd = append(spruceCmd, file)
+			result = append(result, file)
 		}
 	}
 
 	if chain.WithIn != "" {
-		within := resolveVar(chain.WithIn)
+		within := chain.WithIn
 		files, _ := ioutil.ReadDir(within)
 		regex := getChainRegexp(chain)
 		for _, f := range files {
 			matched, _ := regexp.MatchString(regex, f.Name())
 			if matched {
-				spruceCmd = append(spruceCmd, within+f.Name())
+				result = append(result, within+f.Name())
 			}
 		}
 	}
 
-	return spruceCmd
+	return result
 }
 
-func SpruceToFile(argv []string, fileName string) {
-	cmd := exec.Command("spruce", argv...)
-	// fmt.Println("EXEC SPRUCE:", cmd.Args, "to", fileName)
-	beautifyPrint(cmd.Args, fileName)
-	outfile, err := os.Create(fileName)
-	if err != nil {
-		panic(err)
-	}
-	defer outfile.Close()
-
-	stdoutPipe, err := cmd.StdoutPipe()
-	if err != nil {
-		panic(err)
-	}
-
-	printStderr(cmd)
-
-	writer := bufio.NewWriter(outfile)
-	defer writer.Flush()
-
-	err = cmd.Start()
-	if err != nil {
-		panic(err)
-	}
-
-	go io.Copy(writer, stdoutPipe)
-
-	err = cmd.Wait()
-	if err != nil {
-		os.Exit(1)
-	}
+func spruceToFile(opts spruce.MergeOpts, fileName string) {
+	beautifyPrint(opts, fileName)
+	rawYml, _ := spruce.CmdMergeEval(opts)
+	resultYml, _ := yaml.Marshal(rawYml)
+	ioutil.WriteFile(fileName, resultYml, 0644)
 }
 
 func Cleanup(path string) {
@@ -301,19 +268,3 @@ func Cleanup(path string) {
 		}
 	}
 }
-
-// func Walk(conf SpruceConfig) {
-// 	sl := getAllFilesInSubDirs(conf.Walk)
-// 	regex := getRegexp(conf)
-//
-// 	for _, f := range sl {
-// 		filename, parent := ConcatFileName(f)
-// 		matched, _ := regexp.MatchString(regex, filename)
-// 		if matched {
-// 			cmd := CreateSpruceCommand(conf)
-// 			cmd = append(cmd, f)
-// 			CreateDir(conf.DestDir + parent)
-// 			SpruceToFile(cmd, conf.DestDir+parent+"/"+filename)
-// 		}
-// 	}
-// }
