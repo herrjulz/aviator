@@ -37,7 +37,12 @@ func main() {
 				panic(err)
 			}
 			yml = aviator.ReadYaml(ymlBytes)
-			aviator.ProcessSprucePlan(yml.Spruce)
+
+			err := aviator.ProcessSprucePlan(yml.Spruce)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
 
 			if target != "" {
 				fmt.Println("Target set to", target)

@@ -86,37 +86,58 @@ func FlyPipeline(fly FlyConfig, target string, pipeline string) {
 	}
 }
 
-func ProcessSprucePlan(spruce []SpruceConfig) {
+func ProcessSprucePlan(spruce []SpruceConfig) error {
 	for _, conf := range spruce {
 
 		verifySpruceConfig(conf)
 
 		if conf.ForEachIn == "" && len(conf.ForEach) == 0 && conf.Walk == "" {
-			simpleMerge(conf)
+			err := simpleMerge(conf)
+			if err != nil {
+				return err
+			}
 		}
 		if len(conf.ForEach) != 0 {
-			ForEachFile(conf)
+			err := ForEachFile(conf)
+			if err != nil {
+				return err
+			}
 		}
 		if conf.ForEachIn != "" {
-			ForEachIn(conf)
+			err := ForEachIn(conf)
+			if err != nil {
+				return err
+			}
 		}
 		if conf.Walk != "" {
 			if conf.ForAll != "" {
-				ForAll(conf)
+				err := ForAll(conf)
+				if err != nil {
+					return err
+				}
 			} else {
-				Walk(conf, "")
+				err := Walk(conf, "")
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
+
+	return nil
 }
 
-func simpleMerge(conf SpruceConfig) {
+func simpleMerge(conf SpruceConfig) error {
 	files := collectFiles(conf)
 	mergeConf := spruce.MergeOpts{
 		Files: files,
 		Prune: conf.Prune,
 	}
-	spruceToFile(mergeConf, conf.DestFile)
+	err := spruceToFile(mergeConf, conf.DestFile)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func collectFiles(conf SpruceConfig) []string {
@@ -130,7 +151,7 @@ func collectFiles(conf SpruceConfig) []string {
 	return files
 }
 
-func ForEachFile(conf SpruceConfig) {
+func ForEachFile(conf SpruceConfig) error {
 	for _, val := range conf.ForEach {
 		files := collectFiles(conf)
 		fileName, _ := ConcatFileName(val)
@@ -139,11 +160,16 @@ func ForEachFile(conf SpruceConfig) {
 			Files: files,
 			Prune: conf.Prune,
 		}
-		spruceToFile(mergeConf, conf.DestDir+fileName)
+		err := spruceToFile(mergeConf, conf.DestDir+fileName)
+		if err != nil {
+			return err
+		}
+
 	}
+	return nil
 }
 
-func ForEachIn(conf SpruceConfig) {
+func ForEachIn(conf SpruceConfig) error {
 	filePaths, _ := ioutil.ReadDir(conf.ForEachIn)
 	regex := getRegexp(conf)
 	for _, f := range filePaths {
@@ -156,12 +182,17 @@ func ForEachIn(conf SpruceConfig) {
 				Files: files,
 				Prune: conf.Prune,
 			}
-			spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
+			err := spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
+			if err != nil {
+				return err
+			}
+
 		}
 	}
+	return nil
 }
 
-func ForEachInner(conf SpruceConfig, outer string) {
+func ForEachInner(conf SpruceConfig, outer string) error {
 	filePaths, _ := ioutil.ReadDir(conf.ForEachIn)
 	regex := getRegexp(conf)
 	for _, f := range filePaths {
@@ -175,21 +206,29 @@ func ForEachInner(conf SpruceConfig, outer string) {
 				Files: files,
 				Prune: conf.Prune,
 			}
-			spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
+			err := spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
-func ForAll(conf SpruceConfig) {
+func ForAll(conf SpruceConfig) error {
 	if conf.ForAll != "" {
 		files, _ := ioutil.ReadDir(conf.ForAll)
 		for _, f := range files {
-			Walk(conf, conf.ForAll+f.Name())
+			err := Walk(conf, conf.ForAll+f.Name())
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
-func Walk(conf SpruceConfig, outer string) {
+func Walk(conf SpruceConfig, outer string) error {
 	sl := getAllFilesInSubDirs(conf.Walk)
 	regex := getRegexp(conf)
 
@@ -211,10 +250,15 @@ func Walk(conf SpruceConfig, outer string) {
 					Files: files,
 					Prune: conf.Prune,
 				}
-				spruceToFile(mergeConf, conf.DestDir+parent+"/"+filename)
+				err := spruceToFile(mergeConf, conf.DestDir+parent+"/"+filename)
+				if err != nil {
+					return err
+				}
+
 			}
 		}
 	}
+	return nil
 }
 
 func collectFromMergeSection(chain Chain) []string {
@@ -244,11 +288,24 @@ func collectFromMergeSection(chain Chain) []string {
 	return result
 }
 
-func spruceToFile(opts spruce.MergeOpts, fileName string) {
+func spruceToFile(opts spruce.MergeOpts, fileName string) error {
 	beautifyPrint(opts, fileName)
-	rawYml, _ := spruce.CmdMergeEval(opts)
-	resultYml, _ := yaml.Marshal(rawYml)
-	ioutil.WriteFile(fileName, resultYml, 0644)
+	rawYml, err := spruce.CmdMergeEval(opts)
+	if err != nil {
+		return err
+	}
+
+	resultYml, err := yaml.Marshal(rawYml)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(fileName, resultYml, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func Cleanup(path string) {
