@@ -38,7 +38,7 @@ func main() {
 			}
 			yml = aviator.ReadYaml(ymlBytes)
 
-			err := aviator.ProcessSprucePlan(yml.Spruce)
+			err = aviator.ProcessSprucePlan(yml.Spruce)
 			if err != nil {
 				fmt.Println(err.Error())
 				os.Exit(1)
