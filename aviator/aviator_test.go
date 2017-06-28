@@ -1,6 +1,8 @@
 package aviator_test
 
 import (
+	"os"
+
 	. "github.com/JulzDiverse/aviator/aviator"
 
 	. "github.com/onsi/ginkgo"
@@ -85,6 +87,49 @@ fly:
 				Expect("../integration/tmp/result.yml").ShouldNot(BeAnExistingFile())
 			})
 		})
+	})
+
+	Context("Resolve env vars", func() {
+		var file, resultFile string
+		BeforeEach(func() {
+			file = `spruce:
+  - base: $BASE
+    merge:
+    - with:
+        files:
+        - ${INPUT_FILE}
+    to: $TMP_DIR/destination/$FILE
+
+fly:
+  config: pipeline.yml
+  vars:
+  - personal.yml`
+
+			resultFile = `spruce:
+  - base: base.yml
+    merge:
+    - with:
+        files:
+        - another.yml
+    to: some/destination/file.yml
+
+fly:
+  config: pipeline.yml
+  vars:
+  - personal.yml`
+
+		})
+
+		It("should resolve env variables", func() {
+			os.Setenv("BASE", "base.yml")
+			os.Setenv("INPUT_FILE", "another.yml")
+			os.Setenv("TMP_DIR", "some")
+			os.Setenv("FILE", "file.yml")
+
+			resolved := ResolveEnvVars([]byte(file))
+			Expect(string(resolved)).To(Equal(resultFile))
+		})
+
 	})
 
 })

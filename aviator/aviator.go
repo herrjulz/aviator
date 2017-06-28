@@ -141,7 +141,7 @@ func simpleMerge(conf SpruceConfig) error {
 }
 
 func collectFiles(conf SpruceConfig) []string {
-	files := []string{}
+	files := []string{conf.Base}
 	for _, val := range conf.Chain {
 		tmp := collectFromMergeSection(val)
 		for _, str := range tmp {

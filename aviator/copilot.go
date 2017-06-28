@@ -1,11 +1,9 @@
 package aviator
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -92,35 +90,21 @@ func fillSliceWithFiles(files *[]string) filepath.WalkFunc {
 	}
 }
 
-func printStderr(cmd *exec.Cmd) {
-	stderrPipe, err := cmd.StderrPipe()
-	if err != nil {
-		panic(err)
-	}
-
-	errorScanner := bufio.NewScanner(stderrPipe)
-	go func() {
-		for errorScanner.Scan() {
-			fmt.Printf("%s\n", errorScanner.Text())
-		}
-	}()
-}
-
 func beautifyPrint(opts spruce.MergeOpts, dest string) {
 	y := color.New(color.FgYellow, color.Bold)
 	r := color.New(color.FgHiRed)
 	c := color.New(color.FgHiCyan)
-	fmt.Println("SPRUCE: merge")
+	fmt.Println("SPRUCE MERGE:")
 	if len(opts.Prune) != 0 {
-		r.Printf("\t%s ", "--prune")
 		for _, prune := range opts.Prune {
-			c.Printf("\t %s \n", prune)
+			r.Printf("\t%s ", "--prune")
+			c.Printf("  %s \n", prune)
 		}
 	}
 	for _, file := range opts.Files {
-		fmt.Printf("\t %s \n", file)
+		fmt.Printf("\t%s \n", file)
 	}
-	y.Printf("\tto: %s \n\n", dest)
+	y.Printf("\tto: %s\n\n", dest)
 }
 
 func fileExists(path string) bool {
@@ -128,4 +112,9 @@ func fileExists(path string) bool {
 		return false
 	}
 	return true
+}
+
+func ResolveEnvVars(input []byte) []byte {
+	result := os.ExpandEnv(string(input))
+	return []byte(result)
 }
