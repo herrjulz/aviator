@@ -17,10 +17,10 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 			- [Properties:](#properties)
 				- [Base (`string`)](#base-string)
 				- [Prune (`[string]Array`)](#prune-stringarray)
-			- [Merge (`Array`)](#merge-array)
-			- [To (`string`)](#to-string)
-			- [Read From & Write To Variables](#read-from-write-to-variables)
-			- [Other properties](#other-properties)
+				- [Merge (`Array`)](#merge-array)
+				- [To (`string`)](#to-string)
+				- [Read From & Write To Variables](#read-from-write-to-variables)
+			- [ForEach, ForEachIn & WalkThrough](#foreach-foreachin-walkthrough)
 		- [The `fly` section (Optional)](#the-fly-section-optional)
 - [Development](#development)
 
@@ -92,7 +92,7 @@ spruce:
 
 In this case `meta` and `properties` will be pruned during merge.
 
-#### Merge (`Array`)
+##### Merge (`Array`)
 
 You can configure two types of objects in a `merge`: `with` and `with_in`.
 
@@ -122,7 +122,7 @@ spruce:
   to: result.yml
 ```
 
-**with_in**
+**with_in** (`string`)
 
 `with_in` specifies a path (do not forget the trailing "/") to a directory. All files  within this directory (but not subdirectories) will be included in the merge.
 
@@ -136,7 +136,7 @@ spruce:
   to: result.yml
 ```
 
-**regexp**
+**regexp** (`string`(quoted))
 
 Only files matching the regular expression will be included in the merge. It affects both `with` and `with_in`. This could be required if the target directory contains other then only YAML files.
 
@@ -154,11 +154,11 @@ spruce:
   to: result.yml
 ```
 
-#### To (`string`)
+##### To (`string`)
 
 `to` specifies the target file, where the merged files should be saved to.
 
-#### Read From & Write To Variables
+##### Read From & Write To Variables
 
 Sometimes it is required to do more than one merge step, which creates intermediate YAML files. In this case you can save merge results to variables which are defined in double courly braces `{{var}}`. You can read from & write to such a variable.
 
@@ -177,44 +177,89 @@ spruce:
   to: final.yml
 ```
 
-#### Other properties
+#### ForEach, ForEachIn & WalkThrough
 
-- **for_each** OR **for_each_in** OR **walk_through**:
+On top of the basic `merge` the user can do more complex merges with `for_each`, `for_each_in` and `walk_through`. Note that only one of these properties can be specified per merge. For example, it is not allowed to combine `for_each` and `walk_through` in one merge step. Moreover, it requires to specify `to_dir` isntead `to` to save the merged files.  
 
-  - **for_each [array] (optional)** lists files, which will be merged with the `base` YAML file seperately.
+**for_each**
 
-  - **for_each_in [string] (optional)** (similar to `for_each`) specifies a direcotry, where each file within this direcotry will be merged with the `base` YAML.
+`for_each` specifies a list of files that will be included in your merge seperately.
 
-  - **walk_through [string] (optional):** Same principle as `for_each_in`, with the difference that it walks through all subdirectories.
+Example:
 
-    - **for_all [string] (optional)** will merge all files, which was merged with `walk_through` with all files within the directory speciefied with `for_all`.
+```
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with:
+      files:
+      - top.yml
+  regexp: ".*.(yml)"
+  for_each:
+  - env.yml
+  - env2.yml
+  to_dir: results/
+```
 
-    Example (pseudo-code):
+This merge step will execute two merges and generate two files. It will merge `base.yml` and `top.yml` with `env.yml`, write it to `results/` and do the same with `env2.yml`.
 
-    ```
-    for $element_1 in $for_all do
-      for $element_2 in $walk_through do
-        merge $base with $element_2, $element_1 to $to
-      od
-    od
-    ```
+**for_each_in**
 
-    - **enable_matching [bool] (optional)** this will spruce only those files, which contain the same substring.
-    - **copy_parents [bool] (optional)** copies parent directories of each file to the destination specified with `to`.
+`for_each_in` is basically the same as `for_each` with the difference that it will merge all files for a given path sperately
 
+Example:
 
-- **regexp [string] (optional):** will include only files matching the regexp.
+```
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with:
+      files:
+      - top.yml
+  regexp: ".*.(yml)"
+  for_each_in: path/to/dir/
+  to_dir: results/
+```
 
+**walk_through**
 
-- **to_dir [string]** is the path you want to save the spruced files to. Use this property only in combination with `for_each`, `for_each_in`, and `walk_through`.
+`walk_through` includes all files in a directory into a merge seperately. Including all subdirectories.
+
+```
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with:
+      files:
+      - top.yml
+  regexp: ".*.(yml)"
+  walk_through: path/to/dir/
+  enable_matching: true
+  copy_parents: true
+  to_dir: results/
+```
+
+In combination with `walk_through` there are another two proprties you can define:
+
+- `enable_matching`: this will only include files in the merge, that contains the same substring as the parent directory.
+
+- `copy_parents`: setting this property to `true` (default `false`) will copy the parent folder of a file to the target directory (in the above example `results/`)
+
+**regexp**
+
+The `regexp` property can also be set in combination with `for_each`, `for_each_in`, and `walk_through` to only include files matching the regular expression.
 
 
 ### The `fly` section (Optional)
+
+If you want to merge Concourse pipeline YAML files and set them on the fly you can specify additionally the `fly` section. If Aviator find this section it will _automagically_ execute fly for you if the following configurations are set:
 
 - **name**: Name of the pipeline
 - **target**: Target short name (`fly` target)
 - **config (string):** the pipeline config file (yml)
 - **vars (array):** List of all property files (-l)
+
+_NOTE: You will need to fly login first, before executing `aviator`_
 
 # Development
 
