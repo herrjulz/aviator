@@ -49,6 +49,8 @@ type With struct {
 }
 
 type FlyConfig struct {
+	Name   string   `yaml:"name"`
+	Target string   `yaml:"target"`
 	Config string   `yaml:"config"`
 	Vars   []string `yaml:"vars"`
 }
@@ -72,9 +74,9 @@ func quoteBraces(input []byte) []byte {
 	return re.ReplaceAll(input, []byte("\"$1\""))
 }
 
-func FlyPipeline(fly FlyConfig, target string, pipeline string) {
+func FlyPipeline(fly FlyConfig) {
 
-	flyCmd := []string{"-t", target, "set-pipeline", "-p", pipeline, "-c", fly.Config}
+	flyCmd := []string{"-t", fly.Target, "set-pipeline", "-p", fly.Name, "-c", fly.Config}
 	for _, val := range fly.Vars {
 		flyCmd = append(flyCmd, "-l", val)
 	}

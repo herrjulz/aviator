@@ -15,17 +15,6 @@ func main() {
 	cmd := setCli()
 
 	cmd.Action = func(c *cli.Context) error {
-		target := ""
-		pipeline := ""
-
-		if c.String("t") != "" {
-			target = c.String("target")
-		}
-
-		if c.String("p") != "" {
-			pipeline = c.String("pipeline")
-		}
-
 		aviatorFile := "./aviator.yml"
 
 		var yml aviator.Aviator
@@ -44,9 +33,9 @@ func main() {
 				os.Exit(1)
 			}
 
-			if target != "" {
-				fmt.Println("Target set to", target)
-				aviator.FlyPipeline(yml.Fly, target, pipeline)
+			if yml.Fly.Target != "" && yml.Fly.Name != "" && yml.Fly.Config != "" {
+				fmt.Println("Target set to", yml.Fly.Target)
+				aviator.FlyPipeline(yml.Fly)
 			}
 
 		}

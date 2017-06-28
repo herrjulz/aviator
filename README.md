@@ -11,7 +11,8 @@ comming soon ...
 
 ## Prereqs
 
-- [Spruce](https://github.com/geofffranks/spruce) CLI Tool
+If you use Aviator to merge Concourse configuration files you will need to have `fly` installed on your machine:
+
 - [Fly](https://github.com/concourse/fly) CLI Tool
 
 ## The Aviator CLI
@@ -22,13 +23,9 @@ The `aviator` CLI is a command line tool to execute `aviator.yml` files. To use 
 $ aviator
 ```
 
-If you use it for `Concourse` pipelines, you need to specify a target and a pipeline name:
-
-```
-$ aviator -t <target> -p <pipeline-name>
-```
-
 ## Configure an Aviator YAML
+
+### Spruce Section 
 
 Aviator YAMLs provide plans on how yaml files should be merged. Such a plan is configured in up to two sections: `spruce` (required) and `fly` (optional). The `spruce` section specifies the files and the order they need to be merged. The `fly` section specifies the fly command which needs to be executed for a specific (`concourse`) YAML file. The following code snippet shows an example of an `aviator.yml` file:  
 
@@ -37,7 +34,7 @@ spruce:
 - base: base.yml
   prune:
   - meta
-  chain:
+  merge:
   - with:
       files:
       - another.yml
@@ -66,7 +63,7 @@ The `spruce` section is an Array of merge steps. Each merge step merges several 
 
 - **prune [array] (optional):** lists all properties, that needs to be pruned from the merged files.
 
-- **chain** is an array containing `with` and `with_in` properties
+- **merge** is an array containing `with` and `with_in` properties
 
   - **with [map] (optional)** specifies either specific files from different locations or from a specific location.
       - **files [array] (required)** lists specific files you want to spruce on top of the base YAML.
@@ -108,9 +105,10 @@ The `spruce` section is an Array of merge steps. Each merge step merges several 
 
 ### The `fly` section (Optional)
 
+- **name**: Name of the pipeline 
+- **target**: Target short name (`fly` target)
 - **config (string):** the pipeline config file (yml)
 - **vars (array):** List of all property files (-l)
-
 
 # Development
 
