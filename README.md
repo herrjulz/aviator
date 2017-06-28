@@ -10,6 +10,8 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 - [Aviator](#aviator)
 - [Table of Content](#table-of-content)
 	- [Installation](#installation)
+		- [OS X](#os-x)
+		- [Linux](#linux)
 	- [Prereqs](#prereqs)
 	- [Usage](#usage)
 	- [Configure an `aviator.yml`](#configure-an-aviatoryml)
@@ -28,7 +30,24 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 
 ## Installation
 
-comming soon ...
+### OS X
+
+```
+$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.1.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
+```
+
+**Via Homebrew**
+
+```
+$ brew tap julzdiverse/tools  
+$ brew install aviator
+```
+
+### Linux
+
+```
+$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.1.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
+```
 
 ## Prereqs
 
