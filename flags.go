@@ -19,17 +19,6 @@ func setCli() *cli.App {
 
 func getFlags() []cli.Flag {
 	var flags []cli.Flag
-	flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "target, t",
-			Value: "",
-			Usage: "Concourse Server URL",
-		},
-		cli.StringFlag{
-			Name:  "pipeline, p",
-			Value: "",
-			Usage: "Pipeline Name",
-		},
-	}
+	flags = []cli.Flag{}
 	return flags
 }
