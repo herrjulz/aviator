@@ -1,6 +1,8 @@
 package aviator_test
 
 import (
+	"os"
+
 	. "github.com/JulzDiverse/aviator/aviator"
 
 	. "github.com/onsi/ginkgo"
@@ -16,7 +18,7 @@ var _ = Describe("Aviator", func() {
 		BeforeEach(func() {
 			file = `spruce:
   - base: base.yml
-    chain:
+    merge:
     - with:
         files:
         - another.yml
@@ -40,15 +42,6 @@ fly:
 			})
 		})
 
-		Context("CreateSpruceCommand", func() {
-			It("Should create an expected spruce command", func() {
-				command := ProcessChain(ReadYaml([]byte(file)).Spruce[0])
-				Expect(command).NotTo(BeEmpty())
-				Expect(command).Should(HaveLen(4))
-				Expect(command[2]).To(Equal("base.yml"))
-			})
-		})
-
 		Context("ConcatFileName", func() {
 			It("should concat a file name concatinaed by the parant folder name and the file name", func() {
 				filePath := "path/to/some/file.yml"
@@ -56,6 +49,7 @@ fly:
 				Expect(fn).To(Equal("some_file.yml"))
 			})
 		})
+
 	})
 
 	Context("Integration Tests: Spruce Specific Files", func() {
@@ -63,7 +57,7 @@ fly:
 		BeforeEach(func() {
 			file = `spruce:
 - base: ../integration/yamls/base.yml
-  chain:
+  merge:
   - with:
       files:
       - another.yml
@@ -73,19 +67,11 @@ fly:
       - ../integration/yamls/addons/sub1/file1.yml
   to: ../integration/tmp/tmp.yml
 - base: ../integration/tmp/tmp.yml
-  chain:
+  merge:
   - with:
       files:
       - ../integration/yamls/yet-another.yml
   to: ../integration/tmp/result.yml`
-		})
-
-		Context("SpruceToFile", func() {
-			It("Should generate a file", func() {
-				avi := ReadYaml([]byte(file))
-				SpruceToFile(ProcessChain(avi.Spruce[0]), avi.Spruce[0].DestFile)
-				Expect("../integration/tmp/tmp.yml").To(BeAnExistingFile())
-			})
 		})
 
 		Context("ProcessSpruceChain", func() {
@@ -102,4 +88,48 @@ fly:
 			})
 		})
 	})
+
+	Context("Resolve env vars", func() {
+		var file, resultFile string
+		BeforeEach(func() {
+			file = `spruce:
+  - base: $BASE
+    merge:
+    - with:
+        files:
+        - ${INPUT_FILE}
+    to: $TMP_DIR/destination/$FILE
+
+fly:
+  config: pipeline.yml
+  vars:
+  - personal.yml`
+
+			resultFile = `spruce:
+  - base: base.yml
+    merge:
+    - with:
+        files:
+        - another.yml
+    to: some/destination/file.yml
+
+fly:
+  config: pipeline.yml
+  vars:
+  - personal.yml`
+
+		})
+
+		It("should resolve env variables", func() {
+			os.Setenv("BASE", "base.yml")
+			os.Setenv("INPUT_FILE", "another.yml")
+			os.Setenv("TMP_DIR", "some")
+			os.Setenv("FILE", "file.yml")
+
+			resolved := ResolveEnvVars([]byte(file))
+			Expect(string(resolved)).To(Equal(resultFile))
+		})
+
+	})
+
 })

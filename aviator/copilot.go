@@ -1,14 +1,13 @@
 package aviator
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/JulzDiverse/aviator/spruce"
 	"github.com/fatih/color"
 )
 
@@ -91,59 +90,21 @@ func fillSliceWithFiles(files *[]string) filepath.WalkFunc {
 	}
 }
 
-func printStderr(cmd *exec.Cmd) {
-	stderrPipe, err := cmd.StderrPipe()
-	if err != nil {
-		panic(err)
-	}
-
-	errorScanner := bufio.NewScanner(stderrPipe)
-	go func() {
-		for errorScanner.Scan() {
-			fmt.Printf("%s\n", errorScanner.Text())
-		}
-	}()
-}
-
-func resolveVar(envVar string) string {
-	if hasEnvVar(envVar) {
-		split := strings.Split(envVar, "/")
-		for i, val := range split {
-			if hasEnvVar(val) {
-				envar := strings.Split(val, "$")
-				split[i] = os.Getenv(envar[1])
-			}
-		}
-		return strings.Join(split, "/")
-	}
-	return envVar
-}
-
-func hasEnvVar(str ...string) bool {
-	for _, val := range str {
-		has := strings.Contains(val, "$")
-		if has {
-			return has
-		}
-	}
-	return false
-}
-
-func beautifyPrint(args []string, dest string) {
+func beautifyPrint(opts spruce.MergeOpts, dest string) {
 	y := color.New(color.FgYellow, color.Bold)
 	r := color.New(color.FgHiRed)
 	c := color.New(color.FgHiCyan)
-	fmt.Println("EXEC SPRUCE:", args[0], args[1], args[2])
-	for i := 3; i < len(args); i++ {
-		if args[i] == "--prune" {
-			r.Printf("\t%s ", args[i])
-			i++
-			c.Printf("%s \n", args[i])
-			continue
+	fmt.Println("SPRUCE MERGE:")
+	if len(opts.Prune) != 0 {
+		for _, prune := range opts.Prune {
+			r.Printf("\t%s ", "--prune")
+			c.Printf("  %s \n", prune)
 		}
-		fmt.Printf("\t%s \n", args[i])
 	}
-	y.Printf("\tto:%s \n\n", dest)
+	for _, file := range opts.Files {
+		fmt.Printf("\t%s \n", file)
+	}
+	y.Printf("\tto: %s\n\n", dest)
 }
 
 func fileExists(path string) bool {
@@ -151,4 +112,9 @@ func fileExists(path string) bool {
 		return false
 	}
 	return true
+}
+
+func ResolveEnvVars(input []byte) []byte {
+	result := os.ExpandEnv(string(input))
+	return []byte(result)
 }
