@@ -15,7 +15,11 @@ type MergeOpts struct {
 	Files          []string
 }
 
+var DataStore map[string][]byte = make(map[string][]byte)
+
 var concourseRegex = `\{\{([-\w\p{L}]+)\}\}`
+
+var re = regexp.MustCompile("(" + concourseRegex + ")")
 
 func parseYAML(data []byte) (map[interface{}]interface{}, error) {
 	y, err := simpleyaml.NewYaml(data)
@@ -50,9 +54,9 @@ func mergeAllDocs(root map[interface{}]interface{}, paths []string, fallbackAppe
 		var data []byte
 		var err error
 
-		data, err = ioutil.ReadFile(path)
-		if err != nil {
-			return ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", path, err.Error())
+		data = readYamlFromPathOrStore(path)
+		if len(data) == 0 {
+			return ansi.Errorf("@R{Error reading file or resolve variable} @m{%s} \n", path)
 		}
 
 		data = quoteConcourse(data)
@@ -69,6 +73,40 @@ func mergeAllDocs(root map[interface{}]interface{}, paths []string, fallbackAppe
 }
 
 func quoteConcourse(input []byte) []byte {
-	re := regexp.MustCompile("(" + concourseRegex + ")")
 	return re.ReplaceAll(input, []byte("\"$1\""))
+}
+
+func readYamlFromPathOrStore(path string) []byte {
+	var data []byte
+	if re.MatchString(path) {
+		matches := re.FindSubmatch([]byte(path))
+		key := string(matches[len(matches)-1])
+		dataTmp, ok := DataStore[key]
+		if !ok {
+			ansi.Errorf("@R{Error reading variable} @m{%s}\n", key)
+			return nil
+		}
+		data = dataTmp
+	} else {
+		dataTmp, err := ioutil.ReadFile(path)
+		if err != nil {
+			ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", path, err.Error())
+			return nil
+		}
+		data = dataTmp
+	}
+	return data
+}
+
+func WriteYamlToPathOrStore(path string, data []byte) {
+	if re.MatchString(path) {
+		matches := re.FindSubmatch([]byte(path))
+		key := string(matches[len(matches)-1])
+		DataStore[key] = data
+	} else {
+		err := ioutil.WriteFile(path, data, 0644)
+		if err != nil {
+			ansi.Errorf("@R{Error writing file} @m{%s}: %s\n", path, err.Error())
+		}
+	}
 }

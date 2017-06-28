@@ -56,14 +56,20 @@ type FlyConfig struct {
 func ReadYaml(ymlBytes []byte) Aviator {
 	var yml Aviator
 
-	// fmt.Printf("%s", ymlBytes)
-
+	ymlBytes = quoteBraces(ymlBytes)
 	err := yaml.Unmarshal(ymlBytes, &yml)
 	if err != nil {
 		panic(err)
 	}
 
 	return yml
+}
+
+var quoteRegex = `\{\{([-\w\p{L}]+)\}\}`
+
+func quoteBraces(input []byte) []byte {
+	re := regexp.MustCompile("(" + quoteRegex + ")")
+	return re.ReplaceAll(input, []byte("\"$1\""))
 }
 
 func FlyPipeline(fly FlyConfig, target string, pipeline string) {
@@ -300,11 +306,7 @@ func spruceToFile(opts spruce.MergeOpts, fileName string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(fileName, resultYml, 0644)
-	if err != nil {
-		return err
-	}
-
+	spruce.WriteYamlToPathOrStore(fileName, resultYml)
 	return nil
 }
 
