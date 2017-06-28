@@ -11,8 +11,8 @@ func setCli() *cli.App {
 		},
 	}
 	cmd.Name = "Aviator"
-	cmd.Usage = "CLI Tool to Run AVIATOR Concourse Pipelines"
-	cmd.Version = "0.0.1"
+	cmd.Usage = "Navigate to a aviator.yml file and run aviator"
+	cmd.Version = "0.1.0"
 	cmd.Flags = getFlags()
 	return cmd
 }
