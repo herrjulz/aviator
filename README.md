@@ -83,14 +83,13 @@ spruce:
 
 The `spruce` section is an array that defines the "plan" how YAML files should be merged. You can defines an arbitrary amount of spruce steps in this section.
 
-#### Properties:
-
-##### Base (`string`)
+#### Base (`string`)
 
 The `base` property specifies the path to the base YAML file. All other YAML files will be merged on top of the YAML files specified in this property.
 
+---
 
-##### Prune (`[string]Array`)
+#### Prune (`[string]Array`)
 
 `prune` defines YAML properties which will be pruned during the merge.
 
@@ -111,7 +110,9 @@ spruce:
 
 In this case `meta` and `properties` will be pruned during merge.
 
-##### Merge (`Array`)
+---
+
+#### Merge (`Array`)
 
 You can configure two types of objects in a `merge`: `with` and `with_in`.
 
@@ -173,11 +174,15 @@ spruce:
   to: result.yml
 ```
 
-##### To (`string`)
+---
+
+#### To (`string`)
 
 `to` specifies the target file, where the merged files should be saved to.
 
-##### Read From & Write To Variables
+---
+
+#### Read From & Write To Variables
 
 Sometimes it is required to do more than one merge step, which creates intermediate YAML files. In this case you can save merge results to variables which are defined in double courly braces `{{var}}`. You can read from & write to such a variable.
 
@@ -195,6 +200,48 @@ spruce:
   - with_in: another/path/
   to: final.yml
 ```
+
+#### Environment Variables
+
+Aviator supports to read from Environment Variables. Environment variables can be set with `$VAR` or `${VAR}` at an arbitrary place in the `aviator.yml`.
+
+Example:
+
+```
+spruce:
+- base: $BASE_PATH/app-${NUMBER}.yml
+  merge:
+  - with_in: path/to/dir/
+  to: {{result}}
+
+- base: {{result}}
+  merge:
+  - with_in: $TARGET_PATH
+  to: $RESULT_YAML
+```
+
+Executing `aviator` as follows:
+
+```
+$ BASE_PATH=/tmp/ NUMBER=1 RESULT_YAML=result.yml aviator
+```
+
+will resolve:
+
+```
+spruce:
+- base: /tmp/app-1.yml
+  merge:
+  - with_in: path/to/dir/
+  to: {{result}}
+
+- base: {{result}}
+  merge:
+  - with_in: $TARGET_PATH
+  to: result.yml
+```
+
+---
 
 #### ForEach, ForEachIn & WalkThrough
 
@@ -268,6 +315,7 @@ In combination with `walk_through` there are another two proprties you can defin
 
 The `regexp` property can also be set in combination with `for_each`, `for_each_in`, and `walk_through` to only include files matching the regular expression.
 
+---
 
 ### The `fly` section (Optional)
 
@@ -277,6 +325,25 @@ If you want to merge Concourse pipeline YAML files and set them on the fly you c
 - **target**: Target short name (`fly` target)
 - **config (string):** the pipeline config file (yml)
 - **vars (array):** List of all property files (-l)
+
+Example:
+
+```
+spruce:
+- base: path/to/stub.yml
+  merge:
+  - with_in: path/to/dir/
+  to: pipeline.yml
+
+fly:
+	name: myPipelineName
+	target: myFlyTarget
+	config: pipeline.yml
+	vars:
+	- credentials.yml
+```
+
+Note, that the generated `pipeline.yml` is used in the `fly` section as `config`.
 
 _NOTE: You will need to fly login first, before executing `aviator`_
 
