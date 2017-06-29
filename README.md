@@ -5,6 +5,7 @@ Aviator is a tool to merge YAML files in a convenient fashion based on a configu
 If you have to handle rather complex YAML files (for BOSH or Concourse), you just provide the flight plan (`aviator.yml`), the Aviator flies you there.
 
 # Table of Content
+
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
 - [Aviator](#aviator)
@@ -16,12 +17,12 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 	- [Usage](#usage)
 	- [Configure an `aviator.yml`](#configure-an-aviatoryml)
 		- [Spruce Section (required)](#spruce-section-required)
-			- [Properties:](#properties)
-				- [Base (`string`)](#base-string)
-				- [Prune (`[string]Array`)](#prune-stringarray)
-				- [Merge (`Array`)](#merge-array)
-				- [To (`string`)](#to-string)
-				- [Read From & Write To Variables](#read-from-write-to-variables)
+			- [Base (`string`)](#base-string)
+			- [Prune (`[string]Array`)](#prune-stringarray)
+			- [Merge (`Array`)](#merge-array)
+			- [To (`string`)](#to-string)
+			- [Read From & Write To Variables](#read-from-write-to-variables)
+			- [Environment Variables](#environment-variables)
 			- [ForEach, ForEachIn & WalkThrough](#foreach-foreachin-walkthrough)
 		- [The `fly` section (Optional)](#the-fly-section-optional)
 - [Development](#development)
