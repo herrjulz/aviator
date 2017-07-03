@@ -21,6 +21,8 @@ var concourseRegex = `\{\{([-\w\p{L}]+)\}\}`
 
 var re = regexp.MustCompile("(" + concourseRegex + ")")
 
+var dere = regexp.MustCompile("['\"](" + concourseRegex + ")[\"']")
+
 func parseYAML(data []byte) (map[interface{}]interface{}, error) {
 	y, err := simpleyaml.NewYaml(data)
 	if err != nil {
@@ -76,6 +78,10 @@ func quoteConcourse(input []byte) []byte {
 	return re.ReplaceAll(input, []byte("\"$1\""))
 }
 
+func dequoteConcourse(input []byte) string {
+	return dere.ReplaceAllString(string(input), "$1")
+}
+
 func readYamlFromPathOrStore(path string) []byte {
 	var data []byte
 	if re.MatchString(path) {
@@ -100,11 +106,13 @@ func readYamlFromPathOrStore(path string) []byte {
 
 func WriteYamlToPathOrStore(path string, data []byte) {
 	if re.MatchString(path) {
+		dataString := dequoteConcourse(data)
 		matches := re.FindSubmatch([]byte(path))
 		key := string(matches[len(matches)-1])
-		DataStore[key] = data
+		DataStore[key] = []byte(dataString)
 	} else {
-		err := ioutil.WriteFile(path, data, 0644)
+		dataString := dequoteConcourse(data)
+		err := ioutil.WriteFile(path, []byte(dataString), 0644)
 		if err != nil {
 			ansi.Errorf("@R{Error writing file} @m{%s}: %s\n", path, err.Error())
 		}
