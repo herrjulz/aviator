@@ -66,7 +66,7 @@ $ aviator
 
 OR 
 
-Specify an AVIATOR YAML FILE `.vtr` with the [--file|-f] option:
+Specify an AVIATOR YAML file  with the [--file|-f] option:
 
 ```
 $ aviator -f myAviatorFile.yml
