@@ -34,7 +34,7 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 ### OS X
 
 ```
-$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.1.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
+$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.2.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
 ```
 
 **Via Homebrew**
@@ -47,7 +47,7 @@ $ brew install aviator
 ### Linux
 
 ```
-$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.1.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
+$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.2.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
 ```
 
 ## Prereqs
@@ -62,6 +62,14 @@ To run Aviator navigate to a directory that contains an `aviator.yml` and run:
 
 ```
 $ aviator
+```
+
+OR 
+
+Specify an AVIATOR YAML FILE `.vtr` with the [--file|-f] option:
+
+```
+$ aviator -f myAviatorFile.vtr
 ```
 
 That's it! :)
