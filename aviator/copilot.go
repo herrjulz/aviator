@@ -109,6 +109,14 @@ func beautifyPrint(opts spruce.MergeOpts, dest string) {
 
 func fileExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if re.MatchString(path) {
+			matches := re.FindSubmatch([]byte(path))
+			key := string(matches[len(matches)-1])
+			_, ok := spruce.DataStore[key]
+			if ok {
+				return true //return true if dataManager has file
+			}
+		}
 		return false
 	}
 	return true

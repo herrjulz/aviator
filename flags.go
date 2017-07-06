@@ -19,6 +19,12 @@ func setCli() *cli.App {
 
 func getFlags() []cli.Flag {
 	var flags []cli.Flag
-	flags = []cli.Flag{}
+	flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "file, f",
+			Value: "aviator.yml",
+			Usage: "Path to a AVIATOR YAML",
+		},
+	}
 	return flags
 }

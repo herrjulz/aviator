@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/JulzDiverse/aviator/aviator"
 
@@ -11,15 +12,18 @@ import (
 )
 
 func main() {
-
 	cmd := setCli()
 
 	cmd.Action = func(c *cli.Context) error {
-		aviatorFile := "./aviator.yml"
 
 		var yml aviator.Aviator
-		if _, err := os.Stat(aviatorFile); os.IsNotExist(err) {
-			fmt.Println("No Aviator file found. Please navigate to a Aviator directory and run Aviator again")
+
+		aviatorFile := c.String("file")
+		if !VerifyAviatorFile(aviatorFile) {
+			fmt.Println("No Aviator file found. Does the file exist?\n ")
+			fmt.Println("Please navigate to a Aviator directory or specify a AVIATOR YAML ('.vtr')  with [--file|-f] option  and run aviator again")
+			fmt.Println("NOTE: specified AVIATOR files require the '.vtr' extension")
+			os.Exit(1)
 		} else {
 			ymlBytes, err := ioutil.ReadFile(aviatorFile)
 			if err != nil {
@@ -43,4 +47,20 @@ func main() {
 		return nil
 	}
 	cmd.Run(os.Args)
+}
+
+func VerifyAviatorFile(file string) bool {
+	if file == "aviator.yml" {
+		if _, err := os.Stat(file); !os.IsNotExist(err) {
+			return true
+		}
+	} else {
+		sl := strings.Split(file, ".")
+		if sl[len(sl)-1] == "vtr" {
+			if _, err := os.Stat(file); !os.IsNotExist(err) {
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -68,9 +68,9 @@ func ReadYaml(ymlBytes []byte) Aviator {
 }
 
 var quoteRegex = `\{\{([-\w\p{L}]+)\}\}`
+var re = regexp.MustCompile("(" + quoteRegex + ")")
 
 func quoteBraces(input []byte) []byte {
-	re := regexp.MustCompile("(" + quoteRegex + ")")
 	return re.ReplaceAll(input, []byte("\"$1\""))
 }
 
