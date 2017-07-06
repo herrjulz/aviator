@@ -69,7 +69,7 @@ OR
 Specify an AVIATOR YAML FILE `.vtr` with the [--file|-f] option:
 
 ```
-$ aviator -f myAviatorFile.vtr
+$ aviator -f myAviatorFile.yml
 ```
 
 That's it! :)
