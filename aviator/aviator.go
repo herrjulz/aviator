@@ -37,9 +37,10 @@ type SpruceConfig struct {
 }
 
 type Chain struct {
-	With   With   `yaml:"with"`
-	WithIn string `yaml:"with_in"`
-	Regexp string `yaml:"regexp"`
+	With   With     `yaml:"with"`
+	WithIn string   `yaml:"with_in"`
+	Except []string `yaml:"except"`
+	Regexp string   `yaml:"regexp"`
 }
 
 type With struct {
@@ -194,7 +195,6 @@ func ForEachIn(conf SpruceConfig) error {
 			if err != nil {
 				return err
 			}
-
 		}
 	}
 	return nil
@@ -286,6 +286,9 @@ func collectFromMergeSection(chain Chain) []string {
 		files, _ := ioutil.ReadDir(within)
 		regex := getChainRegexp(chain)
 		for _, f := range files {
+			if except(chain.Except, f.Name()) {
+				continue
+			}
 			matched, _ := regexp.MatchString(regex, f.Name())
 			if matched {
 				result = append(result, within+f.Name())
@@ -294,6 +297,15 @@ func collectFromMergeSection(chain Chain) []string {
 	}
 
 	return result
+}
+
+func except(except []string, file string) bool {
+	for _, f := range except {
+		if f == file {
+			return true
+		}
+	}
+	return false
 }
 
 func spruceToFile(opts spruce.MergeOpts, fileName string) error {
