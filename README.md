@@ -165,6 +165,25 @@ spruce:
   to: result.yml
 ```
 
+**except** (`array`)
+
+With except you can specify a list of files you want to exclude from the path specified in `with_in`
+
+Example:
+
+```
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with_in: path/to/dir/
+    except:
+    - file1
+    - file2
+  to: result.yml
+```
+
+This will exclude `path/to/dir/file1` and `path/to/dir/file2` from the merge.
+ 
 **regexp** (`string`(quoted))
 
 Only files matching the regular expression will be included in the merge. It affects both `with` and `with_in`. This could be required if the target directory contains other then only YAML files.
