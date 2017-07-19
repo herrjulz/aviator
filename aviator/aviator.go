@@ -14,9 +14,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var Warnings []string
+var Silent bool
+var Verbose bool
+
 type Aviator struct {
-	Spruce []SpruceConfig `yaml:"spruce"`
-	Fly    FlyConfig      `yaml:"fly"`
+	Spruce  []SpruceConfig `yaml:"spruce"`
+	Fly     FlyConfig      `yaml:"fly"`
+	Aviator AviatorConfig  `yaml:"aviator"`
+}
+
+type AviatorConfig struct {
+	Verbose bool `yaml:"verbose`
+	Silent  bool `yaml:"silent"`
 }
 
 type SpruceConfig struct {
@@ -33,6 +43,7 @@ type SpruceConfig struct {
 	EnableMatching bool     `yaml:"enable_matching"`
 	DestFile       string   `yaml:"to"`
 	DestDir        string   `yaml:"to_dir"`
+	Except         []string `yaml:"except"`
 	Regexp         string   `yaml:"regexp"`
 }
 
@@ -95,7 +106,10 @@ func FlyPipeline(fly FlyConfig) {
 	}
 }
 
-func ProcessSprucePlan(spruce []SpruceConfig) error {
+func ProcessSprucePlan(spruce []SpruceConfig, verbose bool, silent bool) error {
+	Silent = silent
+	Verbose = verbose
+
 	for _, conf := range spruce {
 
 		verifySpruceConfig(conf)
@@ -181,20 +195,27 @@ func ForEachFile(conf SpruceConfig) error {
 func ForEachIn(conf SpruceConfig) error {
 	filePaths, _ := ioutil.ReadDir(conf.ForEachIn)
 	regex := getRegexp(conf)
+	files := collectFiles(conf)
 	for _, f := range filePaths {
-		files := collectFiles(conf)
+		if except(conf.Except, f.Name()) {
+			Warnings = append(Warnings, "SKIPPED: "+f.Name())
+			continue
+		}
 		matched, _ := regexp.MatchString(regex, f.Name())
 		if matched {
 			prefix := Chunk(conf.ForEachIn)
-			files = append(files, conf.ForEachIn+f.Name())
+			filesTmp := append(files, conf.ForEachIn+f.Name())
 			mergeConf := spruce.MergeOpts{
-				Files: files,
+				Files: filesTmp,
 				Prune: conf.Prune,
 			}
+			CreateDir(conf.DestDir)
 			err := spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
 			if err != nil {
 				return err
 			}
+		} else {
+			Warnings = append(Warnings, "EXCLUDED BY REGEXP "+regex+": "+conf.ForEachIn+f.Name())
 		}
 	}
 	return nil
@@ -292,6 +313,8 @@ func collectFromMergeSection(chain Chain) []string {
 			matched, _ := regexp.MatchString(regex, f.Name())
 			if matched {
 				result = append(result, within+f.Name())
+			} else {
+				Warnings = append(Warnings, "EXCLUDED BY REGEXP "+regex+": "+chain.WithIn+f.Name())
 			}
 		}
 	}
@@ -309,7 +332,11 @@ func except(except []string, file string) bool {
 }
 
 func spruceToFile(opts spruce.MergeOpts, fileName string) error {
-	beautifyPrint(opts, fileName)
+	if !Silent {
+		beautifyPrint(opts, fileName)
+	}
+	Warnings = []string{}
+
 	rawYml, err := spruce.CmdMergeEval(opts)
 	if err != nil {
 		return err

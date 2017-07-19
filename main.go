@@ -21,8 +21,7 @@ func main() {
 		aviatorFile := c.String("file")
 		if !VerifyAviatorFile(aviatorFile) {
 			fmt.Println("No Aviator file found. Does the file exist?\n ")
-			fmt.Println("Please navigate to a Aviator directory or specify a AVIATOR YAML ('.vtr')  with [--file|-f] option  and run aviator again")
-			fmt.Println("NOTE: specified AVIATOR files require the '.vtr' extension")
+			fmt.Println("Please navigate to a Aviator directory or specify a AVIATOR YAML with [--file|-f] option  and run aviator again")
 			os.Exit(1)
 		} else {
 			ymlBytes, err := ioutil.ReadFile(aviatorFile)
@@ -31,7 +30,14 @@ func main() {
 			}
 
 			yml = aviator.ReadYaml(aviator.ResolveEnvVars(ymlBytes))
-			err = aviator.ProcessSprucePlan(yml.Spruce)
+
+			if !yml.Aviator.Silent {
+				yml.Aviator.Silent = c.Bool("silent")
+			}
+			if !yml.Aviator.Verbose {
+				yml.Aviator.Verbose = c.Bool("verbose")
+			}
+			err = aviator.ProcessSprucePlan(yml.Spruce, yml.Aviator.Verbose, yml.Aviator.Silent)
 			if err != nil {
 				fmt.Println(err.Error())
 				os.Exit(1)

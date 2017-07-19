@@ -9,6 +9,7 @@ import (
 
 	"github.com/JulzDiverse/aviator/spruce"
 	"github.com/fatih/color"
+	"github.com/starkandwayne/goutils/ansi"
 )
 
 func verifySpruceConfig(conf SpruceConfig) {
@@ -105,6 +106,22 @@ func beautifyPrint(opts spruce.MergeOpts, dest string) {
 		fmt.Printf("\t%s \n", file)
 	}
 	y.Printf("\tto: %s\n\n", dest)
+	if Verbose && (len(Warnings) != 0) { //global variable
+		ansi.Printf("\t@R{WARNINGS:}\n")
+		for _, w := range Warnings {
+			sl := strings.Split(w, ":")
+			ansi.Printf("\t@p{%s}:@P{%s}\n", sl[0], sl[1])
+		}
+		fmt.Println("\n")
+	}
+}
+
+func printWarnings() {
+	ansi.Printf("@R{WARNINGS:}\n")
+	for _, w := range Warnings {
+		sl := strings.Split(w, ":")
+		ansi.Printf("@p{%s}:@P{%s}\n", sl[0], sl[1])
+	}
 }
 
 func fileExists(path string) bool {
@@ -117,6 +134,7 @@ func fileExists(path string) bool {
 				return true //return true if dataManager has file
 			}
 		}
+		Warnings = append(Warnings, "FILE DOES NOT EXIST: "+path)
 		return false
 	}
 	return true

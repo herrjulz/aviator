@@ -12,7 +12,7 @@ func setCli() *cli.App {
 	}
 	cmd.Name = "Aviator"
 	cmd.Usage = "Navigate to a aviator.yml file and run aviator"
-	cmd.Version = "0.3.0"
+	cmd.Version = "0.4.0"
 	cmd.Flags = getFlags()
 	return cmd
 }
@@ -24,6 +24,14 @@ func getFlags() []cli.Flag {
 			Name:  "file, f",
 			Value: "aviator.yml",
 			Usage: "Path to a AVIATOR YAML",
+		},
+		cli.BoolFlag{
+			Name:  "verbose, vv",
+			Usage: "print warnings",
+		},
+		cli.BoolFlag{
+			Name:  "silent, s",
+			Usage: "silent mode (no prints)",
 		},
 	}
 	return flags
