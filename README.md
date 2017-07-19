@@ -34,7 +34,7 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 ### OS X
 
 ```
-$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.3.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
+$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.4.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
 ```
 
 **Via Homebrew**
@@ -47,7 +47,7 @@ $ brew install aviator
 ### Linux
 
 ```
-$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.3.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
+$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.4.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
 ```
 
 ## Prereqs
@@ -312,6 +312,26 @@ spruce:
       - top.yml
   regexp: ".*.(yml)"
   for_each_in: path/to/dir/
+  to_dir: results/
+```
+
+**Except**
+
+Excludes files in the path specified with `for_each_in`
+
+Example:
+
+```
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with:
+      files:
+      - top.yml
+  regexp: ".*.(yml)"
+  for_each_in: path/to/dir/
+  except:
+  - some.yml
   to_dir: results/
 ```
 
