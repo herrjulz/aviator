@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/JulzDiverse/aviator/aviator"
 
@@ -61,11 +60,8 @@ func VerifyAviatorFile(file string) bool {
 			return true
 		}
 	} else {
-		sl := strings.Split(file, ".")
-		if sl[len(sl)-1] == "vtr" {
-			if _, err := os.Stat(file); !os.IsNotExist(err) {
-				return true
-			}
+		if _, err := os.Stat(file); !os.IsNotExist(err) {
+			return true
 		}
 	}
 	return false
