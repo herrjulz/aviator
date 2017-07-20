@@ -23,7 +23,7 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 			- [To (`string`)](#to-string)
 			- [Read From & Write To Variables](#read-from-write-to-variables)
 			- [Environment Variables](#environment-variables)
-			- [ForEach, ForEachIn & WalkThrough](#foreach-foreachin-walkthrough)
+			- [ForEach, ForEachIn & WalkThrough](#foreach-foreachin--walkthrough)
 		- [The `fly` section (Optional)](#the-fly-section-optional)
 - [Development](#development)
 
@@ -317,7 +317,7 @@ spruce:
 
 **Except**
 
-Excludes files in the path specified with `for_each_in`
+Only in combination with `for_each_in`: list of files that you want to exclude from the merge. 
 
 Example:
 
