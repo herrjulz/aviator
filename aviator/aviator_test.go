@@ -76,7 +76,7 @@ fly:
 
 		Context("ProcessSpruceChain", func() {
 			It("Should generate a result.yml file", func() {
-				ProcessSprucePlan(ReadYaml([]byte(file)).Spruce)
+				ProcessSprucePlan(ReadYaml([]byte(file)).Spruce, false, false)
 				Expect("../integration/tmp/result.yml").To(BeAnExistingFile())
 			})
 		})
