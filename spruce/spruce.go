@@ -13,6 +13,7 @@ type MergeOpts struct {
 	Prune          []string
 	FallbackAppend bool
 	Files          []string
+	SkipEval       bool
 }
 
 var DataStore map[string][]byte = make(map[string][]byte)
@@ -45,7 +46,7 @@ func CmdMergeEval(options MergeOpts) (map[interface{}]interface{}, error) {
 		return nil, err
 	}
 
-	ev := &Evaluator{Tree: root, SkipEval: false}
+	ev := &Evaluator{Tree: root, SkipEval: options.SkipEval}
 	err = ev.Run(options.Prune, []string{})
 	return ev.Tree, err
 }
