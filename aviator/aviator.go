@@ -42,6 +42,7 @@ type SpruceConfig struct {
 	CopyParents    bool     `yaml:"copy_parents"`
 	EnableMatching bool     `yaml:"enable_matching"`
 	SkipEval       bool     `yaml:"skip_eval"`
+	CherryPicks    []string `yaml:"cherry_pick"`
 	DestFile       string   `yaml:"to"`
 	DestDir        string   `yaml:"to_dir"`
 	Except         []string `yaml:"except"`
@@ -154,9 +155,10 @@ func ProcessSprucePlan(spruce []SpruceConfig, verbose bool, silent bool) error {
 func simpleMerge(conf SpruceConfig) error {
 	files := collectFiles(conf)
 	mergeConf := spruce.MergeOpts{
-		Files:    files,
-		Prune:    conf.Prune,
-		SkipEval: conf.SkipEval,
+		Files:       files,
+		Prune:       conf.Prune,
+		SkipEval:    conf.SkipEval,
+		CherryPicks: conf.CherryPicks,
 	}
 	err := spruceToFile(mergeConf, conf.DestFile)
 	if err != nil {
@@ -182,9 +184,10 @@ func ForEachFile(conf SpruceConfig) error {
 		fileName, _ := ConcatFileName(val)
 		files = append(files, val)
 		mergeConf := spruce.MergeOpts{
-			Files:    files,
-			Prune:    conf.Prune,
-			SkipEval: conf.SkipEval,
+			Files:       files,
+			Prune:       conf.Prune,
+			SkipEval:    conf.SkipEval,
+			CherryPicks: conf.CherryPicks,
 		}
 		err := spruceToFile(mergeConf, conf.DestDir+fileName)
 		if err != nil {
@@ -209,9 +212,10 @@ func ForEachIn(conf SpruceConfig) error {
 			prefix := Chunk(conf.ForEachIn)
 			filesTmp := append(files, conf.ForEachIn+f.Name())
 			mergeConf := spruce.MergeOpts{
-				Files:    filesTmp,
-				SkipEval: conf.SkipEval,
-				Prune:    conf.Prune,
+				Files:       filesTmp,
+				SkipEval:    conf.SkipEval,
+				Prune:       conf.Prune,
+				CherryPicks: conf.CherryPicks,
 			}
 			CreateDir(conf.DestDir)
 			err := spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
@@ -236,9 +240,10 @@ func ForEachInner(conf SpruceConfig, outer string) error {
 			files = append(files, conf.ForEachIn+f.Name())
 			files = append(files, outer)
 			mergeConf := spruce.MergeOpts{
-				Files:    files,
-				Prune:    conf.Prune,
-				SkipEval: conf.SkipEval,
+				Files:       files,
+				Prune:       conf.Prune,
+				SkipEval:    conf.SkipEval,
+				CherryPicks: conf.CherryPicks,
 			}
 			err := spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
 			if err != nil {
@@ -281,9 +286,10 @@ func Walk(conf SpruceConfig, outer string) error {
 					parent = ""
 				}
 				mergeConf := spruce.MergeOpts{
-					Files:    files,
-					Prune:    conf.Prune,
-					SkipEval: conf.SkipEval,
+					Files:       files,
+					Prune:       conf.Prune,
+					SkipEval:    conf.SkipEval,
+					CherryPicks: conf.CherryPicks,
 				}
 				err := spruceToFile(mergeConf, conf.DestDir+parent+"/"+filename)
 				if err != nil {
