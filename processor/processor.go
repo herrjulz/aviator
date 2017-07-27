@@ -15,13 +15,20 @@ type Aviator struct {
 }
 
 type Spruce struct {
-	Base  string  `yaml:"base"`
-	Merge []Merge `yaml:"merge"`
-	To    string  `yaml:"to"`
+	Base      string   `yaml:"base"`
+	Merge     []Merge  `yaml:"merge"`
+	To        string   `yaml:"to"`
+	ForEach   []string `yaml:"for_each"`
+	ForEachIn string   `yaml:"for_each_in"`
+	Except    []string `yaml:"except"`
 }
 
 type Merge struct {
-	With With `yaml:"with"`
+	With   With     `yaml:"with"`
+	WithIn string   `yaml:"with_in"`
+	Except []string `yaml:"except"`
+	Regexp string   `yaml:"regexp"`
+	Skip   bool     `yaml:"skip_non_existing"`
 }
 
 type With struct {
