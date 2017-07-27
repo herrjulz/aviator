@@ -20,6 +20,8 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 			- [Base (`string`)](#base-string)
 			- [Prune (`[string]Array`)](#prune-stringarray)
 			- [Merge (`Array`)](#merge-array)
+			- [skip_eval (`bool`)](#skip_eval-bool)
+			- [cherry_pick (`array`)](#cherry_pick-array)
 			- [To (`string`)](#to-string)
 			- [Read From & Write To Variables](#read-from-write-to-variables)
 			- [Environment Variables](#environment-variables)
@@ -34,7 +36,7 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 ### OS X
 
 ```
-$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.4.1/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
+$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.5.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
 ```
 
 **Via Homebrew**
@@ -47,7 +49,7 @@ $ brew install aviator
 ### Linux
 
 ```
-$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.4.1/aviator-linux-amd64 && chmod +x /usr/bin/aviator
+$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.5.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
 ```
 
 ## Prereqs
@@ -204,6 +206,47 @@ spruce:
 
 ---
 
+#### skip_eval (`bool`)
+
+Enabling this skip-eval will merge without resolve spruce expressions.
+
+Example:
+```
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with_in: path/to/dir/
+  - with:
+      files:
+      - top.yml
+  regexp: ".*.(yml)"
+  skip_eval: true
+  to: result.yml
+```
+
+---
+
+#### cherry_pick (`array`)
+
+Enables [Spruce]() `cherry pick` option: With the `cherry_pick` property you can specify specific YAML subtrees you want to have in your restulting YAML file (opposite of `prune`)  
+
+Example:
+```
+spruce:
+- base: path/to/base.yml
+  cherry_pick:
+  - properties
+  merge:
+  - with_in: path/to/dir/
+  - with:
+      files:
+      - top.yml
+  regexp: ".*.(yml)"
+  skip_eval: true
+  to: result.yml
+```
+
+---
 #### To (`string`)
 
 `to` specifies the target file, where the merged files should be saved to.
