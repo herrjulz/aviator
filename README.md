@@ -208,7 +208,7 @@ spruce:
 
 #### skip_eval (`bool`)
 
-Enabling this skip-eval will merge without resolve spruce expressions.
+Enabling this skip-eval will merge without resolve spruce expressions. For more information check [Spruce doc](https://github.com/geofffranks/spruce/blob/master/doc/merging.md#order-of-operations)
 
 Example:
 ```
@@ -228,7 +228,7 @@ spruce:
 
 #### cherry_pick (`array`)
 
-Enables [Spruce]() `cherry pick` option: With the `cherry_pick` property you can specify specific YAML subtrees you want to have in your restulting YAML file (opposite of `prune`)  
+Enables [Spruce](https://github.com/geofffranks/spruce/blob/master/doc/merging.md#order-of-operations) `cherry pick` option: With the `cherry_pick` property you can specify specific YAML subtrees you want to have in your restulting YAML file (opposite of `prune`)  
 
 Example:
 ```
