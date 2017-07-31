@@ -1,6 +1,6 @@
 # Aviator
 
-[![GoDoc](https://godoc.org/github.com/JulzDiverse/aviator?status.svg)](https://godoc.org/github.com/JulzDiverse/aviator)
+[![GoDoc](https://godoc.org/github.com/JulzDiverse/aviator/aviator?status.svg)](https://godoc.org/github.com/JulzDiverse/aviator/aviator)
 
 Aviator is a tool to merge YAML files in a convenient fashion based on a configuration file called `aviator.yml`. The merge itself utilizes Spruce for the merge and therefore enables you to use all the Spruce operators in your YAML files.
 
