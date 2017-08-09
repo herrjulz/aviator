@@ -1,12 +1,61 @@
 {
-	"ImportPath": "masterjulz/aviator",
-	"GoVersion": "go1.7",
+	"ImportPath": "github.com/JulzDiverse/aviator",
+	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
 	"Deps": [
+		{
+			"ImportPath": "github.com/Knetic/govaluate",
+			"Comment": "v3.0.0-21-g93a54c2",
+			"Rev": "93a54c2584a8b78856230ea1d31cfa2b61693721"
+		},
+		{
+			"ImportPath": "github.com/fatih/color",
+			"Comment": "v0.2.0",
+			"Rev": "87d4004f2ab62d0d255e0a38f1680aa534549fe3"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/simpleyaml",
+			"Rev": "c9320f076de50350542482dfe99e66c8732a426f"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/spruce",
+			"Comment": "v1.10.0",
+			"Rev": "dff3b4096e403370f8e6df3cf890b02c4d5e5edb"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/spruce/log",
+			"Comment": "v1.10.0",
+			"Rev": "dff3b4096e403370f8e6df3cf890b02c4d5e5edb"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/yaml",
+			"Rev": "9f2fe4b6f2957db3a5e43179ecfa1a10fd3bc2f9"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-colorable",
+			"Comment": "v0.0.6",
+			"Rev": "ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-isatty",
+			"Rev": "66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8"
+		},
+		{
+			"ImportPath": "github.com/starkandwayne/goutils/ansi",
+			"Rev": "6fde490f64c2112f5d858389293170b6542eb013"
+		},
+		{
+			"ImportPath": "github.com/starkandwayne/goutils/tree",
+			"Rev": "6fde490f64c2112f5d858389293170b6542eb013"
+		},
 		{
 			"ImportPath": "github.com/urfave/cli",
 			"Comment": "v1.19.1",
 			"Rev": "0bdeddeeb0f650497d603c4ad7b20cfe685682f6"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "f3918c30c5c2cb527c0b071a27c35120a6c0719a"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
