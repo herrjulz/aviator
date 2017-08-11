@@ -1,0 +1,9 @@
+language: go
+
+go:
+- 1.6
+
+sudo: false
+
+script:
+- make

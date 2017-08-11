@@ -1,2 +1,3 @@
-vendor/*
 install.sh
+aviator-linux-*
+aviator-darwin-*
