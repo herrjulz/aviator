@@ -19,13 +19,13 @@
 		},
 		{
 			"ImportPath": "github.com/geofffranks/spruce",
-			"Comment": "v1.10.0",
-			"Rev": "dff3b4096e403370f8e6df3cf890b02c4d5e5edb"
+			"Comment": "v1.11.0-7-g31c4c1d",
+			"Rev": "31c4c1d302d576001001b45973a10e5f2a40ef1c"
 		},
 		{
 			"ImportPath": "github.com/geofffranks/spruce/log",
-			"Comment": "v1.10.0",
-			"Rev": "dff3b4096e403370f8e6df3cf890b02c4d5e5edb"
+			"Comment": "v1.11.0-7-g31c4c1d",
+			"Rev": "31c4c1d302d576001001b45973a10e5f2a40ef1c"
 		},
 		{
 			"ImportPath": "github.com/geofffranks/yaml",
@@ -38,15 +38,16 @@
 		},
 		{
 			"ImportPath": "github.com/mattn/go-isatty",
-			"Rev": "66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8"
+			"Comment": "v0.0.2",
+			"Rev": "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
 		},
 		{
 			"ImportPath": "github.com/starkandwayne/goutils/ansi",
-			"Rev": "6fde490f64c2112f5d858389293170b6542eb013"
+			"Rev": "2c96629058fe59038b1f090194d047ecf0194045"
 		},
 		{
 			"ImportPath": "github.com/starkandwayne/goutils/tree",
-			"Rev": "6fde490f64c2112f5d858389293170b6542eb013"
+			"Rev": "2c96629058fe59038b1f090194d047ecf0194045"
 		},
 		{
 			"ImportPath": "github.com/urfave/cli",
@@ -60,6 +61,41 @@
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
 			"Rev": "e4d366fc3c7938e2958e662b4258c7a89e1f0e3e"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/spruce/vendor/github.com/Knetic/govaluate",
+			"Comment": "v1.11.0-7-g31c4c1d",
+			"Rev": "31c4c1d302d576001001b45973a10e5f2a40ef1c"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/spruce/vendor/github.com/geofffranks/simpleyaml",
+			"Comment": "v1.11.0-7-g31c4c1d",
+			"Rev": "31c4c1d302d576001001b45973a10e5f2a40ef1c"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/spruce/vendor/github.com/geofffranks/yaml",
+			"Comment": "v1.11.0-7-g31c4c1d",
+			"Rev": "31c4c1d302d576001001b45973a10e5f2a40ef1c"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/spruce/vendor/github.com/starkandwayne/goutils/ansi",
+			"Comment": "v1.11.0-7-g31c4c1d",
+			"Rev": "31c4c1d302d576001001b45973a10e5f2a40ef1c"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/spruce/vendor/github.com/starkandwayne/goutils/tree",
+			"Comment": "v1.11.0-7-g31c4c1d",
+			"Rev": "31c4c1d302d576001001b45973a10e5f2a40ef1c"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/spruce/vendor/github.com/mattn/go-isatty",
+			"Comment": "v1.11.0-7-g31c4c1d",
+			"Rev": "31c4c1d302d576001001b45973a10e5f2a40ef1c"
+		},
+		{
+			"ImportPath": "github.com/geofffranks/spruce/vendor/golang.org/x/sys/unix",
+			"Comment": "v1.11.0-7-g31c4c1d",
+			"Rev": "31c4c1d302d576001001b45973a10e5f2a40ef1c"
 		}
 	]
 }
