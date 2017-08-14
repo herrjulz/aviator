@@ -34,7 +34,6 @@ type SpruceConfig struct {
 	Prune          []string `yaml:"prune"`
 	Chain          []Chain  `yaml:"merge"`
 	WithIn         string   `yaml:"with_in"`
-	Folder         string   `yaml:"dir"`
 	ForEach        []string `yaml:"for_each"`
 	ForEachIn      string   `yaml:"for_each_in"`
 	Walk           string   `yaml:"walk_through"`
