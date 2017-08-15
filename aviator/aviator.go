@@ -38,6 +38,7 @@ type SpruceConfig struct {
 	ForEach        []string `yaml:"for_each"`
 	ForEachIn      string   `yaml:"for_each_in"`
 	Walk           string   `yaml:"walk_through"`
+	IncludeAllIn   string   `yaml:"include_all_in"`
 	ForAll         string   `yaml:"for_all"`
 	CopyParents    bool     `yaml:"copy_parents"`
 	EnableMatching bool     `yaml:"enable_matching"`
@@ -145,6 +146,12 @@ func ProcessSprucePlan(spruce []SpruceConfig, verbose bool, silent bool) error {
 				if err != nil {
 					return err
 				}
+			}
+		}
+		if conf.IncludeAllIn != "" {
+			err := WalkInclude(conf)
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -299,6 +306,31 @@ func Walk(conf SpruceConfig, outer string) error {
 			}
 		}
 	}
+	return nil
+}
+
+func WalkInclude(conf SpruceConfig) error {
+	allFiles := getAllFilesInSubDirs(conf.IncludeAllIn)
+	regex := getRegexp(conf)
+	files := []string{}
+	for _, file := range allFiles {
+		filename, _ := ConcatFileName(file)
+		matched, _ := regexp.MatchString(regex, filename)
+		if matched {
+			files = append(files, file)
+		}
+	}
+	mergeConf := spruce.MergeOpts{
+		Files:       files,
+		Prune:       conf.Prune,
+		SkipEval:    conf.SkipEval,
+		CherryPicks: conf.CherryPicks,
+	}
+	err := spruceToFile(mergeConf, conf.DestFile)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
