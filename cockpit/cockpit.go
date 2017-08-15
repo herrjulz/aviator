@@ -1,4 +1,4 @@
-package validator
+package cockpit
 
 import (
 	"os"
@@ -9,13 +9,17 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type Validator struct {
-	Aviator           Aviator
-	processSprucePlan ProcessSprucePlanFunc
-	executeFly        ExecuteFlyFunc
+type Cockpit struct {
+	spruceProcessor SpruceProcessor
+	flyExecuter     FlyExecuter
 }
 
 type Aviator struct {
+	cockpit     *Cockpit
+	AviatorYaml *AviatorYaml
+}
+
+type AviatorYaml struct {
 	Spruce []Spruce `yaml:"spruce"`
 	Fly    Fly      `yaml:"fly"`
 }
@@ -57,39 +61,46 @@ type Fly struct {
 	Expose bool     `yaml:"expose"`
 }
 
-type ProcessSprucePlanFunc func([]Spruce) ([]byte, error)
+//go:generate counterfeiter . SpruceProcessor
+type SpruceProcessor interface {
+	Process([]Spruce) ([]byte, error)
+}
 
-type ExecuteFlyFunc func(Fly) error
+//go:generate counterfeiter . FlyExecuter
+type FlyExecuter interface {
+	Execute(Fly) error
+}
 
-func New(
+func Init(spruceProcessor SpruceProcessor, flyExecuter FlyExecuter) *Cockpit {
+	return &Cockpit{spruceProcessor, flyExecuter}
+}
+
+func (c *Cockpit) NewAviator(
 	aviatorYml []byte,
-	spruceProcessor ProcessSprucePlanFunc,
-	flyExecuter ExecuteFlyFunc,
-) (*Validator, error) {
-	var aviator Aviator
+) (*Aviator, error) {
+	var aviator AviatorYaml
 	aviatorYml = resolveEnvVars(aviatorYml)
 	aviatorYml = quoteCurlyBraces(aviatorYml)
 	err := yaml.Unmarshal(aviatorYml, &aviator)
 	if err != nil {
 		return nil, err
 	}
-	return &Validator{
-		aviator,
-		spruceProcessor,
-		flyExecuter,
+	return &Aviator{
+		c,
+		&aviator,
 	}, nil
 }
 
-func (p *Validator) ProcessSprucePlan() ([]byte, error) {
-	mergedYaml, err := p.processSprucePlan(p.Aviator.Spruce)
+func (a *Aviator) ProcessSprucePlan() ([]byte, error) {
+	mergedYaml, err := a.cockpit.spruceProcessor.Process(a.AviatorYaml.Spruce)
 	if err != nil {
 		return nil, errors.Wrap(err, "Processing Spruce Plan FAILED:")
 	}
 	return mergedYaml, nil
 }
 
-func (p *Validator) ExecuteFly() error {
-	err := p.executeFly(p.Aviator.Fly)
+func (a *Aviator) ExecuteFly() error {
+	err := a.cockpit.flyExecuter.Execute(a.AviatorYaml.Fly)
 	if err != nil {
 		return errors.Wrap(err, "Executing Fly FAILED")
 	}

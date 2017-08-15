@@ -1,23 +1,31 @@
-package validator_test
+package cockpit_test
 
 import (
 	"errors"
 	"os"
 
-	. "github.com/JulzDiverse/aviator/validator"
+	. "github.com/JulzDiverse/aviator/cockpit"
+	fakes "github.com/JulzDiverse/aviator/cockpit/cockpitfakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Validator", func() {
+var _ = Describe("Cockpit", func() {
 	var aviatorYaml string
-	var spruceProcessor ProcessSprucePlanFunc
-	var flyExecuter ExecuteFlyFunc
+	var spruceProcessor *fakes.FakeSpruceProcessor
+	var flyExecuter *fakes.FakeFlyExecuter
+	var cockpit *Cockpit
+
+	BeforeEach(func() {
+		spruceProcessor = new(fakes.FakeSpruceProcessor)
+		flyExecuter = new(fakes.FakeFlyExecuter)
+		cockpit = Init(spruceProcessor, flyExecuter)
+	})
 
 	Context("New", func() {
 		Context("aviator.yml validation", func() {
-			var validator *Validator
+			var aviator *Aviator
 
 			Context("spruce section", func() {
 				It("is able to read all 'with' related properties", func() {
@@ -37,15 +45,15 @@ var _ = Describe("Validator", func() {
   to: result.yml`
 
 					var err error
-					validator, err = New([]byte(aviatorYaml), spruceProcessor, flyExecuter)
+					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
 					Expect(err).ToNot(HaveOccurred())
 
-					Expect(len(validator.Aviator.Spruce[0].Merge[0].With.Files)).To(Equal(2))
-					Expect(validator.Aviator.Spruce[0].Merge[1].WithIn).To(Equal("path/to/dir/"))
-					Expect(len(validator.Aviator.Spruce[0].Merge[1].Except)).To(Equal(1))
-					Expect(validator.Aviator.Spruce[0].Merge[0].Regexp).To(Equal(".*.(yml)"))
-					Expect(validator.Aviator.Spruce[0].Merge[0].Skip).To(Equal(true))
-					Expect(validator.Aviator.Spruce[0].To).To(Equal("result.yml"))
+					Expect(len(aviator.AviatorYaml.Spruce[0].Merge[0].With.Files)).To(Equal(2))
+					Expect(aviator.AviatorYaml.Spruce[0].Merge[1].WithIn).To(Equal("path/to/dir/"))
+					Expect(len(aviator.AviatorYaml.Spruce[0].Merge[1].Except)).To(Equal(1))
+					Expect(aviator.AviatorYaml.Spruce[0].Merge[0].Regexp).To(Equal(".*.(yml)"))
+					Expect(aviator.AviatorYaml.Spruce[0].Merge[0].Skip).To(Equal(true))
+					Expect(aviator.AviatorYaml.Spruce[0].To).To(Equal("result.yml"))
 
 				})
 
@@ -61,12 +69,12 @@ var _ = Describe("Validator", func() {
   to_dir: some/tmp/dir/`
 
 					var err error
-					validator, err = New([]byte(aviatorYaml), spruceProcessor, flyExecuter)
+					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
 					Expect(err).ToNot(HaveOccurred())
 
-					Expect(validator.Aviator.Spruce[0].ForEachIn).To(Equal("path/to/dir/"))
-					Expect(len(validator.Aviator.Spruce[0].Except)).To(Equal(1))
-					Expect(validator.Aviator.Spruce[0].ToDir).To(Equal("some/tmp/dir/"))
+					Expect(aviator.AviatorYaml.Spruce[0].ForEachIn).To(Equal("path/to/dir/"))
+					Expect(len(aviator.AviatorYaml.Spruce[0].Except)).To(Equal(1))
+					Expect(aviator.AviatorYaml.Spruce[0].ToDir).To(Equal("some/tmp/dir/"))
 				})
 
 				It("is able to read all 'cherry_pick' and 'skip_eval' properties", func() {
@@ -85,12 +93,12 @@ var _ = Describe("Validator", func() {
   to_dir: foo/bar/`
 
 					var err error
-					validator, err = New([]byte(aviatorYaml), spruceProcessor, flyExecuter)
+					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
 					Expect(err).ToNot(HaveOccurred())
 
-					Expect(len(validator.Aviator.Spruce[0].ForEach)).To(Equal(2))
-					Expect(len(validator.Aviator.Spruce[0].CherryPicks)).To(Equal(3))
-					Expect(validator.Aviator.Spruce[0].SkipEval).To(Equal(true))
+					Expect(len(aviator.AviatorYaml.Spruce[0].ForEach)).To(Equal(2))
+					Expect(len(aviator.AviatorYaml.Spruce[0].CherryPicks)).To(Equal(3))
+					Expect(aviator.AviatorYaml.Spruce[0].SkipEval).To(Equal(true))
 				})
 
 				It("is able to read all 'walk_through' related properties", func() {
@@ -108,14 +116,14 @@ var _ = Describe("Validator", func() {
   to_dir: final/`
 
 					var err error
-					validator, err = New([]byte(aviatorYaml), spruceProcessor, flyExecuter)
+					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
 					Expect(err).ToNot(HaveOccurred())
 
-					Expect(validator.Aviator.Spruce[0].WalkThrough).To(Equal("foo/bar/"))
-					Expect(len(validator.Aviator.Spruce[0].Prune)).To(Equal(2))
-					Expect(validator.Aviator.Spruce[0].CopyParents).To(Equal(true))
-					Expect(validator.Aviator.Spruce[0].EnableMatching).To(Equal(true))
-					Expect(validator.Aviator.Spruce[0].ForAll).To(Equal("some/dir/"))
+					Expect(aviator.AviatorYaml.Spruce[0].WalkThrough).To(Equal("foo/bar/"))
+					Expect(len(aviator.AviatorYaml.Spruce[0].Prune)).To(Equal(2))
+					Expect(aviator.AviatorYaml.Spruce[0].CopyParents).To(Equal(true))
+					Expect(aviator.AviatorYaml.Spruce[0].EnableMatching).To(Equal(true))
+					Expect(aviator.AviatorYaml.Spruce[0].ForAll).To(Equal("some/dir/"))
 				})
 
 				It("is able resolve environment variables", func() {
@@ -131,11 +139,11 @@ var _ = Describe("Validator", func() {
   to: $RESULT`
 
 					var err error
-					validator, err = New([]byte(aviatorYaml), spruceProcessor, flyExecuter)
+					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
 					Expect(err).ToNot(HaveOccurred())
-					Expect(validator.Aviator.Spruce[0].Base).To(Equal("envVar"))
-					Expect(validator.Aviator.Spruce[0].Merge[0].With.Files[0]).To(Equal("another"))
-					Expect(validator.Aviator.Spruce[0].To).To(Equal("result"))
+					Expect(aviator.AviatorYaml.Spruce[0].Base).To(Equal("envVar"))
+					Expect(aviator.AviatorYaml.Spruce[0].Merge[0].With.Files[0]).To(Equal("another"))
+					Expect(aviator.AviatorYaml.Spruce[0].To).To(Equal("result"))
 				})
 
 				It("is able to parse '{{}}'", func() {
@@ -151,7 +159,7 @@ var _ = Describe("Validator", func() {
   to: {{result}}`
 
 					var err error
-					_, err = New([]byte(aviatorYaml), spruceProcessor, flyExecuter)
+					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -168,28 +176,28 @@ var _ = Describe("Validator", func() {
 				})
 
 				It("is able to read all properties from the fly section", func() {
-					validator, err := New([]byte(aviatorYaml), spruceProcessor, flyExecuter)
+					var err error
+					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
 					Expect(err).ToNot(HaveOccurred())
 
-					Expect(validator.Aviator.Fly.Name).To(Equal("pipelineName"))
-					Expect(validator.Aviator.Fly.Target).To(Equal("targetName"))
-					Expect(validator.Aviator.Fly.Config).To(Equal("configFile"))
-					Expect(validator.Aviator.Fly.Expose).To(BeTrue())
-					Expect(len(validator.Aviator.Fly.Vars)).To(Equal(1))
+					Expect(aviator.AviatorYaml.Fly.Name).To(Equal("pipelineName"))
+					Expect(aviator.AviatorYaml.Fly.Target).To(Equal("targetName"))
+					Expect(aviator.AviatorYaml.Fly.Config).To(Equal("configFile"))
+					Expect(aviator.AviatorYaml.Fly.Expose).To(BeTrue())
+					Expect(len(aviator.AviatorYaml.Fly.Vars)).To(Equal(1))
 				})
 
 				Context("executing fly returns a valid error", func() {
 					BeforeEach(func() {
-						flyExecuter = func(Fly) error {
-							return errors.New("uups")
-						}
+						flyExecuter.ExecuteReturns(errors.New("uups"))
 					})
 
 					It("", func() {
-						validator, err := New([]byte(aviatorYaml), spruceProcessor, flyExecuter)
+						var err error
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
 						Expect(err).ToNot(HaveOccurred())
 
-						err = validator.ExecuteFly()
+						err = aviator.ExecuteFly()
 						Expect(err).To(MatchError(ContainSubstring("Executing Fly FAILED")))
 						Expect(err).To(MatchError(ContainSubstring("uups")))
 					})
@@ -199,22 +207,22 @@ var _ = Describe("Validator", func() {
 	})
 
 	Context("spruce section processor", func() {
+		var aviator *Aviator
 		BeforeEach(func() {
 			aviatorYaml = `spruce:
-- base: input.yml 
+- base: input.yml
   merge:
   - with_in: some/dir/
   to: output.yml`
 
-			spruceProcessor = func([]Spruce) ([]byte, error) {
-				return nil, errors.New("uups")
-			}
+			spruceProcessor.ProcessReturns(nil, errors.New("uups"))
 		})
 
 		It("returns a valid error message", func() {
-			validator, err := New([]byte(aviatorYaml), spruceProcessor, flyExecuter)
+			var err error
+			aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
 			Expect(err).ToNot(HaveOccurred())
-			_, err = validator.ProcessSprucePlan()
+			_, err = aviator.ProcessSprucePlan()
 
 			Expect(err).To(MatchError(ContainSubstring("Processing Spruce Plan FAILED")))
 			Expect(err).To(MatchError(ContainSubstring("uups")))

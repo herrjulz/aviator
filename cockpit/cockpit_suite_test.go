@@ -1,4 +1,4 @@
-package validator_test
+package cockpit_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestValidator(t *testing.T) {
+func TestCockpit(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Validator Suite")
+	RunSpecs(t, "Cockpit Suite")
 }
