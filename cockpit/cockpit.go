@@ -71,13 +71,14 @@ type FlyExecuter interface {
 	Execute(Fly) error
 }
 
-func Init(spruceProcessor SpruceProcessor, flyExecuter FlyExecuter) *Cockpit {
+func Init(
+	spruceProcessor SpruceProcessor,
+	flyExecuter FlyExecuter,
+) *Cockpit {
 	return &Cockpit{spruceProcessor, flyExecuter}
 }
 
-func (c *Cockpit) NewAviator(
-	aviatorYml []byte,
-) (*Aviator, error) {
+func (c *Cockpit) NewAviator(aviatorYml []byte) (*Aviator, error) {
 	var aviator AviatorYaml
 	aviatorYml = resolveEnvVars(aviatorYml)
 	aviatorYml = quoteCurlyBraces(aviatorYml)
@@ -85,10 +86,7 @@ func (c *Cockpit) NewAviator(
 	if err != nil {
 		return nil, err
 	}
-	return &Aviator{
-		c,
-		&aviator,
-	}, nil
+	return &Aviator{c, &aviator}, nil
 }
 
 func (a *Aviator) ProcessSprucePlan() ([]byte, error) {

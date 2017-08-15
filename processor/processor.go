@@ -1,26 +1,30 @@
 package processor
 
 import (
-	"github.com/JulzDiverse/aviator/spruce"
-	"github.com/JulzDiverse/aviator/validator"
+	"github.com/JulzDiverse/aviator/cockpit"
 )
 
+//go:generate counterfeiter . SpruceClient
 type SpruceClient interface {
 	MergeWithOpts()
 }
 
-type SpruceProcessor struct {
-	config []validator.Spruce
-	spruce SpruceClient
+type Processor struct {
+	config       []cockpit.Spruce
+	spruceClient SpruceClient
 }
 
-func Process(config []validator.Spruce) ([]byte, error) {
-	processor := SpruceProcessor{config: config}
+func New(spruceClient SpruceClient) *Processor {
+	return &Processor{spruceClient: spruceClient}
+}
+
+func (p *Processor) Process(config []cockpit.Spruce) ([]byte, error) {
+	p.config = config
 	for _, cfg := range config {
 		var err error
 		switch mergeType(cfg) {
 		case "default":
-			result, err = processor.defaultMerge(cfg)
+			return p.defaultMerge(cfg)
 		case "forEach":
 		case "forEachIn":
 		case "walkThrough":
@@ -33,7 +37,7 @@ func Process(config []validator.Spruce) ([]byte, error) {
 	return []byte{}, nil
 }
 
-func mergeType(cfg validator.Spruce) string {
+func mergeType(cfg cockpit.Spruce) string {
 	if cfg.ForEachIn == "" && len(cfg.ForEach) == 0 && cfg.WalkThrough == "" {
 		return "default"
 	}
@@ -53,78 +57,82 @@ func mergeType(cfg validator.Spruce) string {
 	return ""
 }
 
-func (p *SpruceProcessor) defaultMerge(cfg validator.Spruce) ([]byte, error) {
-	files := collectFiles(cfg)
-	mergeConf := spruce.MergeOpts{
-		Files:       files,
-		Prune:       cfg.Prune,
-		SkipEval:    cfg.SkipEval,
-		CherryPicks: cfg.CherryPicks,
-	}
-	result, err := p.sprucify(mergeConf, cfg.To)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+func (p *Processor) defaultMerge(cfg cockpit.Spruce) ([]byte, error) {
+	return []byte{}, nil
 }
 
-func collectFiles(cfg validator.Spruce) []string {
-	files := []string{cfg.Base}
-	for _, val := range cfg.Chain {
-		tmp := collectFromMergeSection(val)
-		for _, str := range tmp {
-			files = append(files, str)
-		}
-	}
-	return files
-}
+//func (p *SpruceProcessor) defaultMerge(cfg validator.Spruce) ([]byte, error) {
+//files := collectFiles(cfg)
+//mergeConf := spruce.MergeOpts{
+//Files:       files,
+//Prune:       cfg.Prune,
+//SkipEval:    cfg.SkipEval,
+//CherryPicks: cfg.CherryPicks,
+//}
+//result, err := p.sprucify(mergeConf, cfg.To)
+//if err != nil {
+//return nil, err
+//}
+//return result, nil
+//}
 
-func collectFromMergeSection(merge validator.Merge) []string {
-	var result []string
-	for _, file := range merge.With.Files {
-		if merge.With.InDir != "" {
-			dir := merge.With.InDir
-			file = dir + file
-		}
-		if !merge.With.Existing || fileExists(file) {
-			result = append(result, file)
-		}
-	}
+//func collectFiles(cfg validator.Spruce) []string {
+//files := []string{cfg.Base}
+//for _, val := range cfg.Chain {
+//tmp := collectFromMergeSection(val)
+//for _, str := range tmp {
+//files = append(files, str)
+//}
+//}
+//return files
+//}
 
-	if merge.WithIn != "" {
-		within := merge.WithIn
-		files, _ := ioutil.ReadDir(within)
-		regex := getChainRegexp(merge)
-		for _, f := range files {
-			if except(merge.Except, f.Name()) {
-				continue
-			}
-			matched, _ := regexp.MatchString(regex, f.Name())
-			if matched {
-				result = append(result, within+f.Name())
-			} else {
-				Warnings = append(Warnings, "EXCLUDED BY REGEXP "+regex+": "+merge.WithIn+f.Name())
-			}
-		}
-	}
-	return result
-}
+//func collectFromMergeSection(merge validator.Merge) []string {
+//var result []string
+//for _, file := range merge.With.Files {
+//if merge.With.InDir != "" {
+//dir := merge.With.InDir
+//file = dir + file
+//}
+//if !merge.With.Existing || fileExists(file) {
+//result = append(result, file)
+//}
+//}
 
-func (p *SpruceProcessor) sprucify(opts spruce.MergeOpts, fileName string) ([]byte, error) {
-	//if !p.Silent {
-	//beautifyPrint(opts, fileName)
-	//}
-	//Warnings = []string{}
+//if merge.WithIn != "" {
+//within := merge.WithIn
+//files, _ := ioutil.ReadDir(within)
+//regex := getChainRegexp(merge)
+//for _, f := range files {
+//if except(merge.Except, f.Name()) {
+//continue
+//}
+//matched, _ := regexp.MatchString(regex, f.Name())
+//if matched {
+//result = append(result, within+f.Name())
+//} else {
+//Warnings = append(Warnings, "EXCLUDED BY REGEXP "+regex+": "+merge.WithIn+f.Name())
+//}
+//}
+//}
+//return result
+//}
 
-	rawYml, err := p.spruce.CmdMergeEval(opts)
-	if err != nil {
-		return rawYml, err
-	}
+//func (p *SpruceProcessor) sprucify(opts spruce.MergeOpts, fileName string) ([]byte, error) {
+////if !p.Silent {
+////beautifyPrint(opts, fileName)
+////}
+////Warnings = []string{}
 
-	resultYml, err := yaml.Marshal(rawYml)
-	if err != nil {
-		return resultYaml, err
-	}
+//rawYml, err := p.spruce.CmdMergeEval(opts)
+//if err != nil {
+//return rawYml, err
+//}
 
-	return nil
-}
+//resultYml, err := yaml.Marshal(rawYml)
+//if err != nil {
+//return resultYaml, err
+//}
+
+//return nil
+//}

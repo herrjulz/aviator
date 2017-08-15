@@ -1,8 +1,9 @@
 package processor_test
 
 import (
+	"github.com/JulzDiverse/aviator/cockpit"
 	. "github.com/JulzDiverse/aviator/processor"
-	"github.com/JulzDiverse/aviator/validator"
+	fakes "github.com/JulzDiverse/aviator/processor/processorfakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -10,27 +11,30 @@ import (
 
 var _ = Describe("Processor", func() {
 
-	//var spruceProcessor *SpruceProcessor
-	var spruceConfig []validator.Spruce
+	var processor *Processor
+	var spruceConfig []cockpit.Spruce
+	var spruceClient *fakes.FakeSpruceClient
 
-	BeforeEach(func() {
-		cfg := validator.Spruce{
-			Base: "input.yml",
-			Merge: []validator.Merge{
-				validator.Merge{
-					With: validator.With{
-						Files: []string{"file.yml"},
+	Describe("", func() {
+		BeforeEach(func() {
+			cfg := cockpit.Spruce{
+				Base: "input.yml",
+				Merge: []cockpit.Merge{
+					cockpit.Merge{
+						With: cockpit.With{
+							Files: []string{"file.yml"},
+						},
 					},
 				},
-			},
-			To: "result.yml",
-		}
-		spruceConfig = []validator.Spruce{cfg}
-	})
+				To: "result.yml",
+			}
+			spruceConfig = []cockpit.Spruce{cfg}
+			spruceClient = new(fakes.FakeSpruceClient)
+			processor = New(spruceClient)
+		})
 
-	Describe("Process() returns a byte and an error", func() {
 		It("", func() {
-			_, err := Process(spruceConfig)
+			_, err := processor.Process(spruceConfig)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})
