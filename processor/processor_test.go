@@ -11,27 +11,27 @@ import (
 var _ = Describe("Processor", func() {
 
 	//var spruceProcessor *SpruceProcessor
-	var spruceConfig validator.Spruce
+	var spruceConfig []validator.Spruce
 
-	Describe("Process() returns a byte and an error)", func() {
-		BeforeEach(func() {
-			spruceConfig = validator.Spruce{
-				Base: "input.yml",
-				Merge: []validator.Merge{
-					validator.Merge{
-						With: validator.With{
-							Files: []string{"file.yml"},
-						},
+	BeforeEach(func() {
+		cfg := validator.Spruce{
+			Base: "input.yml",
+			Merge: []validator.Merge{
+				validator.Merge{
+					With: validator.With{
+						Files: []string{"file.yml"},
 					},
 				},
-				To: "result.yml",
-			}
-		})
+			},
+			To: "result.yml",
+		}
+		spruceConfig = []validator.Spruce{cfg}
+	})
 
+	Describe("Process() returns a byte and an error", func() {
 		It("", func() {
 			_, err := Process(spruceConfig)
 			Expect(err).ToNot(HaveOccurred())
 		})
-
 	})
 })
