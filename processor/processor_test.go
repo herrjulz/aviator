@@ -25,9 +25,7 @@ var _ = Describe("Processor", func() {
 					Base: "input.yml",
 					Merge: []cockpit.Merge{
 						cockpit.Merge{
-							With: cockpit.With{
-								Files: []string{"file.yml"},
-							},
+							With: cockpit.With{},
 						},
 					},
 					To: "result.yml",
@@ -37,6 +35,7 @@ var _ = Describe("Processor", func() {
 
 			Describe("Using Merge.With.Files", func() {
 				It("includes the right files with the right amount in the merge ", func() {
+					cfg.Merge[0].With.Files = []string{"file.yml"}
 					spruceConfig = []cockpit.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = New(spruceClient)
@@ -111,6 +110,49 @@ var _ = Describe("Processor", func() {
 					Expect(mergeOpts.Files[0]).To(Equal("input.yml"))
 					Expect(mergeOpts.Files[1]).To(Equal("integration/yamls/nonExisting.yml"))
 					Expect(mergeOpts.Files[2]).To(Equal("integration/yamls/fake.yml"))
+				})
+			})
+
+			Describe("Using Merge.WithIn", func() {
+				It("includes all files within a directory, but not subdirectories ", func() {
+					cfg.Merge[0].WithIn = "integration/yamls/"
+
+					spruceConfig = []cockpit.Spruce{cfg}
+					spruceClient = new(fakes.FakeSpruceClient)
+					spruceClient.MergeWithOptsReturns(nil, errors.New("uups"))
+					processor = New(spruceClient)
+
+					_, err := processor.Process(spruceConfig)
+					Expect(err).To(HaveOccurred())
+					Expect(err).To(MatchError(ContainSubstring("Spruce Merge FAILED")))
+
+					mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
+					Expect(len(mergeOpts.Files)).To(Equal(4))
+					Expect(mergeOpts.Files[0]).To(Equal("input.yml"))
+					Expect(mergeOpts.Files[1]).To(Equal("integration/yamls/base.yml"))
+					Expect(mergeOpts.Files[2]).To(Equal("integration/yamls/fake.yml"))
+					Expect(mergeOpts.Files[3]).To(Equal("integration/yamls/fake2.yml"))
+				})
+			})
+
+			Describe("Using Merge.WithIn in combination with Except", func() {
+				It("includes all files within a directory, except files listed in Except ", func() {
+					cfg.Merge[0].WithIn = "integration/yamls/"
+					cfg.Merge[0].Except = []string{"base.yml", "fake.yml"}
+
+					spruceConfig = []cockpit.Spruce{cfg}
+					spruceClient = new(fakes.FakeSpruceClient)
+					spruceClient.MergeWithOptsReturns(nil, errors.New("uups"))
+					processor = New(spruceClient)
+
+					_, err := processor.Process(spruceConfig)
+					Expect(err).To(HaveOccurred())
+					Expect(err).To(MatchError(ContainSubstring("Spruce Merge FAILED")))
+
+					mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
+					Expect(len(mergeOpts.Files)).To(Equal(2))
+					Expect(mergeOpts.Files[0]).To(Equal("input.yml"))
+					Expect(mergeOpts.Files[1]).To(Equal("integration/yamls/fake2.yml"))
 				})
 			})
 		})

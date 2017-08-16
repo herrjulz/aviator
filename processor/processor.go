@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"io/ioutil"
 	"os"
 
 	"github.com/JulzDiverse/aviator/cockpit"
@@ -85,13 +86,14 @@ func (p *Processor) defaultMerge(cfg cockpit.Spruce) ([]byte, error) {
 func collectFiles(cfg cockpit.Spruce) []string {
 	files := []string{cfg.Base}
 	for _, m := range cfg.Merge {
-		tmp := collectFilesFromMergeSection(m)
-		files = concatStringSlice(files, tmp)
+		with := collectFilesFromWithSection(m)
+		within := collectFilesFromWithInSection(m)
+		files = concatStringSlices(files, with, within)
 	}
 	return files
 }
 
-func collectFilesFromMergeSection(merge cockpit.Merge) []string {
+func collectFilesFromWithSection(merge cockpit.Merge) []string {
 	var result []string
 	for _, file := range merge.With.Files {
 		if merge.With.InDir != "" {
@@ -99,21 +101,38 @@ func collectFilesFromMergeSection(merge cockpit.Merge) []string {
 			file = dir + file
 		}
 
-		if !merge.With.Existing || fileExists(file) {
+		if !merge.With.Existing || fileExists(file) { //|| fileExistsInDataStore(file)
 			result = append(result, file)
 		}
 	}
 	return result
 }
 
-func fileExists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
+func collectFilesFromWithInSection(merge cockpit.Merge) []string {
+	result := []string{}
+	if merge.WithIn != "" {
+		within := merge.WithIn
+		files, _ := ioutil.ReadDir(within)
+		//regex := regexp(merge)
+		for _, f := range files {
+			if except(merge.Except, f.Name()) {
+				continue
+			}
+			//matched, _ := regexp.MatchString(regex, f.Name())
+			//if matched {
+			//result = append(result, within+f.Name())
+			//} else {
+			//Warnings = append(Warnings, "EXCLUDED BY REGEXP "+regex+": "+merge.WithIn+f.Name())
+			//}
+			if !f.IsDir() {
+				result = append(result, within+f.Name())
+			}
+		}
 	}
-	return true
+	return result
 }
 
-func fileExistsInDataStore(path string) {
+func fileExistsInDataStore(file string) {
 	//if re.MatchString(path) {
 	//matches := re.FindSubmatch([]byte(path))
 	//key := string(matches[len(matches)-1])
@@ -124,30 +143,39 @@ func fileExistsInDataStore(path string) {
 	//}
 }
 
-func concatStringSlice(sl1 []string, sl2 []string) []string {
-	for _, s := range sl2 {
-		sl1 = append(sl1, s)
+func except(except []string, file string) bool {
+	for _, f := range except {
+		if f == file {
+			return true
+		}
+	}
+	return false
+}
+
+func regexp(merge cockpit.Merge) string {
+	regex := ".*"
+	if merge.Regexp != "" {
+		regex = merge.Regexp
+	}
+	return regex
+}
+
+func fileExists(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+func concatStringSlices(sl1 []string, sls ...[]string) []string {
+	for _, sl := range sls {
+		for _, s := range sl {
+			sl1 = append(sl1, s)
+		}
 	}
 	return sl1
 }
 
-//if merge.WithIn != "" {
-//within := merge.WithIn
-//files, _ := ioutil.ReadDir(within)
-//regex := getChainRegexp(merge)
-//for _, f := range files {
-//if except(merge.Except, f.Name()) {
-//continue
-//}
-//matched, _ := regexp.MatchString(regex, f.Name())
-//if matched {
-//result = append(result, within+f.Name())
-//} else {
-//Warnings = append(Warnings, "EXCLUDED BY REGEXP "+regex+": "+merge.WithIn+f.Name())
-//}
-//}
-//}
-//return result
 //}
 
 //func (p *SpruceProcessor) sprucify(opts spruce.MergeOpts, fileName string) ([]byte, error) {
