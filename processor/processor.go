@@ -1,12 +1,22 @@
 package processor
 
 import (
+	"os"
+
 	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/pkg/errors"
 )
 
 //go:generate counterfeiter . SpruceClient
 type SpruceClient interface {
-	MergeWithOpts()
+	MergeWithOpts(MergeConf) ([]byte, error)
+}
+
+type MergeConf struct {
+	Files       []string
+	Prune       []string
+	CherryPicks []string
+	SkipEval    bool
 }
 
 type Processor struct {
@@ -58,46 +68,68 @@ func mergeType(cfg cockpit.Spruce) string {
 }
 
 func (p *Processor) defaultMerge(cfg cockpit.Spruce) ([]byte, error) {
-	return []byte{}, nil
+	files := collectFiles(cfg)
+	mergeConf := MergeConf{
+		Files:       files,
+		Prune:       cfg.Prune,
+		SkipEval:    cfg.SkipEval,
+		CherryPicks: cfg.CherryPicks,
+	}
+	result, err := p.spruceClient.MergeWithOpts(mergeConf)
+	if err != nil {
+		return nil, errors.Wrap(err, "Spruce Merge FAILED")
+	}
+	return result, nil
 }
 
-//func (p *SpruceProcessor) defaultMerge(cfg validator.Spruce) ([]byte, error) {
-//files := collectFiles(cfg)
-//mergeConf := spruce.MergeOpts{
-//Files:       files,
-//Prune:       cfg.Prune,
-//SkipEval:    cfg.SkipEval,
-//CherryPicks: cfg.CherryPicks,
-//}
-//result, err := p.sprucify(mergeConf, cfg.To)
-//if err != nil {
-//return nil, err
-//}
-//return result, nil
-//}
+func collectFiles(cfg cockpit.Spruce) []string {
+	files := []string{cfg.Base}
+	for _, m := range cfg.Merge {
+		tmp := collectFilesFromMergeSection(m)
+		files = concatStringSlice(files, tmp)
+	}
+	return files
+}
 
-//func collectFiles(cfg validator.Spruce) []string {
-//files := []string{cfg.Base}
-//for _, val := range cfg.Chain {
-//tmp := collectFromMergeSection(val)
-//for _, str := range tmp {
-//files = append(files, str)
-//}
-//}
-//return files
-//}
+func collectFilesFromMergeSection(merge cockpit.Merge) []string {
+	var result []string
+	for _, file := range merge.With.Files {
+		if merge.With.InDir != "" {
+			dir := merge.With.InDir
+			file = dir + file
+		}
 
-//func collectFromMergeSection(merge validator.Merge) []string {
-//var result []string
-//for _, file := range merge.With.Files {
-//if merge.With.InDir != "" {
-//dir := merge.With.InDir
-//file = dir + file
-//}
-//if !merge.With.Existing || fileExists(file) {
-//result = append(result, file)
-//}
-//}
+		if !merge.With.Existing || fileExists(file) {
+			result = append(result, file)
+		}
+	}
+	return result
+}
+
+func fileExists(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+func fileExistsInDataStore(path string) {
+	//if re.MatchString(path) {
+	//matches := re.FindSubmatch([]byte(path))
+	//key := string(matches[len(matches)-1])
+	//_, ok := spruce.DataStore[key]
+	//if ok {
+	//return true //return true if dataManager has file
+	//}
+	//}
+}
+
+func concatStringSlice(sl1 []string, sl2 []string) []string {
+	for _, s := range sl2 {
+		sl1 = append(sl1, s)
+	}
+	return sl1
+}
 
 //if merge.WithIn != "" {
 //within := merge.WithIn

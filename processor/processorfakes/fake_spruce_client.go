@@ -8,27 +8,72 @@ import (
 )
 
 type FakeSpruceClient struct {
-	MergeWithOptsStub        func()
+	MergeWithOptsStub        func(processor.MergeConf) ([]byte, error)
 	mergeWithOptsMutex       sync.RWMutex
-	mergeWithOptsArgsForCall []struct{}
-	invocations              map[string][][]interface{}
-	invocationsMutex         sync.RWMutex
+	mergeWithOptsArgsForCall []struct {
+		arg1 processor.MergeConf
+	}
+	mergeWithOptsReturns struct {
+		result1 []byte
+		result2 error
+	}
+	mergeWithOptsReturnsOnCall map[int]struct {
+		result1 []byte
+		result2 error
+	}
+	invocations      map[string][][]interface{}
+	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeSpruceClient) MergeWithOpts() {
+func (fake *FakeSpruceClient) MergeWithOpts(arg1 processor.MergeConf) ([]byte, error) {
 	fake.mergeWithOptsMutex.Lock()
-	fake.mergeWithOptsArgsForCall = append(fake.mergeWithOptsArgsForCall, struct{}{})
-	fake.recordInvocation("MergeWithOpts", []interface{}{})
+	ret, specificReturn := fake.mergeWithOptsReturnsOnCall[len(fake.mergeWithOptsArgsForCall)]
+	fake.mergeWithOptsArgsForCall = append(fake.mergeWithOptsArgsForCall, struct {
+		arg1 processor.MergeConf
+	}{arg1})
+	fake.recordInvocation("MergeWithOpts", []interface{}{arg1})
 	fake.mergeWithOptsMutex.Unlock()
 	if fake.MergeWithOptsStub != nil {
-		fake.MergeWithOptsStub()
+		return fake.MergeWithOptsStub(arg1)
 	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fake.mergeWithOptsReturns.result1, fake.mergeWithOptsReturns.result2
 }
 
 func (fake *FakeSpruceClient) MergeWithOptsCallCount() int {
 	fake.mergeWithOptsMutex.RLock()
 	defer fake.mergeWithOptsMutex.RUnlock()
 	return len(fake.mergeWithOptsArgsForCall)
+}
+
+func (fake *FakeSpruceClient) MergeWithOptsArgsForCall(i int) processor.MergeConf {
+	fake.mergeWithOptsMutex.RLock()
+	defer fake.mergeWithOptsMutex.RUnlock()
+	return fake.mergeWithOptsArgsForCall[i].arg1
+}
+
+func (fake *FakeSpruceClient) MergeWithOptsReturns(result1 []byte, result2 error) {
+	fake.MergeWithOptsStub = nil
+	fake.mergeWithOptsReturns = struct {
+		result1 []byte
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeSpruceClient) MergeWithOptsReturnsOnCall(i int, result1 []byte, result2 error) {
+	fake.MergeWithOptsStub = nil
+	if fake.mergeWithOptsReturnsOnCall == nil {
+		fake.mergeWithOptsReturnsOnCall = make(map[int]struct {
+			result1 []byte
+			result2 error
+		})
+	}
+	fake.mergeWithOptsReturnsOnCall[i] = struct {
+		result1 []byte
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeSpruceClient) Invocations() map[string][][]interface{} {

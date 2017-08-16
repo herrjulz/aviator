@@ -50,7 +50,9 @@ type Merge struct {
 }
 
 type With struct {
-	Files []string `yaml:"files"`
+	Files    []string `yaml:"files"`
+	InDir    string   `yaml:"in_dir"`
+	Existing bool     `yaml:"skip_non_existing"`
 }
 
 type Fly struct {
