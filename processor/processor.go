@@ -2,11 +2,7 @@ package processor
 
 import (
 	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
 	"regexp"
-	"strings"
 
 	"github.com/JulzDiverse/aviator/cockpit"
 	"github.com/pkg/errors"
@@ -53,7 +49,7 @@ func (p *Processor) Process(config []cockpit.Spruce) ([]byte, error) {
 }
 
 func (p *Processor) defaultMerge(cfg cockpit.Spruce) ([]byte, error) {
-	files := collectFiles(cfg)
+	files := p.collectFiles(cfg)
 	mergeConf := MergeConf{
 		Files:       files,
 		Prune:       cfg.Prune,
@@ -67,18 +63,18 @@ func (p *Processor) defaultMerge(cfg cockpit.Spruce) ([]byte, error) {
 	return result, nil
 }
 
-func collectFiles(cfg cockpit.Spruce) []string {
+func (p *Processor) collectFiles(cfg cockpit.Spruce) []string {
 	files := []string{cfg.Base}
 	for _, m := range cfg.Merge {
-		with := collectFilesFromWithSection(m)
-		within := collectFilesFromWithInSection(m)
-		withallin := collectFilesFromWithAllInSection(m)
+		with := p.collectFilesFromWithSection(m)
+		within := p.collectFilesFromWithInSection(m)
+		withallin := p.collectFilesFromWithAllInSection(m)
 		files = concatStringSlices(files, with, within, withallin)
 	}
 	return files
 }
 
-func collectFilesFromWithSection(merge cockpit.Merge) []string {
+func (p *Processor) collectFilesFromWithSection(merge cockpit.Merge) []string {
 	var result []string
 	for _, file := range merge.With.Files {
 		if merge.With.InDir != "" {
@@ -93,7 +89,7 @@ func collectFilesFromWithSection(merge cockpit.Merge) []string {
 	return result
 }
 
-func collectFilesFromWithInSection(merge cockpit.Merge) []string {
+func (p *Processor) collectFilesFromWithInSection(merge cockpit.Merge) []string {
 	result := []string{}
 	if merge.WithIn != "" {
 		within := merge.WithIn
@@ -116,7 +112,7 @@ func collectFilesFromWithInSection(merge cockpit.Merge) []string {
 	return result
 }
 
-func collectFilesFromWithAllInSection(merge cockpit.Merge) []string {
+func (p *Processor) collectFilesFromWithAllInSection(merge cockpit.Merge) []string {
 	result := []string{}
 	if merge.WithAllIn != "" {
 		allFiles := getAllFilesIncludingSubDirs(merge.WithAllIn)
@@ -132,7 +128,7 @@ func collectFilesFromWithAllInSection(merge cockpit.Merge) []string {
 	return result
 }
 
-func fileExistsInDataStore(file string) {
+func (p *Processor) fileExistsInDataStore(file string) {
 	//if re.MatchString(path) {
 	//matches := re.FindSubmatch([]byte(path))
 	//key := string(matches[len(matches)-1])
@@ -142,102 +138,3 @@ func fileExistsInDataStore(file string) {
 	//}
 	//}
 }
-
-func except(except []string, file string) bool {
-	for _, f := range except {
-		if f == file {
-			return true
-		}
-	}
-	return false
-}
-
-func getRegexp(merge cockpit.Merge) string {
-	regex := ".*"
-	if merge.Regexp != "" {
-		regex = merge.Regexp
-	}
-	return regex
-}
-
-func fileExists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-func concatStringSlices(sl1 []string, sls ...[]string) []string {
-	for _, sl := range sls {
-		for _, s := range sl {
-			sl1 = append(sl1, s)
-		}
-	}
-	return sl1
-}
-
-func mergeType(cfg cockpit.Spruce) string {
-	if cfg.ForEachIn == "" && len(cfg.ForEach) == 0 && cfg.WalkThrough == "" {
-		return "default"
-	}
-	if len(cfg.ForEach) != 0 {
-		return "forEach"
-	}
-	if cfg.ForEachIn != "" {
-		return "forEachIn"
-	}
-	if cfg.WalkThrough != "" {
-		if cfg.ForAll != "" {
-			return "walkThrough"
-		} else {
-			return "walkThroughForAll"
-		}
-	}
-	return ""
-}
-
-func getAllFilesIncludingSubDirs(path string) []string {
-	sl := []string{}
-	err := filepath.Walk(path, fillSliceWithFiles(&sl))
-	if err != nil {
-		log.Fatal(err)
-	}
-	return sl
-}
-
-func fillSliceWithFiles(files *[]string) filepath.WalkFunc {
-	return func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			*files = append(*files, path)
-		}
-		return nil
-	}
-}
-
-func concatFileNameWithPath(path string) (string, string) {
-	chunked := strings.Split(path, "/")
-	fileName := chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
-	parent := chunked[len(chunked)-2]
-	return fileName, parent
-}
-
-//}
-
-//func (p *SpruceProcessor) sprucify(opts spruce.MergeOpts, fileName string) ([]byte, error) {
-////if !p.Silent {
-////beautifyPrint(opts, fileName)
-////}
-////Warnings = []string{}
-
-//rawYml, err := p.spruce.CmdMergeEval(opts)
-//if err != nil {
-//return rawYml, err
-//}
-
-//resultYml, err := yaml.Marshal(rawYml)
-//if err != nil {
-//return resultYaml, err
-//}
-
-//return nil
-//}
