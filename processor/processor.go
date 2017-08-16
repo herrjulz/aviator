@@ -2,7 +2,11 @@ package processor
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/JulzDiverse/aviator/cockpit"
 	"github.com/pkg/errors"
@@ -48,26 +52,6 @@ func (p *Processor) Process(config []cockpit.Spruce) ([]byte, error) {
 	return []byte{}, nil
 }
 
-func mergeType(cfg cockpit.Spruce) string {
-	if cfg.ForEachIn == "" && len(cfg.ForEach) == 0 && cfg.WalkThrough == "" {
-		return "default"
-	}
-	if len(cfg.ForEach) != 0 {
-		return "forEach"
-	}
-	if cfg.ForEachIn != "" {
-		return "forEachIn"
-	}
-	if cfg.WalkThrough != "" {
-		if cfg.ForAll != "" {
-			return "walkThrough"
-		} else {
-			return "walkThroughForAll"
-		}
-	}
-	return ""
-}
-
 func (p *Processor) defaultMerge(cfg cockpit.Spruce) ([]byte, error) {
 	files := collectFiles(cfg)
 	mergeConf := MergeConf{
@@ -88,7 +72,8 @@ func collectFiles(cfg cockpit.Spruce) []string {
 	for _, m := range cfg.Merge {
 		with := collectFilesFromWithSection(m)
 		within := collectFilesFromWithInSection(m)
-		files = concatStringSlices(files, with, within)
+		withallin := collectFilesFromWithAllInSection(m)
+		files = concatStringSlices(files, with, within, withallin)
 	}
 	return files
 }
@@ -113,19 +98,34 @@ func collectFilesFromWithInSection(merge cockpit.Merge) []string {
 	if merge.WithIn != "" {
 		within := merge.WithIn
 		files, _ := ioutil.ReadDir(within)
-		//regex := regexp(merge)
+		regex := getRegexp(merge)
 		for _, f := range files {
 			if except(merge.Except, f.Name()) {
 				continue
 			}
-			//matched, _ := regexp.MatchString(regex, f.Name())
-			//if matched {
-			//result = append(result, within+f.Name())
-			//} else {
+
+			matched, _ := regexp.MatchString(regex, f.Name())
+			if !f.IsDir() && matched {
+				result = append(result, within+f.Name())
+			}
+			//else {
 			//Warnings = append(Warnings, "EXCLUDED BY REGEXP "+regex+": "+merge.WithIn+f.Name())
 			//}
-			if !f.IsDir() {
-				result = append(result, within+f.Name())
+		}
+	}
+	return result
+}
+
+func collectFilesFromWithAllInSection(merge cockpit.Merge) []string {
+	result := []string{}
+	if merge.WithAllIn != "" {
+		allFiles := getAllFilesIncludingSubDirs(merge.WithAllIn)
+		regex := getRegexp(merge)
+		for _, file := range allFiles {
+			filename, _ := concatFileNameWithPath(file)
+			matched, _ := regexp.MatchString(regex, filename)
+			if matched {
+				result = append(result, file)
 			}
 		}
 	}
@@ -152,7 +152,7 @@ func except(except []string, file string) bool {
 	return false
 }
 
-func regexp(merge cockpit.Merge) string {
+func getRegexp(merge cockpit.Merge) string {
 	regex := ".*"
 	if merge.Regexp != "" {
 		regex = merge.Regexp
@@ -174,6 +174,51 @@ func concatStringSlices(sl1 []string, sls ...[]string) []string {
 		}
 	}
 	return sl1
+}
+
+func mergeType(cfg cockpit.Spruce) string {
+	if cfg.ForEachIn == "" && len(cfg.ForEach) == 0 && cfg.WalkThrough == "" {
+		return "default"
+	}
+	if len(cfg.ForEach) != 0 {
+		return "forEach"
+	}
+	if cfg.ForEachIn != "" {
+		return "forEachIn"
+	}
+	if cfg.WalkThrough != "" {
+		if cfg.ForAll != "" {
+			return "walkThrough"
+		} else {
+			return "walkThroughForAll"
+		}
+	}
+	return ""
+}
+
+func getAllFilesIncludingSubDirs(path string) []string {
+	sl := []string{}
+	err := filepath.Walk(path, fillSliceWithFiles(&sl))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return sl
+}
+
+func fillSliceWithFiles(files *[]string) filepath.WalkFunc {
+	return func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			*files = append(*files, path)
+		}
+		return nil
+	}
+}
+
+func concatFileNameWithPath(path string) (string, string) {
+	chunked := strings.Split(path, "/")
+	fileName := chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
+	parent := chunked[len(chunked)-2]
+	return fileName, parent
 }
 
 //}

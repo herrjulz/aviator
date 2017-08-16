@@ -42,11 +42,11 @@ type Spruce struct {
 }
 
 type Merge struct {
-	With   With     `yaml:"with"`
-	WithIn string   `yaml:"with_in"`
-	Except []string `yaml:"except"`
-	Regexp string   `yaml:"regexp"`
-	Skip   bool     `yaml:"skip_non_existing"`
+	With      With     `yaml:"with"`
+	WithIn    string   `yaml:"with_in"`
+	WithAllIn string   `yaml:"with_all_in"`
+	Except    []string `yaml:"except"`
+	Regexp    string   `yaml:"regexp"`
 }
 
 type With struct {
