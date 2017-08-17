@@ -33,7 +33,6 @@ type SpruceConfig struct {
 	Base           string   `yaml:"base"`
 	Prune          []string `yaml:"prune"`
 	Chain          []Chain  `yaml:"merge"`
-	WithIn         string   `yaml:"with_in"`
 	ForEach        []string `yaml:"for_each"`
 	ForEachIn      string   `yaml:"for_each_in"`
 	Walk           string   `yaml:"walk_through"`
@@ -228,30 +227,30 @@ func ForEachIn(conf SpruceConfig) error {
 	return nil
 }
 
-func ForEachInner(conf SpruceConfig, outer string) error {
-	filePaths, _ := ioutil.ReadDir(conf.ForEachIn)
-	regex := getRegexp(conf)
-	for _, f := range filePaths {
-		files := collectFiles(conf)
-		matched, _ := regexp.MatchString(regex, f.Name())
-		if matched {
-			prefix := Chunk(conf.ForEachIn)
-			files = append(files, conf.ForEachIn+f.Name())
-			files = append(files, outer)
-			mergeConf := spruce.MergeOpts{
-				Files:       files,
-				Prune:       conf.Prune,
-				SkipEval:    conf.SkipEval,
-				CherryPicks: conf.CherryPicks,
-			}
-			err := spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
+//func ForEachInner(conf SpruceConfig, outer string) error {
+//filePaths, _ := ioutil.ReadDir(conf.ForEachIn)
+//regex := getRegexp(conf)
+//for _, f := range filePaths {
+//files := collectFiles(conf)
+//matched, _ := regexp.MatchString(regex, f.Name())
+//if matched {
+//prefix := Chunk(conf.ForEachIn)
+//files = append(files, conf.ForEachIn+f.Name())
+//files = append(files, outer)
+//mergeConf := spruce.MergeOpts{
+//Files:       files,
+//Prune:       conf.Prune,
+//SkipEval:    conf.SkipEval,
+//CherryPicks: conf.CherryPicks,
+//}
+//err := spruceToFile(mergeConf, conf.DestDir+prefix+"_"+f.Name())
+//if err != nil {
+//return err
+//}
+//}
+//}
+//return nil
+//}
 
 func ForAll(conf SpruceConfig) error {
 	if conf.ForAll != "" {
