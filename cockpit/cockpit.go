@@ -25,20 +25,14 @@ type AviatorYaml struct {
 }
 
 type Spruce struct {
-	Base           string   `yaml:"base"`
-	Merge          []Merge  `yaml:"merge"`
-	To             string   `yaml:"to"`
-	ToDir          string   `yaml:"to_dir"`
-	ForEach        []string `yaml:"for_each"`
-	ForEachIn      string   `yaml:"for_each_in"`
-	Except         []string `yaml:"except"`
-	WalkThrough    string   `yaml:"walk_through"`
-	Prune          []string `yaml:"prune"`
-	CherryPicks    []string `yaml:"cherry_pick"`
-	EnableMatching bool     `yaml:"enable_matching"`
-	CopyParents    bool     `yaml:"copy_parents"`
-	SkipEval       bool     `yaml:"skip_eval"`
-	ForAll         string   `yaml:"for_all"`
+	Base        string   `yaml:"base"`
+	Merge       []Merge  `yaml:"merge"`
+	ForEach     ForEach  `yaml:"for_each"`
+	Prune       []string `yaml:"prune"`
+	CherryPicks []string `yaml:"cherry_pick"`
+	SkipEval    bool     `yaml:"skip_eval"`
+	To          string   `yaml:"to"`
+	ToDir       string   `yaml:"to_dir"`
 }
 
 type Merge struct {
@@ -50,9 +44,9 @@ type Merge struct {
 }
 
 type With struct {
-	Files    []string `yaml:"files"`
-	InDir    string   `yaml:"in_dir"`
-	Existing bool     `yaml:"skip_non_existing"`
+	Files []string `yaml:"files"`
+	InDir string   `yaml:"in_dir"`
+	Skip  bool     `yaml:"skip_non_existing"`
 }
 
 type Fly struct {
@@ -61,6 +55,19 @@ type Fly struct {
 	Config string   `yaml:"config"`
 	Vars   []string `yaml:"vars"`
 	Expose bool     `yaml:"expose"`
+}
+
+type ForEach struct {
+	Files          []string `yaml:"files"`
+	InDir          string   `yaml:"in_dir"`
+	Skip           bool     `yaml:"skip_non_existing"`
+	In             string   `yaml:"in"`
+	Except         []string `yaml:"except"`
+	SubDirs        bool     `yaml:"include_sub_dirs"`
+	EnableMatching bool     `yaml:"enable_matching"`
+	CopyParents    bool     `yaml:"copy_parents"`
+	ForAll         string   `yaml:"for_all"`
+	Regexp         string   `yaml:"regexp"`
 }
 
 //go:generate counterfeiter . SpruceProcessor

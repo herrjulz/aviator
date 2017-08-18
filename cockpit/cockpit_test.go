@@ -24,61 +24,43 @@ var _ = Describe("Cockpit", func() {
 	})
 
 	Context("New", func() {
-		Context("aviator.yml validation", func() {
+		Context("aviator.yml parsing", func() {
 			var aviator *Aviator
 
-			Context("spruce section", func() {
-				It("is able to read all 'with' related properties", func() {
-					aviatorYaml = `spruce:
+			Context("Spruce", func() {
+				Context("Merge Section", func() {
+					It("is able to read all 'with' related properties", func() {
+						aviatorYaml = `spruce:
 - base: base.yml
   merge:
   - with:
       files:
       - file1.yml
       - file2.yml
+      skip_non_existing: true
     regexp: ".*.(yml)"
     in_dir: /path/
-    skip_non_existing: true
   - with_in: path/to/dir/
     except:
     - file2.yml
+  - with_all_in: path/
   to: result.yml`
 
-					var err error
-					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
-					Expect(err).ToNot(HaveOccurred())
+						var err error
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+						Expect(err).ToNot(HaveOccurred())
 
-					Expect(len(aviator.AviatorYaml.Spruce[0].Merge[0].With.Files)).To(Equal(2))
-					Expect(aviator.AviatorYaml.Spruce[0].Merge[1].WithIn).To(Equal("path/to/dir/"))
-					Expect(len(aviator.AviatorYaml.Spruce[0].Merge[1].Except)).To(Equal(1))
-					Expect(aviator.AviatorYaml.Spruce[0].Merge[0].Regexp).To(Equal(".*.(yml)"))
-					Expect(aviator.AviatorYaml.Spruce[0].Merge[0].Skip).To(Equal(true))
-					Expect(aviator.AviatorYaml.Spruce[0].To).To(Equal("result.yml"))
+						Expect(len(aviator.AviatorYaml.Spruce[0].Merge[0].With.Files)).To(Equal(2))
+						Expect(aviator.AviatorYaml.Spruce[0].Merge[1].WithIn).To(Equal("path/to/dir/"))
+						Expect(len(aviator.AviatorYaml.Spruce[0].Merge[1].Except)).To(Equal(1))
+						Expect(aviator.AviatorYaml.Spruce[0].Merge[0].Regexp).To(Equal(".*.(yml)"))
+						Expect(aviator.AviatorYaml.Spruce[0].Merge[0].With.Skip).To(Equal(true))
+						Expect(aviator.AviatorYaml.Spruce[0].To).To(Equal("result.yml"))
+						Expect(aviator.AviatorYaml.Spruce[0].Merge[2].WithAllIn).To(Equal("path/"))
+					})
 
-				})
-
-				It("is able to parse all for_each_in related properties", func() {
-					aviatorYaml = `spruce:
-- base: result.yml
-  merge:
-  - with_in: another/path/
-  for_each_in: path/to/dir/
-  except:
-  - file2.yml
-  regexp: ".*.(yml)"
-  to_dir: some/tmp/dir/`
-
-					var err error
-					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
-					Expect(err).ToNot(HaveOccurred())
-
-					Expect(aviator.AviatorYaml.Spruce[0].ForEachIn).To(Equal("path/to/dir/"))
-					Expect(len(aviator.AviatorYaml.Spruce[0].Except)).To(Equal(1))
-					Expect(aviator.AviatorYaml.Spruce[0].ToDir).To(Equal("some/tmp/dir/"))
-				})
-
-				It("is able to read all 'cherry_pick' and 'skip_eval' properties", func() {
-					aviatorYaml = `spruce:
+					It("is able to read all 'cherry_pick' and 'skip_eval' properties", func() {
+						aviatorYaml = `spruce:
 - base: some/tmp/dir/file1.yml
   cherry_pick:
   - one
@@ -87,50 +69,22 @@ var _ = Describe("Cockpit", func() {
   merge:
   - with_in: path/
   skip_eval: true
-  for_each:
-  - foo.yml
-  - bar.yml
   to_dir: foo/bar/`
 
-					var err error
-					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
-					Expect(err).ToNot(HaveOccurred())
+						var err error
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+						Expect(err).ToNot(HaveOccurred())
 
-					Expect(len(aviator.AviatorYaml.Spruce[0].ForEach)).To(Equal(2))
-					Expect(len(aviator.AviatorYaml.Spruce[0].CherryPicks)).To(Equal(3))
-					Expect(aviator.AviatorYaml.Spruce[0].SkipEval).To(Equal(true))
-				})
+						Expect(len(aviator.AviatorYaml.Spruce[0].CherryPicks)).To(Equal(3))
+						Expect(aviator.AviatorYaml.Spruce[0].SkipEval).To(Equal(true))
+					})
 
-				It("is able to read all 'walk_through' related properties", func() {
-					aviatorYaml = `spruce:
-- base: base.yml
-  prune:
-  - some
-  - properties
-  merge:
-  - with_in: foo/
-  walk_through: foo/bar/
-  for_all: some/dir/
-  copy_parents: true
-  enable_matching: true
-  to_dir: final/`
-
-					var err error
-					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
-					Expect(err).ToNot(HaveOccurred())
-
-					Expect(aviator.AviatorYaml.Spruce[0].WalkThrough).To(Equal("foo/bar/"))
-					Expect(len(aviator.AviatorYaml.Spruce[0].Prune)).To(Equal(2))
-					Expect(aviator.AviatorYaml.Spruce[0].CopyParents).To(Equal(true))
-					Expect(aviator.AviatorYaml.Spruce[0].EnableMatching).To(Equal(true))
-					Expect(aviator.AviatorYaml.Spruce[0].ForAll).To(Equal("some/dir/"))
-				})
-
-				It("is able resolve environment variables", func() {
-					os.Setenv("ENV_VAR", "envVar")
-					os.Setenv("ANOTHER_VAR", "another")
-					os.Setenv("RESULT", "result")
-					aviatorYaml = `spruce:
+					Context("Environment Variabels & Curly Braces", func() {
+						It("is able resolve environment variables", func() {
+							os.Setenv("ENV_VAR", "envVar")
+							os.Setenv("ANOTHER_VAR", "another")
+							os.Setenv("RESULT", "result")
+							aviatorYaml = `spruce:
 - base: $ENV_VAR
   merge:
   - with:
@@ -138,19 +92,19 @@ var _ = Describe("Cockpit", func() {
       - $ANOTHER_VAR
   to: $RESULT`
 
-					var err error
-					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
-					Expect(err).ToNot(HaveOccurred())
-					Expect(aviator.AviatorYaml.Spruce[0].Base).To(Equal("envVar"))
-					Expect(aviator.AviatorYaml.Spruce[0].Merge[0].With.Files[0]).To(Equal("another"))
-					Expect(aviator.AviatorYaml.Spruce[0].To).To(Equal("result"))
-				})
+							var err error
+							aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+							Expect(err).ToNot(HaveOccurred())
+							Expect(aviator.AviatorYaml.Spruce[0].Base).To(Equal("envVar"))
+							Expect(aviator.AviatorYaml.Spruce[0].Merge[0].With.Files[0]).To(Equal("another"))
+							Expect(aviator.AviatorYaml.Spruce[0].To).To(Equal("result"))
+						})
 
-				It("is able to parse '{{}}'", func() {
-					os.Setenv("ENV_VAR", "envVar")
-					os.Setenv("ANOTHER_VAR", "another")
-					os.Setenv("RESULT", "result")
-					aviatorYaml = `spruce:
+						It("is able to parse '{{}}'", func() {
+							os.Setenv("ENV_VAR", "envVar")
+							os.Setenv("ANOTHER_VAR", "another")
+							os.Setenv("RESULT", "result")
+							aviatorYaml = `spruce:
 - base: input.yml 
   merge:
   - with:
@@ -158,9 +112,79 @@ var _ = Describe("Cockpit", func() {
       - {{identifier}}
   to: {{result}}`
 
-					var err error
-					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
-					Expect(err).ToNot(HaveOccurred())
+							var err error
+							aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+							Expect(err).ToNot(HaveOccurred())
+						})
+					})
+				})
+
+				Context("ForEach Section", func() {
+					It("is able to parse all for_each.files related properties", func() {
+						aviatorYaml = `spruce:
+- base: result.yml
+  merge:
+  - with_in: another/path/
+  for_each:
+    files:
+    - file1.yml
+    - file2.yml
+    skip_non_existing: true
+    in_dir: path/
+  to_dir: some/tmp/dir/`
+
+						var err error
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+						Expect(err).ToNot(HaveOccurred())
+
+						Expect(len(aviator.AviatorYaml.Spruce[0].ForEach.Files)).To(Equal(2))
+						Expect(aviator.AviatorYaml.Spruce[0].ForEach.Skip).To(Equal(true))
+						Expect(aviator.AviatorYaml.Spruce[0].ForEach.InDir).To(Equal("path/"))
+						Expect(aviator.AviatorYaml.Spruce[0].ToDir).To(Equal("some/tmp/dir/"))
+					})
+
+					It("is able to parse all for_each.in related properties", func() {
+						aviatorYaml = `spruce:
+- base: result.yml
+  merge:
+  - with_in: another/path/
+  for_each:
+    in: path/
+    except:
+    - file.yml
+    - file2.yml
+    regexp: ".*.(yml)"
+  to_dir: some/tmp/dir/`
+
+						var err error
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+						Expect(err).ToNot(HaveOccurred())
+
+						Expect(aviator.AviatorYaml.Spruce[0].ForEach.In).To(Equal("path/"))
+						Expect(len(aviator.AviatorYaml.Spruce[0].ForEach.Except)).To(Equal(2))
+						Expect(aviator.AviatorYaml.Spruce[0].ForEach.Regexp).To(Equal(".*.(yml)"))
+					})
+
+					It("is able to parse all for_each.in related properties in combination with enable_sub_dirs", func() {
+						aviatorYaml = `spruce:
+- base: result.yml
+  merge:
+  - with_in: another/path/
+  for_each:
+    in: path/
+    include_sub_dirs: true
+    copy_parents: true
+    enable_matching: true
+  to_dir: some/tmp/dir/`
+
+						var err error
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+						Expect(err).ToNot(HaveOccurred())
+
+						Expect(aviator.AviatorYaml.Spruce[0].ForEach.SubDirs).To(Equal(true))
+						Expect(aviator.AviatorYaml.Spruce[0].ForEach.CopyParents).To(Equal(true))
+						Expect(aviator.AviatorYaml.Spruce[0].ForEach.EnableMatching).To(Equal(true))
+					})
 				})
 			})
 
