@@ -124,4 +124,39 @@ var _ = Describe("Validator", func() {
 			})
 		})
 	})
+
+	Context("ForEach Validator", func() {
+		Context("Top level combination", func() {
+			Context("'files' and 'in' are mutually exclusive", func() {
+				It("returns an error if both parameters are declared", func() {
+					cfg.ForEach.Files = []string{"file", "file2"}
+					cfg.ForEach.In = "path/"
+
+					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					Expect(err).To(HaveOccurred())
+
+					Expect(err).To(MatchError(ContainSubstring(
+						"INVALID SYNTAX: Mutually exclusive parameters declared 'for_each.in' and 'for_each.files'",
+					)))
+				})
+			})
+
+			Context("When 'InDir' is declared", func() {
+				It("can only be decalred in combination with 'files'", func() {
+					cfg.ForEach.InDir = "path/"
+
+					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					Expect(err).To(HaveOccurred())
+
+					Expect(err).To(MatchError(ContainSubstring(
+						"INVALID SYNTAX: 'in_dir' can only be declared in combination with 'files'",
+					)))
+
+					cfg.ForEach.Files = []string{"file", "file2"}
+					err = validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					Expect(err).ToNot(HaveOccurred())
+				})
+			})
+		})
+	})
 })
