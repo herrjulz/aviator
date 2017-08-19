@@ -117,7 +117,7 @@ func ProcessSprucePlan(spruce []SpruceConfig, verbose bool, silent bool) error {
 
 		verifySpruceConfig(conf)
 
-		if conf.ForEachIn == "" && len(conf.ForEach) == 0 && conf.Walk == "" {
+		if conf.ForEachIn == "" && len(conf.ForEach) == 0 && conf.Walk == ""  && conf.IncludeAllIn == "" {
 			err := simpleMerge(conf)
 			if err != nil {
 				return err
@@ -314,8 +314,7 @@ func WalkInclude(conf SpruceConfig) error {
 	regex := getRegexp(conf)
 	files := []string{}
 	for _, file := range allFiles {
-		filename, _ := ConcatFileName(file)
-		matched, _ := regexp.MatchString(regex, filename)
+		matched, _ := regexp.MatchString(regex, file)
 		if matched {
 			files = append(files, file)
 		}
