@@ -15,6 +15,9 @@ type MergeRegexpCombinationError struct{ error }
 //Error Types: ForEach-Section
 type ForEachCombinationError error
 type ForEachFilesCombinationError error
+type ForEachInCombinationError error
+type ForEachRegexpCombinationError error
+type ForEachWalkCombinationError error
 
 type Validator struct{}
 
@@ -61,6 +64,7 @@ func validateMergeSection(cfg []cockpit.Merge) error {
 		if err != nil {
 			return err
 		}
+
 	}
 	return nil
 }
@@ -75,6 +79,22 @@ func validateForEachSection(forEach cockpit.ForEach) error {
 	if err != nil {
 		return err
 	}
+
+	err = validateForEachInCombinations(forEach)
+	if err != nil {
+		return err
+	}
+
+	err = validateForEachRegexpCombination(forEach)
+	if err != nil {
+		return err
+	}
+
+	err = validateForEachWalkCombinations(forEach)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -130,9 +150,39 @@ func validateForEachCombination(forEach cockpit.ForEach) error {
 
 func validateForEachFilesCombinations(forEach cockpit.ForEach) error {
 	var err ForEachFilesCombinationError
-	if forEach.InDir != "" && forEach.Files == nil {
+	if (forEach.InDir != "" || forEach.Skip == true) && forEach.Files == nil {
 		err = errors.New(
-			"INVALID SYNTAX: 'in_dir' can only be declared in combination with 'files'",
+			"INVALID SYNTAX: 'for_each.in_dir' and 'for_each.skip_non_existing' can only be declared in combination with 'for_each.files'",
+		)
+	}
+	return err
+}
+
+func validateForEachInCombinations(forEach cockpit.ForEach) error {
+	var err ForEachInCombinationError
+	if ((forEach.Except != nil || len(forEach.Except) > 0) || forEach.SubDirs == true) && forEach.In == "" {
+		err = errors.New(
+			"INVALID SYNTAX: 'for_each.except' and 'for_each.include_sub_dirs' can only be declared in combination with 'for_each.in'",
+		)
+	}
+	return err
+}
+
+func validateForEachRegexpCombination(forEach cockpit.ForEach) error {
+	var err ForEachRegexpCombinationError
+	if (forEach.Regexp != "") && ((forEach.Files == nil || len(forEach.Files) == 0) && forEach.In == "") {
+		err = errors.New(
+			"INVALID SYNTAX: 'for_each.regexp' is only allowed in combination with 'for_each.in', 'for_each.files'",
+		)
+	}
+	return err
+}
+
+func validateForEachWalkCombinations(forEach cockpit.ForEach) error {
+	var err ForEachWalkCombinationError
+	if (forEach.SubDirs == false) && (forEach.CopyParents == true || forEach.EnableMatching == true || forEach.ForAll != "") {
+		err = errors.New(
+			"INVALID SYNTAX: 'for_each.copy_parents', 'for_each.enable_matching', 'for_each.for_all' can only be declared in combination with 'for_each.inlcude_sub_dirs'",
 		)
 	}
 	return err

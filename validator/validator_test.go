@@ -74,7 +74,6 @@ var _ = Describe("Validator", func() {
 
 					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'with.in_dir' or 'with.skip_non_existing' can only be declared in combination with 'with.files'")))
 				})
-
 			})
 		})
 
@@ -141,20 +140,138 @@ var _ = Describe("Validator", func() {
 				})
 			})
 
-			Context("When 'InDir' is declared", func() {
-				It("can only be decalred in combination with 'files'", func() {
-					cfg.ForEach.InDir = "path/"
+			Context("'files' combinations", func() {
+				Context("When 'files' is not declared", func() {
+					It("returns an error if 'in_dir' is declared", func() {
+						cfg.ForEach.InDir = "path/"
 
-					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
-					Expect(err).To(HaveOccurred())
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).To(HaveOccurred())
 
-					Expect(err).To(MatchError(ContainSubstring(
-						"INVALID SYNTAX: 'in_dir' can only be declared in combination with 'files'",
-					)))
+						Expect(err).To(MatchError(ContainSubstring(
+							"INVALID SYNTAX: 'for_each.in_dir' and 'for_each.skip_non_existing' can only be declared in combination with 'for_each.files'",
+						)))
+					})
 
-					cfg.ForEach.Files = []string{"file", "file2"}
-					err = validator.ValidateSpruce([]cockpit.Spruce{cfg})
-					Expect(err).ToNot(HaveOccurred())
+					It("returns an error if 'skip_non_existing' is enabled", func() {
+						cfg.ForEach.Skip = true
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).To(HaveOccurred())
+
+						Expect(err).To(MatchError(ContainSubstring(
+							"INVALID SYNTAX: 'for_each.in_dir' and 'for_each.skip_non_existing' can only be declared in combination with 'for_each.files'",
+						)))
+					})
+
+					It("returns an error if 'skip_non_existing' and 'in_dir' are declared", func() {
+						cfg.ForEach.Skip = true
+						cfg.ForEach.InDir = "path/"
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).To(HaveOccurred())
+
+						Expect(err).To(MatchError(ContainSubstring(
+							"INVALID SYNTAX: 'for_each.in_dir' and 'for_each.skip_non_existing' can only be declared in combination with 'for_each.files'",
+						)))
+					})
+				})
+
+				Context("When 'files' is declared", func() {
+					It("can be combined with 'in_dir'", func() {
+						cfg.ForEach.InDir = "path/"
+						cfg.ForEach.Files = []string{"file", "file2"}
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).ToNot(HaveOccurred())
+					})
+
+					It("can be combined with 'skip_non_existing'", func() {
+						cfg.ForEach.Skip = true
+						cfg.ForEach.Files = []string{"file", "file2"}
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).ToNot(HaveOccurred())
+					})
+
+					It("can be combined with 'skip_non_existing' and with 'in_dir'", func() {
+						cfg.ForEach.Skip = true
+						cfg.ForEach.InDir = "path/"
+						cfg.ForEach.Files = []string{"file", "file2"}
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).ToNot(HaveOccurred())
+					})
+				})
+			})
+
+			Context("'in' combinations", func() {
+				Context("When 'in' is not declared", func() {
+					It("returns an error if 'except' is declared", func() {
+						cfg.ForEach.Except = []string{"fake"}
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).To(HaveOccurred())
+
+						Expect(err).To(MatchError(ContainSubstring(
+							"INVALID SYNTAX: 'for_each.except' and 'for_each.include_sub_dirs' can only be declared in combination with 'for_each.in'",
+						)))
+					})
+
+					It("returns an error if 'include_sub_dirs' is declared", func() {
+						cfg.ForEach.SubDirs = true
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).To(HaveOccurred())
+
+						Expect(err).To(MatchError(ContainSubstring(
+							"INVALID SYNTAX: 'for_each.except' and 'for_each.include_sub_dirs' can only be declared in combination with 'for_each.in'",
+						)))
+					})
+				})
+
+				Context("When 'include_sub_dirs' is not declared", func() {
+					It("returns an error if 'copy_parents' is enabled", func() {
+						cfg.ForEach.CopyParents = true
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).To(HaveOccurred())
+
+						Expect(err).To(MatchError(ContainSubstring(
+							"INVALID SYNTAX: 'for_each.copy_parents', 'for_each.enable_matching', 'for_each.for_all' can only be declared in combination with 'for_each.inlcude_sub_dirs'",
+						)))
+					})
+				})
+			})
+			Context("regexp combinations", func() {
+				Context("When 'for_each.in' or 'for_each.files' not declared", func() {
+					It("It returns an error if declared 'for_ach.regexp'", func() {
+						cfg.ForEach.Regexp = ".*.(yml)"
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).To(HaveOccurred())
+
+						Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'for_each.regexp' is only allowed in combination with 'for_each.in', 'for_each.files'")))
+					})
+				})
+
+				Context("When 'for_each.in' is declared", func() {
+					It("can be combined with 'for_each.regexp'", func() {
+						cfg.ForEach.Regexp = ".*.(yml)"
+						cfg.ForEach.In = "path/"
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).ToNot(HaveOccurred())
+					})
+				})
+				Context("When 'for_each.files' is declared", func() {
+					It("can be combined with 'for_each.regexp'", func() {
+						cfg.ForEach.Regexp = ".*.(yml)"
+						cfg.ForEach.Files = []string{"fake"}
+
+						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						Expect(err).ToNot(HaveOccurred())
+					})
 				})
 			})
 		})
