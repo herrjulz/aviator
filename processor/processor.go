@@ -82,7 +82,7 @@ func (p *Processor) collectFilesFromWithSection(merge cockpit.Merge) []string {
 			file = dir + file
 		}
 
-		if !merge.With.Existing || fileExists(file) { //|| fileExistsInDataStore(file)
+		if !merge.With.Skip || fileExists(file) { //|| fileExistsInDataStore(file)
 			result = append(result, file)
 		}
 	}
@@ -118,8 +118,7 @@ func (p *Processor) collectFilesFromWithAllInSection(merge cockpit.Merge) []stri
 		allFiles := getAllFilesIncludingSubDirs(merge.WithAllIn)
 		regex := getRegexp(merge)
 		for _, file := range allFiles {
-			filename, _ := concatFileNameWithPath(file)
-			matched, _ := regexp.MatchString(regex, filename)
+			matched, _ := regexp.MatchString(regex, file)
 			if matched {
 				result = append(result, file)
 			}

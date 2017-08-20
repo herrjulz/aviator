@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/JulzDiverse/aviator/cockpit"
 )
@@ -43,17 +42,19 @@ func concatStringSlices(sl1 []string, sls ...[]string) []string {
 }
 
 func mergeType(cfg cockpit.Spruce) string {
-	if cfg.ForEachIn == "" && len(cfg.ForEach) == 0 && cfg.WalkThrough == "" {
+	if (cfg.ForEach.Files == nil ||
+		len(cfg.ForEach.Files) > 0) &&
+		cfg.ForEach.In == "" {
 		return "default"
 	}
-	if len(cfg.ForEach) != 0 {
+	if len(cfg.ForEach.Files) > 0 {
 		return "forEach"
 	}
-	if cfg.ForEachIn != "" {
+	if cfg.ForEach.In != "" && cfg.ForEach.SubDirs == false {
 		return "forEachIn"
 	}
-	if cfg.WalkThrough != "" {
-		if cfg.ForAll != "" {
+	if cfg.ForEach.In != "" && cfg.ForEach.SubDirs == true {
+		if cfg.ForEach.ForAll != "" {
 			return "walkThrough"
 		} else {
 			return "walkThroughForAll"
@@ -80,9 +81,9 @@ func fillSliceWithFiles(files *[]string) filepath.WalkFunc {
 	}
 }
 
-func concatFileNameWithPath(path string) (string, string) {
-	chunked := strings.Split(path, "/")
-	fileName := chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
-	parent := chunked[len(chunked)-2]
-	return fileName, parent
-}
+//func concatFileNameWithPath(path string) (string, string) {
+//chunked := strings.Split(path, "/")
+//fileName := chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
+//parent := chunked[len(chunked)-2]
+//return fileName, parent
+//}
