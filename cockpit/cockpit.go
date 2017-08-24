@@ -1,9 +1,9 @@
 package cockpit
 
 import (
-	"os"
 	"regexp"
 
+	"github.com/JulzDiverse/osenv"
 	"github.com/pkg/errors"
 
 	yaml "gopkg.in/yaml.v2"
@@ -49,14 +49,6 @@ type With struct {
 	Skip  bool     `yaml:"skip_non_existing"`
 }
 
-type Fly struct {
-	Name   string   `yaml:"name"`
-	Target string   `yaml:"target"`
-	Config string   `yaml:"config"`
-	Vars   []string `yaml:"vars"`
-	Expose bool     `yaml:"expose"`
-}
-
 type ForEach struct {
 	Files          []string `yaml:"files"`
 	InDir          string   `yaml:"in_dir"`
@@ -68,6 +60,14 @@ type ForEach struct {
 	CopyParents    bool     `yaml:"copy_parents"`
 	ForAll         string   `yaml:"for_all"`
 	Regexp         string   `yaml:"regexp"`
+}
+
+type Fly struct {
+	Name   string   `yaml:"name"`
+	Target string   `yaml:"target"`
+	Config string   `yaml:"config"`
+	Vars   []string `yaml:"vars"`
+	Expose bool     `yaml:"expose"`
 }
 
 //go:generate counterfeiter . SpruceProcessor
@@ -89,9 +89,13 @@ func Init(
 
 func (c *Cockpit) NewAviator(aviatorYml []byte) (*Aviator, error) {
 	var aviator AviatorYaml
-	aviatorYml = resolveEnvVars(aviatorYml)
+	aviatorYml, err := resolveEnvVars(aviatorYml)
+	if err != nil {
+		return nil, err
+	}
+
 	aviatorYml = quoteCurlyBraces(aviatorYml)
-	err := yaml.Unmarshal(aviatorYml, &aviator)
+	err = yaml.Unmarshal(aviatorYml, &aviator)
 	if err != nil {
 		return nil, err
 	}
@@ -114,9 +118,9 @@ func (a *Aviator) ExecuteFly() error {
 	return nil
 }
 
-func resolveEnvVars(input []byte) []byte {
-	result := os.ExpandEnv(string(input))
-	return []byte(result)
+func resolveEnvVars(input []byte) ([]byte, error) {
+	result, err := osenv.ExpandEnv(string(input))
+	return []byte(result), err
 }
 
 func quoteCurlyBraces(input []byte) []byte {

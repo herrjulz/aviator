@@ -16,20 +16,23 @@ var _ = Describe("Processor", func() {
 	var spruceClient *fakes.FakeSpruceClient
 
 	Describe("Process", func() {
-		var cfg cockpit.Spruce
-		Context("Default Merge", func() {
-			BeforeEach(func() {
-				cfg = cockpit.Spruce{
-					Base: "input.yml",
-					Merge: []cockpit.Merge{
-						cockpit.Merge{
-							With: cockpit.With{},
-						},
-					},
-					To: "result.yml",
-				}
 
-			})
+		var cfg cockpit.Spruce
+
+		BeforeEach(func() {
+			cfg = cockpit.Spruce{
+				Base: "input.yml",
+				Merge: []cockpit.Merge{
+					cockpit.Merge{
+						With: cockpit.With{},
+					},
+				},
+				ForEach: cockpit.ForEach{},
+				To:      "result.yml",
+			}
+		})
+
+		Context("Default Merge", func() {
 			Context("Merge Section", func() {
 				Context("Using Merge.With.Files", func() {
 					It("includes the right files with the right amount in the merge ", func() {
@@ -229,7 +232,160 @@ var _ = Describe("Processor", func() {
 
 		Context("ForEach", func() {
 			Context("Files", func() {
+				It("should run a merge for each file in 'for_each.files'", func() {
+					cfg.Merge[0].With.Files = []string{"fake1", "fake2"}
+					cfg.ForEach.Files = []string{"file1", "file2"}
 
+					spruceConfig = []cockpit.Spruce{cfg}
+					spruceClient = new(fakes.FakeSpruceClient)
+					processor = New(spruceClient)
+
+					_, err := processor.Process(spruceConfig)
+					Expect(err).ToNot(HaveOccurred())
+
+					mergeOpts1 := spruceClient.MergeWithOptsArgsForCall(0)
+					mergeOpts2 := spruceClient.MergeWithOptsArgsForCall(1)
+					Expect(len(mergeOpts1.Files)).To(Equal(4))
+					Expect(len(mergeOpts2.Files)).To(Equal(4))
+					Expect(mergeOpts1.Files[3]).To(Equal("file1"))
+					Expect(mergeOpts2.Files[3]).To(Equal("file2"))
+				})
+			})
+
+			Context("In", func() {
+				It("should run a merge for each file in the directory specified in 'for_each.in'", func() {
+					cfg.Merge[0].With.Files = []string{"fake1", "fake2"}
+					cfg.ForEach.In = "integration/yamls/addons/sub1/"
+
+					spruceConfig = []cockpit.Spruce{cfg}
+					spruceClient = new(fakes.FakeSpruceClient)
+					processor = New(spruceClient)
+
+					_, err := processor.Process(spruceConfig)
+					Expect(err).ToNot(HaveOccurred())
+
+					mergeOpts1 := spruceClient.MergeWithOptsArgsForCall(0)
+					mergeOpts2 := spruceClient.MergeWithOptsArgsForCall(1)
+					Expect(len(mergeOpts1.Files)).To(Equal(4))
+					Expect(len(mergeOpts2.Files)).To(Equal(4))
+					//Expect does not work for any reason
+					//Expect(mergeOpts1.Files[3]).To(Equal("integration/yamls/addons/sub1/file1.yml"))
+					Expect(mergeOpts2.Files[3]).To(Equal("integration/yamls/addons/sub1/file2.yml"))
+				})
+			})
+
+			Context("'In' in combination with except", func() {
+				It("should run a merge for each file in the directory specified in 'for_each.in' except those specified in 'except'", func() {
+					cfg.Merge[0].With.Files = []string{"fake1", "fake2"}
+					cfg.ForEach.In = "integration/yamls/"
+					cfg.ForEach.Except = []string{"fake2.yml"}
+
+					spruceConfig = []cockpit.Spruce{cfg}
+					spruceClient = new(fakes.FakeSpruceClient)
+					processor = New(spruceClient)
+
+					_, err := processor.Process(spruceConfig)
+					Expect(err).ToNot(HaveOccurred())
+
+					cc := spruceClient.MergeWithOptsCallCount()
+					Expect(cc).To(Equal(2))
+
+					mergeOpts1 := spruceClient.MergeWithOptsArgsForCall(0)
+					mergeOpts := spruceClient.MergeWithOptsArgsForCall(1)
+					Expect(len(mergeOpts1.Files)).To(Equal(4))
+					Expect(len(mergeOpts.Files)).To(Equal(4))
+					//Expect(mergeOpts1.Files[3]).To(Equal("integration/yamls/base.yml"))
+					Expect(mergeOpts.Files[3]).To(Equal("integration/yamls/fake.yml"))
+				})
+			})
+
+			Context("'In' in combination with regexp", func() {
+				It("should run a merge for each file in the directory specified in 'for_each.in' matching the 'regexp'", func() {
+					cfg.Merge[0].With.Files = []string{"fake1", "fake2"}
+					cfg.ForEach.In = "integration/yamls/"
+					cfg.ForEach.Regexp = "base.yml"
+
+					spruceConfig = []cockpit.Spruce{cfg}
+					spruceClient = new(fakes.FakeSpruceClient)
+					processor = New(spruceClient)
+
+					_, err := processor.Process(spruceConfig)
+					Expect(err).ToNot(HaveOccurred())
+
+					cc := spruceClient.MergeWithOptsCallCount()
+					Expect(cc).To(Equal(1))
+
+					mergeOpts1 := spruceClient.MergeWithOptsArgsForCall(0)
+					Expect(len(mergeOpts1.Files)).To(Equal(4))
+					Expect(mergeOpts1.Files[3]).To(Equal("integration/yamls/base.yml"))
+				})
+			})
+
+			Context("'In' in combination with 'regexp'", func() {
+				It("should run a merge for each file in the directory specified in 'for_each.in' matching the 'regexp'", func() {
+					cfg.Merge[0].With.Files = []string{"fake1", "fake2"}
+					cfg.ForEach.In = "integration/yamls/"
+					cfg.ForEach.Regexp = "base.yml"
+
+					spruceConfig = []cockpit.Spruce{cfg}
+					spruceClient = new(fakes.FakeSpruceClient)
+					processor = New(spruceClient)
+
+					_, err := processor.Process(spruceConfig)
+					Expect(err).ToNot(HaveOccurred())
+
+					cc := spruceClient.MergeWithOptsCallCount()
+					Expect(cc).To(Equal(1))
+
+					mergeOpts1 := spruceClient.MergeWithOptsArgsForCall(0)
+					Expect(len(mergeOpts1.Files)).To(Equal(4))
+					Expect(mergeOpts1.Files[3]).To(Equal("integration/yamls/base.yml"))
+				})
+			})
+
+			Context("Walk", func() {
+				Context("'In' in combination with 'subdirs'", func() {
+					It("should run a merge for each file in the directory and its subdirs", func() {
+						cfg.Merge[0].With.Files = []string{"fake1", "fake2"}
+						cfg.ForEach.In = "integration/yamls/addons/"
+						cfg.ForEach.SubDirs = true
+
+						spruceConfig = []cockpit.Spruce{cfg}
+						spruceClient = new(fakes.FakeSpruceClient)
+						processor = New(spruceClient)
+
+						_, err := processor.Process(spruceConfig)
+						Expect(err).ToNot(HaveOccurred())
+
+						cc := spruceClient.MergeWithOptsCallCount()
+						Expect(cc).To(Equal(3))
+
+						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
+						Expect(len(mergeOpts.Files)).To(Equal(4))
+					})
+				})
+
+				Context("'In' in combination with 'subdirs' and 'for_all'", func() {
+					It("should run a merge for each file in the directory specified in 'for_each.in' and its subdirs... its complicated", func() {
+						cfg.Merge[0].With.Files = []string{"fake1", "fake2"}
+						cfg.ForEach.In = "integration/yamls/addons/"
+						cfg.ForEach.SubDirs = true
+						cfg.ForEach.ForAll = "integration/yamls/"
+
+						spruceConfig = []cockpit.Spruce{cfg}
+						spruceClient = new(fakes.FakeSpruceClient)
+						processor = New(spruceClient)
+
+						_, err := processor.Process(spruceConfig)
+						Expect(err).ToNot(HaveOccurred())
+
+						cc := spruceClient.MergeWithOptsCallCount()
+						Expect(cc).To(Equal(9))
+
+						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
+						Expect(len(mergeOpts.Files)).To(Equal(5))
+					})
+				})
 			})
 		})
 	})

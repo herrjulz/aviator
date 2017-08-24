@@ -100,6 +100,23 @@ var _ = Describe("Cockpit", func() {
 							Expect(aviator.AviatorYaml.Spruce[0].To).To(Equal("result"))
 						})
 
+						It("returns an error if variables are not set", func() {
+							os.Setenv("ENV_VAR", "envVar")
+							os.Setenv("ANOTHER_VAR", "another")
+							os.Unsetenv("RESULT")
+							aviatorYaml = `spruce:
+- base: $ENV_VAR
+  merge:
+  - with:
+      files:
+      - $ANOTHER_VAR
+  to: $RESULT`
+
+							var err error
+							aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+							Expect(err).To(HaveOccurred())
+						})
+
 						It("is able to parse '{{}}'", func() {
 							os.Setenv("ENV_VAR", "envVar")
 							os.Setenv("ANOTHER_VAR", "another")

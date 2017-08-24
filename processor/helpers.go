@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/JulzDiverse/aviator/cockpit"
 )
@@ -17,10 +18,10 @@ func except(except []string, file string) bool {
 	return false
 }
 
-func getRegexp(merge cockpit.Merge) string {
+func getRegexp(regexpString string) string {
 	regex := ".*"
-	if merge.Regexp != "" {
-		regex = merge.Regexp
+	if regexpString != "" {
+		regex = regexpString
 	}
 	return regex
 }
@@ -41,9 +42,18 @@ func concatStringSlices(sl1 []string, sls ...[]string) []string {
 	return sl1
 }
 
+func concatResults(sl1 [][]byte, sl2 ...[][]byte) [][]byte {
+	for _, sl := range sl2 {
+		for _, s := range sl {
+			sl1 = append(sl1, s)
+		}
+	}
+	return sl1
+}
+
 func mergeType(cfg cockpit.Spruce) string {
 	if (cfg.ForEach.Files == nil ||
-		len(cfg.ForEach.Files) > 0) &&
+		len(cfg.ForEach.Files) == 0) &&
 		cfg.ForEach.In == "" {
 		return "default"
 	}
@@ -54,7 +64,7 @@ func mergeType(cfg cockpit.Spruce) string {
 		return "forEachIn"
 	}
 	if cfg.ForEach.In != "" && cfg.ForEach.SubDirs == true {
-		if cfg.ForEach.ForAll != "" {
+		if cfg.ForEach.ForAll == "" {
 			return "walkThrough"
 		} else {
 			return "walkThroughForAll"
@@ -81,9 +91,27 @@ func fillSliceWithFiles(files *[]string) filepath.WalkFunc {
 	}
 }
 
-//func concatFileNameWithPath(path string) (string, string) {
-//chunked := strings.Split(path, "/")
-//fileName := chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
-//parent := chunked[len(chunked)-2]
-//return fileName, parent
-//}
+func concatFileNameWithPath(path string) (string, string) {
+	chunked := strings.Split(path, "/")
+	fileName := chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
+	parent := chunked[len(chunked)-2]
+	return fileName, parent
+}
+
+func chunk(path string) string {
+	chunked := strings.Split(path, "/")
+	var prefix string
+	if chunked[len(chunked)-1] == "" {
+		prefix = chunked[len(chunked)-2]
+	} else {
+		prefix = chunked[len(chunked)-1]
+	}
+	return prefix
+}
+
+func enableMatching(cfg cockpit.ForEach, match string) string {
+	if !cfg.EnableMatching {
+		match = ""
+	}
+	return match
+}
