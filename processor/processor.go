@@ -14,22 +14,31 @@ type SpruceClient interface {
 	MergeWithOpts(MergeConf) ([]byte, error)
 }
 
+//go:generate counterfeiter . FileStore
+type FileStore interface {
+	GetFile(string) ([]byte, bool)
+	SetFile([]byte, string)
+}
+
 type MergeConf struct {
 	Files       []string
 	Prune       []string
 	CherryPicks []string
 	SkipEval    bool
+	Warnings    []string
 }
 
 type Processor struct {
 	config       []cockpit.Spruce
 	spruceClient SpruceClient
 	mergeOpts    MergeConf
+	store        FileStore
 }
 
-func New(spruceClient SpruceClient) *Processor {
+func New(spruceClient SpruceClient, store FileStore) *Processor {
 	return &Processor{
 		spruceClient: spruceClient,
+		store:        store,
 	}
 }
 
@@ -186,7 +195,8 @@ func (p *Processor) collectFilesFromWithSection(merge cockpit.Merge) []string {
 			file = dir + file
 		}
 
-		if !merge.With.Skip || fileExists(file) { //|| fileExistsInDataStore(file)
+		_, storeHasFile := p.store.GetFile(file)
+		if !merge.With.Skip || fileExists(file) || storeHasFile {
 			result = append(result, file)
 		}
 	}
@@ -229,15 +239,4 @@ func (p *Processor) collectFilesFromWithAllInSection(merge cockpit.Merge) []stri
 		}
 	}
 	return result
-}
-
-func (p *Processor) fileExistsInDataStore(file string) {
-	//if re.MatchString(path) {
-	//matches := re.FindSubmatch([]byte(path))
-	//key := string(matches[len(matches)-1])
-	//_, ok := spruce.DataStore[key]
-	//if ok {
-	//return true //return true if dataManager has file
-	//}
-	//}
 }

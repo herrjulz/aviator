@@ -14,6 +14,7 @@ var _ = Describe("Processor", func() {
 	var processor *Processor
 	var spruceConfig []cockpit.Spruce
 	var spruceClient *fakes.FakeSpruceClient
+	var store *fakes.FakeFileStore = new(fakes.FakeFileStore)
 
 	Describe("Process", func() {
 
@@ -39,7 +40,7 @@ var _ = Describe("Processor", func() {
 						cfg.Merge[0].With.Files = []string{"file.yml"}
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -58,7 +59,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -79,7 +80,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -99,7 +100,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -118,7 +119,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -139,7 +140,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -158,7 +159,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -178,7 +179,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -196,7 +197,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -214,7 +215,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -238,7 +239,7 @@ var _ = Describe("Processor", func() {
 
 					spruceConfig = []cockpit.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
-					processor = New(spruceClient)
+					processor = New(spruceClient, store)
 
 					_, err := processor.Process(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
@@ -259,7 +260,7 @@ var _ = Describe("Processor", func() {
 
 					spruceConfig = []cockpit.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
-					processor = New(spruceClient)
+					processor = New(spruceClient, store)
 
 					_, err := processor.Process(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
@@ -282,7 +283,7 @@ var _ = Describe("Processor", func() {
 
 					spruceConfig = []cockpit.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
-					processor = New(spruceClient)
+					processor = New(spruceClient, store)
 
 					_, err := processor.Process(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
@@ -307,7 +308,7 @@ var _ = Describe("Processor", func() {
 
 					spruceConfig = []cockpit.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
-					processor = New(spruceClient)
+					processor = New(spruceClient, store)
 
 					_, err := processor.Process(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
@@ -329,7 +330,7 @@ var _ = Describe("Processor", func() {
 
 					spruceConfig = []cockpit.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
-					processor = New(spruceClient)
+					processor = New(spruceClient, store)
 
 					_, err := processor.Process(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
@@ -352,7 +353,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -374,7 +375,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []cockpit.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = New(spruceClient)
+						processor = New(spruceClient, store)
 
 						_, err := processor.Process(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
