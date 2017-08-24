@@ -1,48 +1,36 @@
 package printer
 
-//func printWarnings() {
-//ansi.Printf("@R{WARNINGS:}\n")
-//for _, w := range Warnings {
-//sl := strings.Split(w, ":")
-//ansi.Printf("@p{%s}:@P{%s}\n", sl[0], sl[1])
-//}
-//}
+import (
+	"fmt"
+	"strings"
 
-//type Printer interface {
-//// ...
-//}
+	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/starkandwayne/goutils/ansi"
+)
 
-//var ansiPrinter = &AnsiPrinter{}
+type Print func(string, ...interface{}) (int, error)
 
-//func BeautifyPrint(opts spruce.MergeOpts, dest string) {
-//beautifyPrint(opts, dest, ansiPrinter)
-//}
+func AnsiPrint(opts cockpit.MergeConf, verbose bool) {
+	BeautyfulPrint(opts, ansi.Printf, verbose)
+}
 
-//func (...) Println(msg string) {
-//outputString += msg
-//}
-
-//func (p *MyPrinter) beautifyPrint(opts spruce.MergeOpts, dest string, printer Printer) {
-//y := color.New(color.FgYellow, color.Bold)
-//r := color.New(color.FgHiRed)
-//c := color.New(color.FgHiCyan)
-//fmt.Println("SPRUCE MERGE:")
-//if len(opts.Prune) != 0 {
-//for _, prune := range opts.Prune {
-//r.Printf("\t%s ", "--prune")
-//c.Printf("  %s \n", prune)
-//}
-//}
-//for _, file := range opts.Files {
-//fmt.Printf("\t%s \n", file)
-//}
-//y.Printf("\tto: %s\n\n", dest)
-//if Verbose && (len(Warnings) != 0) { //global variable
-//ansi.Printf("\t@R{WARNINGS:}\n")
-//for _, w := range Warnings {
-//sl := strings.Split(w, ":")
-//ansi.Printf("\t@p{%s}:@P{%s}\n", sl[0], sl[1])
-//}
-//fmt.Println("\n")
-//}
-//}
+func BeautyfulPrint(opts cockpit.MergeConf, printf Print, verbose bool) {
+	fmt.Println("SPRUCE MERGE:")
+	if len(opts.Prune) != 0 {
+		for _, prune := range opts.Prune {
+			printf("\t@C{--prune} %s\n", prune)
+		}
+	}
+	for _, file := range opts.Files {
+		printf("\t%s\n", file)
+	}
+	printf("\t@G{to: %s}\n\n", opts.To)
+	if verbose && (len(opts.Warnings) != 0) { //global variable
+		printf("\t@Y{WARNINGS:}\n")
+		for _, w := range opts.Warnings {
+			sl := strings.Split(w, ":")
+			printf("\t@y{%s}:@Y{%s}\n", sl[0], sl[1])
+		}
+		fmt.Println("\n")
+	}
+}
