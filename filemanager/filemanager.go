@@ -22,7 +22,7 @@ func Store() *FileStore {
 	return store
 }
 
-func (ds *FileStore) GetFile(key string) ([]byte, bool) {
+func (ds *FileStore) ReadFile(key string) ([]byte, bool) {
 	if re.MatchString(key) {
 		matches := re.FindSubmatch([]byte(key))
 		key = string(matches[len(matches)-1])
@@ -35,7 +35,7 @@ func (ds *FileStore) GetFile(key string) ([]byte, bool) {
 	return nil, false
 }
 
-func (ds *FileStore) SetFile(key string, file []byte) error {
+func (ds *FileStore) WriteFile(key string, file []byte) error {
 	if re.MatchString(key) {
 		matches := re.FindSubmatch([]byte(key))
 		key = string(matches[len(matches)-1])

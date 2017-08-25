@@ -1,11 +1,14 @@
 package processor
 
 import (
+	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/JulzDiverse/aviator/filemanager"
 	"github.com/pkg/errors"
 )
 
@@ -16,8 +19,8 @@ type SpruceClient interface {
 
 //go:generate counterfeiter . FileStore
 type FileStore interface {
-	GetFile(string) ([]byte, bool)
-	SetFile([]byte, string)
+	ReadFile(string) ([]byte, bool)
+	WriteFile(string, []byte) error
 }
 
 type MergeConf struct {
@@ -26,25 +29,41 @@ type MergeConf struct {
 	CherryPicks []string
 	SkipEval    bool
 	Warnings    []string
+	To          string
 }
+
+type WriterFunc func([]byte, string) error
 
 type Processor struct {
-	config       []cockpit.Spruce
 	spruceClient SpruceClient
-	mergeOpts    MergeConf
 	store        FileStore
+	verbose      bool
+	silent       bool
 }
 
-func New(spruceClient SpruceClient, store FileStore) *Processor {
+func NewTestProcessor(spruceClient SpruceClient, store FileStore) *Processor {
 	return &Processor{
 		spruceClient: spruceClient,
 		store:        store,
 	}
 }
 
-func (p *Processor) Process(config []cockpit.Spruce) ([][]byte, error) {
+type ProcessorFactory func(*Processor, bool, bool)
+
+func Create(fn ProcessorFactory, silent bool, verbose bool) *Processor {
+	var p Processor
+	fn(&p, silent, verbose)
+	return &p
+}
+
+func AviatorDefault(p *Processor, s bool, v bool) {
+	p.store = filemanager.Store()
+	p.verbose = v
+	p.silent = s
+}
+
+func (p *Processor) Process(config []cockpit.Spruce) error {
 	for _, cfg := range config {
-		var err error
 		switch mergeType(cfg) {
 		case "default":
 			return p.defaultMerge(cfg)
@@ -57,42 +76,34 @@ func (p *Processor) Process(config []cockpit.Spruce) ([][]byte, error) {
 		case "walkThroughForAll":
 			return p.forAll(cfg)
 		}
-		if err != nil {
-			return nil, err
-		}
 	}
-	return [][]byte{}, nil
+	return nil
 }
 
-func (p *Processor) defaultMerge(cfg cockpit.Spruce) ([][]byte, error) {
+func (p *Processor) defaultMerge(cfg cockpit.Spruce) error {
 	files := p.collectFiles(cfg)
-	result, err := p.merge(files, cfg)
-	if err != nil {
-		return nil, errors.Wrap(err, "Spruce Merge FAILED")
+	if err := p.mergeAndWrite(files, cfg, cfg.To); err != nil {
+		return errors.Wrap(err, "Spruce Merge FAILED")
 	}
-	return [][]byte{result}, nil
+	return nil
 }
 
-func (p *Processor) forEachFileMerge(cfg cockpit.Spruce) ([][]byte, error) {
-	mergedFiles := [][]byte{}
+func (p *Processor) forEachFileMerge(cfg cockpit.Spruce) error {
 	for _, file := range cfg.ForEach.Files {
 		mergeFiles := p.collectFiles(cfg)
-		//fileName, _ := concatFileNameWithPath(file) --> will be part of cmd
+		fileName, _ := concatFileNameWithPath(file)
 		mergeFiles = append(mergeFiles, file)
-		result, err := p.merge(mergeFiles, cfg)
-		if err != nil {
-			return nil, errors.Wrap(err, "Spruce Merge FAILED")
+		if err := p.mergeAndWrite(mergeFiles, cfg, filepath.Join(cfg.ToDir, fileName)); err != nil {
+			return errors.Wrap(err, "Spruce Merge FAILED")
 		}
-		mergedFiles = append(mergedFiles, result)
 	}
-	return mergedFiles, nil
+	return nil
 }
 
-func (p *Processor) forEachInMerge(cfg cockpit.Spruce) ([][]byte, error) {
-	mergedFiles := [][]byte{}
+func (p *Processor) forEachInMerge(cfg cockpit.Spruce) error {
 	filePaths, err := ioutil.ReadDir(cfg.ForEach.In)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	regex := getRegexp(cfg.ForEach.Regexp)
@@ -104,23 +115,19 @@ func (p *Processor) forEachInMerge(cfg cockpit.Spruce) ([][]byte, error) {
 		}
 		matched, _ := regexp.MatchString(regex, f.Name())
 		if !f.IsDir() && matched {
-			//prefix := chunk(cfg.ForEach.In)
+			prefix := chunk(cfg.ForEach.In)
 			mergeFiles := append(files, cfg.ForEach.In+f.Name())
-			result, err := p.merge(mergeFiles, cfg)
-			if err != nil {
-				return nil, errors.Wrap(err, "Spruce Merge FAILED")
+			if err := p.mergeAndWrite(mergeFiles, cfg, filepath.Join(cfg.ToDir, fmt.Sprintf("%s_%s", prefix, f.Name()))); err != nil {
+				return errors.Wrap(err, "Spruce Merge FAILED")
 			}
-
-			mergedFiles = append(mergedFiles, result)
 		} else {
 			//Warnings = append(Warnings, "EXCLUDED BY REGEXP "+regex+": "+conf.ForEachIn+f.Name())
 		}
 	}
-	return mergedFiles, nil
+	return nil
 }
 
-func (p *Processor) walk(cfg cockpit.Spruce, outer string) ([][]byte, error) {
-	mergedFiles := [][]byte{}
+func (p *Processor) walk(cfg cockpit.Spruce, outer string) error {
 	sl := getAllFilesIncludingSubDirs(cfg.ForEach.In)
 	regex := getRegexp(cfg.ForEach.Regexp)
 	for _, f := range sl {
@@ -134,35 +141,35 @@ func (p *Processor) walk(cfg cockpit.Spruce, outer string) ([][]byte, error) {
 			} else {
 				files = append(files, f)
 			}
-			result, err := p.merge(files, cfg)
-			if err != nil {
-				return nil, errors.Wrap(err, "Spruce Merge FAILED")
+
+			if !cfg.ForEach.CopyParents {
+				parent = ""
 			}
-			mergedFiles = append(mergedFiles, result)
+
+			if err := p.mergeAndWrite(files, cfg, filepath.Join(cfg.ToDir, parent, filename)); err != nil {
+				return errors.Wrap(err, "Spruce Merge FAILED")
+			}
 		}
 	}
-	return mergedFiles, nil
+	return nil
 }
 
-func (p *Processor) forAll(cfg cockpit.Spruce) ([][]byte, error) {
-	mergedFiles := [][]byte{}
+func (p *Processor) forAll(cfg cockpit.Spruce) error {
 	forAll := cfg.ForEach.ForAll
 	if forAll != "" {
 		files, _ := ioutil.ReadDir(forAll)
 		for _, f := range files {
 			if !f.IsDir() {
-				results, err := p.walk(cfg, cfg.ForEach.ForAll+f.Name())
-				if err != nil {
-					return nil, err
+				if err := p.walk(cfg, cfg.ForEach.ForAll+f.Name()); err != nil {
+					return err
 				}
-				mergedFiles = concatResults(mergedFiles, results)
 			}
 		}
 	}
-	return mergedFiles, nil
+	return nil
 }
 
-func (p *Processor) merge(files []string, cfg cockpit.Spruce) ([]byte, error) {
+func (p *Processor) mergeAndWrite(files []string, cfg cockpit.Spruce, to string) error {
 	mergeConf := MergeConf{
 		Files:       files,
 		SkipEval:    cfg.SkipEval,
@@ -171,9 +178,15 @@ func (p *Processor) merge(files []string, cfg cockpit.Spruce) ([]byte, error) {
 	}
 	result, err := p.spruceClient.MergeWithOpts(mergeConf)
 	if err != nil {
-		return nil, errors.Wrap(err, "Spruce Merge FAILED")
+		return errors.Wrap(err, "Spruce Merge FAILED")
 	}
-	return result, nil
+
+	err = p.store.WriteFile(to, result)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *Processor) collectFiles(cfg cockpit.Spruce) []string {
@@ -195,8 +208,8 @@ func (p *Processor) collectFilesFromWithSection(merge cockpit.Merge) []string {
 			file = dir + file
 		}
 
-		_, storeHasFile := p.store.GetFile(file)
-		if !merge.With.Skip || fileExists(file) || storeHasFile {
+		_, fileExists := p.store.ReadFile(file)
+		if !merge.With.Skip || fileExists {
 			result = append(result, file)
 		}
 	}

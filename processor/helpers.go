@@ -92,9 +92,13 @@ func fillSliceWithFiles(files *[]string) filepath.WalkFunc {
 }
 
 func concatFileNameWithPath(path string) (string, string) {
+	var fileName, parent string
 	chunked := strings.Split(path, "/")
-	fileName := chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
-	parent := chunked[len(chunked)-2]
+	if len(chunked) > 1 {
+		fileName = chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
+		parent = chunked[len(chunked)-2]
+	}
+	fileName = path
 	return fileName, parent
 }
 

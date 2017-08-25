@@ -8,117 +8,147 @@ import (
 )
 
 type FakeFileStore struct {
-	GetFileStub        func(string) ([]byte, bool)
-	getFileMutex       sync.RWMutex
-	getFileArgsForCall []struct {
+	ReadFileStub        func(string) ([]byte, bool)
+	readFileMutex       sync.RWMutex
+	readFileArgsForCall []struct {
 		arg1 string
 	}
-	getFileReturns struct {
+	readFileReturns struct {
 		result1 []byte
 		result2 bool
 	}
-	getFileReturnsOnCall map[int]struct {
+	readFileReturnsOnCall map[int]struct {
 		result1 []byte
 		result2 bool
 	}
-	SetFileStub        func([]byte, string)
-	setFileMutex       sync.RWMutex
-	setFileArgsForCall []struct {
-		arg1 []byte
-		arg2 string
+	WriteFileStub        func(string, []byte) error
+	writeFileMutex       sync.RWMutex
+	writeFileArgsForCall []struct {
+		arg1 string
+		arg2 []byte
+	}
+	writeFileReturns struct {
+		result1 error
+	}
+	writeFileReturnsOnCall map[int]struct {
+		result1 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeFileStore) GetFile(arg1 string) ([]byte, bool) {
-	fake.getFileMutex.Lock()
-	ret, specificReturn := fake.getFileReturnsOnCall[len(fake.getFileArgsForCall)]
-	fake.getFileArgsForCall = append(fake.getFileArgsForCall, struct {
+func (fake *FakeFileStore) ReadFile(arg1 string) ([]byte, bool) {
+	fake.readFileMutex.Lock()
+	ret, specificReturn := fake.readFileReturnsOnCall[len(fake.readFileArgsForCall)]
+	fake.readFileArgsForCall = append(fake.readFileArgsForCall, struct {
 		arg1 string
 	}{arg1})
-	fake.recordInvocation("GetFile", []interface{}{arg1})
-	fake.getFileMutex.Unlock()
-	if fake.GetFileStub != nil {
-		return fake.GetFileStub(arg1)
+	fake.recordInvocation("ReadFile", []interface{}{arg1})
+	fake.readFileMutex.Unlock()
+	if fake.ReadFileStub != nil {
+		return fake.ReadFileStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.getFileReturns.result1, fake.getFileReturns.result2
+	return fake.readFileReturns.result1, fake.readFileReturns.result2
 }
 
-func (fake *FakeFileStore) GetFileCallCount() int {
-	fake.getFileMutex.RLock()
-	defer fake.getFileMutex.RUnlock()
-	return len(fake.getFileArgsForCall)
+func (fake *FakeFileStore) ReadFileCallCount() int {
+	fake.readFileMutex.RLock()
+	defer fake.readFileMutex.RUnlock()
+	return len(fake.readFileArgsForCall)
 }
 
-func (fake *FakeFileStore) GetFileArgsForCall(i int) string {
-	fake.getFileMutex.RLock()
-	defer fake.getFileMutex.RUnlock()
-	return fake.getFileArgsForCall[i].arg1
+func (fake *FakeFileStore) ReadFileArgsForCall(i int) string {
+	fake.readFileMutex.RLock()
+	defer fake.readFileMutex.RUnlock()
+	return fake.readFileArgsForCall[i].arg1
 }
 
-func (fake *FakeFileStore) GetFileReturns(result1 []byte, result2 bool) {
-	fake.GetFileStub = nil
-	fake.getFileReturns = struct {
+func (fake *FakeFileStore) ReadFileReturns(result1 []byte, result2 bool) {
+	fake.ReadFileStub = nil
+	fake.readFileReturns = struct {
 		result1 []byte
 		result2 bool
 	}{result1, result2}
 }
 
-func (fake *FakeFileStore) GetFileReturnsOnCall(i int, result1 []byte, result2 bool) {
-	fake.GetFileStub = nil
-	if fake.getFileReturnsOnCall == nil {
-		fake.getFileReturnsOnCall = make(map[int]struct {
+func (fake *FakeFileStore) ReadFileReturnsOnCall(i int, result1 []byte, result2 bool) {
+	fake.ReadFileStub = nil
+	if fake.readFileReturnsOnCall == nil {
+		fake.readFileReturnsOnCall = make(map[int]struct {
 			result1 []byte
 			result2 bool
 		})
 	}
-	fake.getFileReturnsOnCall[i] = struct {
+	fake.readFileReturnsOnCall[i] = struct {
 		result1 []byte
 		result2 bool
 	}{result1, result2}
 }
 
-func (fake *FakeFileStore) SetFile(arg1 []byte, arg2 string) {
-	var arg1Copy []byte
-	if arg1 != nil {
-		arg1Copy = make([]byte, len(arg1))
-		copy(arg1Copy, arg1)
+func (fake *FakeFileStore) WriteFile(arg1 string, arg2 []byte) error {
+	var arg2Copy []byte
+	if arg2 != nil {
+		arg2Copy = make([]byte, len(arg2))
+		copy(arg2Copy, arg2)
 	}
-	fake.setFileMutex.Lock()
-	fake.setFileArgsForCall = append(fake.setFileArgsForCall, struct {
-		arg1 []byte
-		arg2 string
-	}{arg1Copy, arg2})
-	fake.recordInvocation("SetFile", []interface{}{arg1Copy, arg2})
-	fake.setFileMutex.Unlock()
-	if fake.SetFileStub != nil {
-		fake.SetFileStub(arg1, arg2)
+	fake.writeFileMutex.Lock()
+	ret, specificReturn := fake.writeFileReturnsOnCall[len(fake.writeFileArgsForCall)]
+	fake.writeFileArgsForCall = append(fake.writeFileArgsForCall, struct {
+		arg1 string
+		arg2 []byte
+	}{arg1, arg2Copy})
+	fake.recordInvocation("WriteFile", []interface{}{arg1, arg2Copy})
+	fake.writeFileMutex.Unlock()
+	if fake.WriteFileStub != nil {
+		return fake.WriteFileStub(arg1, arg2)
 	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fake.writeFileReturns.result1
 }
 
-func (fake *FakeFileStore) SetFileCallCount() int {
-	fake.setFileMutex.RLock()
-	defer fake.setFileMutex.RUnlock()
-	return len(fake.setFileArgsForCall)
+func (fake *FakeFileStore) WriteFileCallCount() int {
+	fake.writeFileMutex.RLock()
+	defer fake.writeFileMutex.RUnlock()
+	return len(fake.writeFileArgsForCall)
 }
 
-func (fake *FakeFileStore) SetFileArgsForCall(i int) ([]byte, string) {
-	fake.setFileMutex.RLock()
-	defer fake.setFileMutex.RUnlock()
-	return fake.setFileArgsForCall[i].arg1, fake.setFileArgsForCall[i].arg2
+func (fake *FakeFileStore) WriteFileArgsForCall(i int) (string, []byte) {
+	fake.writeFileMutex.RLock()
+	defer fake.writeFileMutex.RUnlock()
+	return fake.writeFileArgsForCall[i].arg1, fake.writeFileArgsForCall[i].arg2
+}
+
+func (fake *FakeFileStore) WriteFileReturns(result1 error) {
+	fake.WriteFileStub = nil
+	fake.writeFileReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeFileStore) WriteFileReturnsOnCall(i int, result1 error) {
+	fake.WriteFileStub = nil
+	if fake.writeFileReturnsOnCall == nil {
+		fake.writeFileReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.writeFileReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
 }
 
 func (fake *FakeFileStore) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.getFileMutex.RLock()
-	defer fake.getFileMutex.RUnlock()
-	fake.setFileMutex.RLock()
-	defer fake.setFileMutex.RUnlock()
+	fake.readFileMutex.RLock()
+	defer fake.readFileMutex.RUnlock()
+	fake.writeFileMutex.RLock()
+	defer fake.writeFileMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

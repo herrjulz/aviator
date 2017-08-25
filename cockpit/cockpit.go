@@ -70,15 +70,6 @@ type Fly struct {
 	Expose bool     `yaml:"expose"`
 }
 
-type MergeConf struct {
-	Files       []string
-	Prune       []string
-	CherryPicks []string
-	SkipEval    bool
-	Warnings    []string
-	To          string
-}
-
 //go:generate counterfeiter . SpruceProcessor
 type SpruceProcessor interface {
 	Process([]Spruce) ([]byte, error)
