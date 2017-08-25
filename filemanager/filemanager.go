@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/starkandwayne/goutils/ansi"
 )
@@ -56,6 +57,7 @@ func (ds *FileStore) WriteFile(key string, file []byte) error {
 		}
 		ds.files[key] = []byte(file)
 	} else {
+		createNonExistingDirs(key)
 		err := ioutil.WriteFile(key, file, 0644)
 		if err != nil {
 			ansi.Errorf("@R{Error writing file} @m{%s}: %s\n", key, err.Error())
@@ -76,5 +78,23 @@ func dequoteCurlyBraces(input []byte) []byte {
 func (ds *FileStore) PrintFiles() {
 	for key, file := range ds.files {
 		fmt.Println(key, string(file))
+	}
+}
+
+func createNonExistingDirs(path string) {
+	sliced := strings.Split(path, "/")
+	dirs := sliced[:len(sliced)-1]
+	fol := dirs[0]
+	for i, dir := range dirs {
+		if i > 0 {
+			fol = strings.Join([]string{fol, dir}, "/")
+		}
+		createDir(fol)
+	}
+}
+
+func createDir(path string) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.Mkdir(path, 0711)
 	}
 }

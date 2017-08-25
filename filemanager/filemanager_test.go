@@ -63,4 +63,11 @@ var _ = Describe("Filemanager", func() {
 			Expect(string(file)).To(ContainSubstring("test:"))
 		})
 	})
+
+	//Context("WriteFile", func() {
+	//It("create non existing dirs", func() {
+	//err := store.WriteFile("integration/non/existing/fake.yml", []byte("file"))
+	//Expect(err).ToNot(HaveOccurred())
+	//})
+	//})
 })
