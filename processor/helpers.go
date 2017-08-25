@@ -1,13 +1,18 @@
 package processor
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/JulzDiverse/aviator/cockpit"
 )
+
+var quoteRegex = `\{\{([-\w\p{L}]+)\}\}`
+var re = regexp.MustCompile("(" + quoteRegex + ")")
 
 func except(except []string, file string) bool {
 	for _, f := range except {
@@ -118,4 +123,14 @@ func enableMatching(cfg cockpit.ForEach, match string) string {
 		match = ""
 	}
 	return match
+}
+
+func createTargetName(prefix string, suffix string) string {
+	if re.MatchString(prefix) {
+		matches := re.FindSubmatch([]byte(prefix))
+		prefix = string(matches[len(matches)-1])
+		return fmt.Sprintf("{{%s}}", filepath.Join(prefix, suffix))
+	}
+
+	return filepath.Join(prefix, suffix)
 }

@@ -15,51 +15,52 @@ var _ = Describe("Filemanager", func() {
 		store = Store()
 	})
 
-	Context("Set/GetFile", func() {
+	Context("Write/ReadFile", func() {
 		Context("When setting a file", func() {
 			It("is available with GetFile", func() {
-				store.SetFile("key", []byte("content"))
-				file, ok := store.GetFile("key")
+				store.WriteFile("{{key}}", []byte("content"))
+				file, ok := store.ReadFile("{{key}}")
 				Expect(ok).To(Equal(true))
 				Expect(string(file[:len(file)])).To(Equal("content"))
-			})
-
-			It("is available using GetFile with a key inside double curly braces", func() {
-				store.SetFile("keyA", []byte("content A"))
-				file, ok := store.GetFile("{{keyA}}")
-				Expect(ok).To(Equal(true))
-				Expect(string(file[:len(file)])).To(Equal("content A"))
 			})
 		})
 
 		Context("When setting a file with a key in double curly braces", func() {
-			It("is available via GetFile", func() {
-				store.SetFile("{{keyB}}", []byte("content B"))
-				file, ok := store.GetFile("keyB")
+			It("is also available with the key without curly braces", func() {
+				store.WriteFile("{{keyB}}", []byte("content B"))
+				file, ok := store.ReadFile("keyB")
 				Expect(ok).To(Equal(true))
 				Expect(string(file[:len(file)])).To(Equal("content B"))
 			})
 		})
 
 		Context("When setting a file with a key in double curly braces", func() {
-			It("is available via GetFile with the key in double curly braces", func() {
-				err := store.SetFile("{{keyC}}", []byte("content C"))
+			It("is available via ReadFile with the key in double curly braces", func() {
+				err := store.WriteFile("{{keyC}}", []byte("content C"))
 				Expect(err).ToNot(HaveOccurred())
-				file, ok := store.GetFile("{{keyC}}")
+				file, ok := store.ReadFile("{{keyC}}")
 				Expect(ok).To(Equal(true))
 				Expect(string(file[:len(file)])).To(Equal("content C"))
 			})
 		})
 	})
 
-	Context("Setting a file that already existsr", func() {
+	Context("Setting a file that already exists", func() {
 		It("returns an error", func() {
-			err := store.SetFile("keyD", []byte("content D"))
+			err := store.WriteFile("{{keyD}}", []byte("content D"))
 			Expect(err).ToNot(HaveOccurred())
 
-			err = store.SetFile("keyD", []byte("content D"))
+			err = store.WriteFile("{{keyD}}", []byte("content D"))
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(ContainSubstring("file keyD in virtual filestore already exists")))
+		})
+	})
+
+	Context("ReadFile", func() {
+		It("reads a existing file from filesystem", func() {
+			file, ok := store.ReadFile("integration/fake.yml")
+			Expect(ok).To(Equal(true))
+			Expect(string(file)).To(ContainSubstring("test:"))
 		})
 	})
 })

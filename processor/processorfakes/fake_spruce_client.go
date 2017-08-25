@@ -4,14 +4,15 @@ package processorfakes
 import (
 	"sync"
 
+	"github.com/JulzDiverse/aviator/cockpit"
 	"github.com/JulzDiverse/aviator/processor"
 )
 
 type FakeSpruceClient struct {
-	MergeWithOptsStub        func(processor.MergeConf) ([]byte, error)
+	MergeWithOptsStub        func(cockpit.MergeConf) ([]byte, error)
 	mergeWithOptsMutex       sync.RWMutex
 	mergeWithOptsArgsForCall []struct {
-		arg1 processor.MergeConf
+		arg1 cockpit.MergeConf
 	}
 	mergeWithOptsReturns struct {
 		result1 []byte
@@ -25,11 +26,11 @@ type FakeSpruceClient struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeSpruceClient) MergeWithOpts(arg1 processor.MergeConf) ([]byte, error) {
+func (fake *FakeSpruceClient) MergeWithOpts(arg1 cockpit.MergeConf) ([]byte, error) {
 	fake.mergeWithOptsMutex.Lock()
 	ret, specificReturn := fake.mergeWithOptsReturnsOnCall[len(fake.mergeWithOptsArgsForCall)]
 	fake.mergeWithOptsArgsForCall = append(fake.mergeWithOptsArgsForCall, struct {
-		arg1 processor.MergeConf
+		arg1 cockpit.MergeConf
 	}{arg1})
 	fake.recordInvocation("MergeWithOpts", []interface{}{arg1})
 	fake.mergeWithOptsMutex.Unlock()
@@ -48,7 +49,7 @@ func (fake *FakeSpruceClient) MergeWithOptsCallCount() int {
 	return len(fake.mergeWithOptsArgsForCall)
 }
 
-func (fake *FakeSpruceClient) MergeWithOptsArgsForCall(i int) processor.MergeConf {
+func (fake *FakeSpruceClient) MergeWithOptsArgsForCall(i int) cockpit.MergeConf {
 	fake.mergeWithOptsMutex.RLock()
 	defer fake.mergeWithOptsMutex.RUnlock()
 	return fake.mergeWithOptsArgsForCall[i].arg1

@@ -3,7 +3,11 @@ package filemanager
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"regexp"
+
+	"github.com/starkandwayne/goutils/ansi"
 )
 
 type FileStore struct {
@@ -23,30 +27,41 @@ func Store() *FileStore {
 }
 
 func (ds *FileStore) ReadFile(key string) ([]byte, bool) {
-	if re.MatchString(key) {
-		matches := re.FindSubmatch([]byte(key))
-		key = string(matches[len(matches)-1])
+	if _, err := os.Stat(key); os.IsNotExist(err) {
+		if re.MatchString(key) {
+			matches := re.FindSubmatch([]byte(key))
+			key = string(matches[len(matches)-1])
+		}
+		if file, ok := ds.files[key]; ok {
+			return file, true
+		}
 	}
 
-	if file, ok := ds.files[key]; ok {
-		return file, true
+	file, err := ioutil.ReadFile(key)
+	if err != nil {
+		return nil, false
 	}
 
-	return nil, false
+	return file, true
 }
 
 func (ds *FileStore) WriteFile(key string, file []byte) error {
+	file = dequoteCurlyBraces(file)
 	if re.MatchString(key) {
 		matches := re.FindSubmatch([]byte(key))
 		key = string(matches[len(matches)-1])
+
+		if _, ok := ds.files[key]; ok {
+			return errors.New(fmt.Sprintf("file %s in virtual filestore already exists", key))
+		}
+		ds.files[key] = []byte(file)
+	} else {
+		err := ioutil.WriteFile(key, file, 0644)
+		if err != nil {
+			ansi.Errorf("@R{Error writing file} @m{%s}: %s\n", key, err.Error())
+		}
 	}
 
-	if _, ok := ds.files[key]; ok {
-		return errors.New(fmt.Sprintf("file %s in virtual filestore already exists", key))
-	}
-
-	file = dequoteCurlyBraces(file)
-	ds.files[key] = []byte(file)
 	return nil
 }
 

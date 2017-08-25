@@ -9,27 +9,19 @@ import (
 
 	"github.com/JulzDiverse/aviator/cockpit"
 	"github.com/JulzDiverse/aviator/filemanager"
+	"github.com/JulzDiverse/aviator/printer"
 	"github.com/pkg/errors"
 )
 
 //go:generate counterfeiter . SpruceClient
 type SpruceClient interface {
-	MergeWithOpts(MergeConf) ([]byte, error)
+	MergeWithOpts(cockpit.MergeConf) ([]byte, error)
 }
 
 //go:generate counterfeiter . FileStore
 type FileStore interface {
 	ReadFile(string) ([]byte, bool)
 	WriteFile(string, []byte) error
-}
-
-type MergeConf struct {
-	Files       []string
-	Prune       []string
-	CherryPicks []string
-	SkipEval    bool
-	Warnings    []string
-	To          string
 }
 
 type WriterFunc func([]byte, string) error
@@ -39,6 +31,7 @@ type Processor struct {
 	store        FileStore
 	verbose      bool
 	silent       bool
+	warnings     []string
 }
 
 func NewTestProcessor(spruceClient SpruceClient, store FileStore) *Processor {
@@ -48,21 +41,27 @@ func NewTestProcessor(spruceClient SpruceClient, store FileStore) *Processor {
 	}
 }
 
-type ProcessorFactory func(*Processor, bool, bool)
-
-func Create(fn ProcessorFactory, silent bool, verbose bool) *Processor {
-	var p Processor
-	fn(&p, silent, verbose)
-	return &p
-}
-
-func AviatorDefault(p *Processor, s bool, v bool) {
-	p.store = filemanager.Store()
-	p.verbose = v
-	p.silent = s
+func New() *Processor {
+	return &Processor{
+		store: filemanager.Store(),
+	}
 }
 
 func (p *Processor) Process(config []cockpit.Spruce) error {
+	return p.ProcessWithOpts(config, false, false)
+}
+
+func (p *Processor) ProcessVerbose(config []cockpit.Spruce) error {
+	return p.ProcessWithOpts(config, true, false)
+}
+
+func (p *Processor) ProcessSilent(config []cockpit.Spruce) error {
+	return p.ProcessWithOpts(config, false, true)
+}
+
+func (p *Processor) ProcessWithOpts(config []cockpit.Spruce, verbose bool, silent bool) error {
+	p.verbose, p.silent = verbose, silent
+
 	for _, cfg := range config {
 		switch mergeType(cfg) {
 		case "default":
@@ -93,7 +92,8 @@ func (p *Processor) forEachFileMerge(cfg cockpit.Spruce) error {
 		mergeFiles := p.collectFiles(cfg)
 		fileName, _ := concatFileNameWithPath(file)
 		mergeFiles = append(mergeFiles, file)
-		if err := p.mergeAndWrite(mergeFiles, cfg, filepath.Join(cfg.ToDir, fileName)); err != nil {
+		targetName := createTargetName(cfg.ToDir, fileName)
+		if err := p.mergeAndWrite(mergeFiles, cfg, targetName); err != nil {
 			return errors.Wrap(err, "Spruce Merge FAILED")
 		}
 	}
@@ -110,18 +110,19 @@ func (p *Processor) forEachInMerge(cfg cockpit.Spruce) error {
 	files := p.collectFiles(cfg)
 	for _, f := range filePaths {
 		if except(cfg.ForEach.Except, f.Name()) {
-			//Warnings = append(Warnings, "SKIPPED: "+f.Name())
+			p.warnings = append(p.warnings, "SKIPPED: "+f.Name())
 			continue
 		}
 		matched, _ := regexp.MatchString(regex, f.Name())
 		if !f.IsDir() && matched {
 			prefix := chunk(cfg.ForEach.In)
 			mergeFiles := append(files, cfg.ForEach.In+f.Name())
-			if err := p.mergeAndWrite(mergeFiles, cfg, filepath.Join(cfg.ToDir, fmt.Sprintf("%s_%s", prefix, f.Name()))); err != nil {
+			targetName := createTargetName(cfg.ToDir, fmt.Sprintf("%s_%s", prefix, f.Name()))
+			if err := p.mergeAndWrite(mergeFiles, cfg, targetName); err != nil {
 				return errors.Wrap(err, "Spruce Merge FAILED")
 			}
 		} else {
-			//Warnings = append(Warnings, "EXCLUDED BY REGEXP "+regex+": "+conf.ForEachIn+f.Name())
+			p.warnings = append(p.warnings, "EXCLUDED BY REGEXP "+regex+": "+cfg.ForEach.In+f.Name())
 		}
 	}
 	return nil
@@ -146,7 +147,8 @@ func (p *Processor) walk(cfg cockpit.Spruce, outer string) error {
 				parent = ""
 			}
 
-			if err := p.mergeAndWrite(files, cfg, filepath.Join(cfg.ToDir, parent, filename)); err != nil {
+			targetName := createTargetName(cfg.ToDir, filepath.Join(parent, filename))
+			if err := p.mergeAndWrite(files, cfg, targetName); err != nil {
 				return errors.Wrap(err, "Spruce Merge FAILED")
 			}
 		}
@@ -170,12 +172,17 @@ func (p *Processor) forAll(cfg cockpit.Spruce) error {
 }
 
 func (p *Processor) mergeAndWrite(files []string, cfg cockpit.Spruce, to string) error {
-	mergeConf := MergeConf{
+	mergeConf := cockpit.MergeConf{
 		Files:       files,
 		SkipEval:    cfg.SkipEval,
 		Prune:       cfg.Prune,
 		CherryPicks: cfg.CherryPicks,
 	}
+	if !p.silent {
+		printer.AnsiPrint(mergeConf, to, p.warnings, p.verbose)
+	}
+
+	p.warnings = []string{}
 	result, err := p.spruceClient.MergeWithOpts(mergeConf)
 	if err != nil {
 		return errors.Wrap(err, "Spruce Merge FAILED")
@@ -211,6 +218,8 @@ func (p *Processor) collectFilesFromWithSection(merge cockpit.Merge) []string {
 		_, fileExists := p.store.ReadFile(file)
 		if !merge.With.Skip || fileExists {
 			result = append(result, file)
+		} else {
+			p.warnings = append(p.warnings, fmt.Sprintf("Skipped non existing file %s", file))
 		}
 	}
 	return result
@@ -230,10 +239,9 @@ func (p *Processor) collectFilesFromWithInSection(merge cockpit.Merge) []string 
 			matched, _ := regexp.MatchString(regex, f.Name())
 			if !f.IsDir() && matched {
 				result = append(result, within+f.Name())
+			} else {
+				p.warnings = append(p.warnings, "EXCLUDED BY REGEXP "+regex+": "+merge.WithIn+f.Name())
 			}
-			//else {
-			//Warnings = append(Warnings, "EXCLUDED BY REGEXP "+regex+": "+merge.WithIn+f.Name())
-			//}
 		}
 	}
 	return result
@@ -248,6 +256,8 @@ func (p *Processor) collectFilesFromWithAllInSection(merge cockpit.Merge) []stri
 			matched, _ := regexp.MatchString(regex, file)
 			if matched {
 				result = append(result, file)
+			} else {
+				p.warnings = append(p.warnings, "EXCLUDED BY REGEXP "+regex+": "+file)
 			}
 		}
 	}

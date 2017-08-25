@@ -16,13 +16,12 @@ import (
 var _ = Describe("Printer", func() {
 	var opts cockpit.MergeConf
 	var expected string
-
+	var warnings []string
+	var to string
 	BeforeEach(func() {
 		opts = cockpit.MergeConf{
-			Files:    []string{"file", "file2"},
-			Prune:    []string{"props", "meta"},
-			Warnings: []string{"skipped:x", "skipped:y"},
-			To:       "dest",
+			Files: []string{"file", "file2"},
+			Prune: []string{"props", "meta"},
 		}
 		expected = `SPRUCE MERGE:
 	@C{--prune} props
@@ -37,21 +36,24 @@ var _ = Describe("Printer", func() {
 
 
 `
+
+		warnings = []string{"skipped:x", "skipped:y"}
+		to = "dest"
 	})
 
 	Context("BeautifulPrint", func() {
 		It("prints the expected output", func() {
-			output := captureOutput(BeautyfulPrint, opts, fmt.Printf, true)
+			output := captureOutput(BeautyfulPrint, opts, to, warnings, true, fmt.Printf)
 			Expect(output).To(Equal(expected))
 		})
 	})
 })
 
-func captureOutput(f func(cockpit.MergeConf, Print, bool), opts cockpit.MergeConf, printf Print, verbose bool) string {
+func captureOutput(f func(cockpit.MergeConf, string, []string, bool, Print), opts cockpit.MergeConf, to string, warnings []string, verbose bool, printf Print) string {
 	old := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-	f(opts, printf, verbose)
+	f(opts, to, warnings, verbose, printf)
 	os.Stdout = old
 	var buf bytes.Buffer
 	w.Close()

@@ -14,7 +14,7 @@ var _ = Describe("Processor", func() {
 	var processor *Processor
 	var spruceConfig []cockpit.Spruce
 	var spruceClient *fakes.FakeSpruceClient
-	var store *fakes.FakeFileStore = new(fakes.FakeFileStore)
+	var store *fakes.FakeFileStore
 
 	Describe("Process", func() {
 
@@ -32,7 +32,7 @@ var _ = Describe("Processor", func() {
 				To:      "result.yml",
 				ToDir:   "integration/tmp/",
 			}
-
+			store = new(fakes.FakeFileStore)
 		})
 
 		Context("Default Merge", func() {
@@ -44,7 +44,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
@@ -63,7 +63,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
@@ -85,7 +85,7 @@ var _ = Describe("Processor", func() {
 					//store.ReadFileReturnsOnCall(0, []byte(""), false)
 					//processor = NewTestProcessor(spruceClient, store)
 
-					//err := processor.Process(spruceConfig)
+					//err := processor.ProcessSilent(spruceConfig)
 					//Expect(err).ToNot(HaveOccurred())
 
 					//mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
@@ -105,7 +105,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
@@ -124,7 +124,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
@@ -145,7 +145,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
@@ -164,7 +164,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
@@ -184,7 +184,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
@@ -202,7 +202,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
@@ -220,7 +220,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
@@ -239,12 +239,13 @@ var _ = Describe("Processor", func() {
 				It("should run a merge for each file in 'for_each.files'", func() {
 					cfg.Merge[0].With.Files = []string{"fake1", "fake2"}
 					cfg.ForEach.Files = []string{"file1", "file2"}
+					cfg.ToDir = "{{path}}"
 
 					spruceConfig = []cockpit.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store)
 
-					err := processor.Process(spruceConfig)
+					err := processor.ProcessSilent(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
 
 					mergeOpts1 := spruceClient.MergeWithOptsArgsForCall(0)
@@ -253,6 +254,9 @@ var _ = Describe("Processor", func() {
 					Expect(len(mergeOpts2.Files)).To(Equal(4))
 					Expect(mergeOpts1.Files[3]).To(Equal("file1"))
 					Expect(mergeOpts2.Files[3]).To(Equal("file2"))
+
+					to, _ := store.WriteFileArgsForCall(0)
+					Expect(to).To(Equal("{{path/file1}}"))
 				})
 			})
 
@@ -265,7 +269,7 @@ var _ = Describe("Processor", func() {
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store)
 
-					err := processor.Process(spruceConfig)
+					err := processor.ProcessSilent(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
 
 					mergeOpts1 := spruceClient.MergeWithOptsArgsForCall(0)
@@ -288,7 +292,7 @@ var _ = Describe("Processor", func() {
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store)
 
-					err := processor.Process(spruceConfig)
+					err := processor.ProcessSilent(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
 
 					cc := spruceClient.MergeWithOptsCallCount()
@@ -313,7 +317,7 @@ var _ = Describe("Processor", func() {
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store)
 
-					err := processor.Process(spruceConfig)
+					err := processor.ProcessSilent(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
 
 					cc := spruceClient.MergeWithOptsCallCount()
@@ -335,7 +339,7 @@ var _ = Describe("Processor", func() {
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store)
 
-					err := processor.Process(spruceConfig)
+					err := processor.ProcessSilent(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
 
 					cc := spruceClient.MergeWithOptsCallCount()
@@ -344,6 +348,8 @@ var _ = Describe("Processor", func() {
 					mergeOpts1 := spruceClient.MergeWithOptsArgsForCall(0)
 					Expect(len(mergeOpts1.Files)).To(Equal(4))
 					Expect(mergeOpts1.Files[3]).To(Equal("integration/yamls/base.yml"))
+					to, _ := store.WriteFileArgsForCall(0)
+					Expect(to).To(Equal("integration/tmp/yamls_base.yml"))
 				})
 			})
 
@@ -358,7 +364,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						cc := spruceClient.MergeWithOptsCallCount()
@@ -380,7 +386,7 @@ var _ = Describe("Processor", func() {
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
-						err := processor.Process(spruceConfig)
+						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
 
 						cc := spruceClient.MergeWithOptsCallCount()
