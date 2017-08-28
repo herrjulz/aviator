@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/JulzDiverse/aviator"
 	. "github.com/JulzDiverse/aviator/printer"
 
 	. "github.com/onsi/ginkgo"
@@ -14,16 +14,16 @@ import (
 )
 
 var _ = Describe("Printer", func() {
-	var opts cockpit.MergeConf
+	var opts aviator.MergeConf
 	var expected string
 	var warnings []string
 	var to string
 	BeforeEach(func() {
-		opts = cockpit.MergeConf{
+		opts = aviator.MergeConf{
 			Files: []string{"file", "file2"},
 			Prune: []string{"props", "meta"},
 		}
-		expected = `SPRUCE MERGE:
+		expected = `@G{SPRUCE MERGE:}
 	@C{--prune} props
 	@C{--prune} meta
 	file
@@ -49,7 +49,7 @@ var _ = Describe("Printer", func() {
 	})
 })
 
-func captureOutput(f func(cockpit.MergeConf, string, []string, bool, Print), opts cockpit.MergeConf, to string, warnings []string, verbose bool, printf Print) string {
+func captureOutput(f func(aviator.MergeConf, string, []string, bool, Print), opts aviator.MergeConf, to string, warnings []string, verbose bool, printf Print) string {
 	old := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w

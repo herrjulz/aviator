@@ -1,6 +1,8 @@
 package spruce_test
 
 import (
+	"github.com/JulzDiverse/aviator/aviatortypes"
+	"github.com/JulzDiverse/aviator/filemanager"
 	. "github.com/JulzDiverse/aviator/spruce"
 
 	. "github.com/onsi/ginkgo"
@@ -9,16 +11,24 @@ import (
 
 var _ = Describe("Spruce", func() {
 
+	var spruce *SpruceClient
+
+	BeforeEach(func() {
+		spruce = NewWithFileFilemanager(
+			filemanager.Store(),
+		)
+	})
+
 	Context("CmdMergeEval", func() {
 		It("simple merge two files", func() {
-			opts := MergeOpts{
+			opts := aviatortypes.MergeConf{
 				Files: []string{
-					"../integration/yamls/base.yml",
-					"../integration/yamls/another.yml",
+					"../processor/integration/yamls/base.yml",
+					"../processor/integration/yamls/fake.yml",
 				},
 			}
 
-			result, err := CmdMergeEval(opts)
+			result, err := spruce.MergeWithOptsRaw(opts)
 
 			Expect(err).To(BeNil())
 			value, _ := result["word"]
@@ -28,17 +38,17 @@ var _ = Describe("Spruce", func() {
 		})
 
 		It("should be able to prune", func() {
-			opts := MergeOpts{
+			opts := aviatortypes.MergeConf{
 				Files: []string{
-					"../integration/yamls/base.yml",
-					"../integration/yamls/another.yml",
+					"../processor/integration/yamls/base.yml",
+					"../processor/integration/yamls/fake.yml",
 				},
 				Prune: []string{
 					"the",
 				},
 			}
 
-			result, err := CmdMergeEval(opts)
+			result, err := spruce.MergeWithOptsRaw(opts)
 			Expect(err).To(BeNil())
 			value, _ := result["the"]
 			Expect(value).To(BeNil())

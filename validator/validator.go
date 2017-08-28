@@ -3,7 +3,7 @@ package validator
 import (
 	"errors"
 
-	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/JulzDiverse/aviator"
 )
 
 //Error Types: Merge-Section
@@ -25,7 +25,7 @@ func New() *Validator {
 	return &Validator{}
 }
 
-func (v *Validator) ValidateSpruce(cfg []cockpit.Spruce) error {
+func (v *Validator) ValidateSpruce(cfg []aviator.Spruce) error {
 	for _, spruce := range cfg {
 		if !isMergeArrayEmpty(spruce.Merge) {
 			err := validateMergeSection(spruce.Merge)
@@ -44,7 +44,7 @@ func (v *Validator) ValidateSpruce(cfg []cockpit.Spruce) error {
 	return nil
 }
 
-func validateMergeSection(cfg []cockpit.Merge) error {
+func validateMergeSection(cfg []aviator.Merge) error {
 	for _, merge := range cfg {
 		if !isMergeEmpty(merge) {
 			err := validateMergeCombinations(merge)
@@ -70,7 +70,7 @@ func validateMergeSection(cfg []cockpit.Merge) error {
 	return nil
 }
 
-func validateForEachSection(forEach cockpit.ForEach) error {
+func validateForEachSection(forEach aviator.ForEach) error {
 	err := validateForEachCombination(forEach)
 	if err != nil {
 		return err
@@ -99,7 +99,7 @@ func validateForEachSection(forEach cockpit.ForEach) error {
 	return nil
 }
 
-func validateMergeCombinations(merge cockpit.Merge) error {
+func validateMergeCombinations(merge aviator.Merge) error {
 	var err MergeCombinationError
 	if (merge.With.Files != nil) && (merge.WithIn != "" || merge.WithAllIn != "") || (merge.WithIn != "" && merge.WithAllIn != "") {
 		err = errors.New(
@@ -109,7 +109,7 @@ func validateMergeCombinations(merge cockpit.Merge) error {
 	return err
 }
 
-func validateMergeWithCombinations(with cockpit.With) error {
+func validateMergeWithCombinations(with aviator.With) error {
 	var err MergeWithCombinationError
 	if len(with.Files) == 0 && (with.InDir != "" || with.Skip == true) {
 		err = errors.New(
@@ -119,7 +119,7 @@ func validateMergeWithCombinations(with cockpit.With) error {
 	return err
 }
 
-func validateMergeExceptCombination(merge cockpit.Merge) error {
+func validateMergeExceptCombination(merge aviator.Merge) error {
 	var err MergeExceptCombinationError
 	if (len(merge.Except) > 0) && (merge.WithIn == "" && merge.WithAllIn == "") {
 		err = errors.New(
@@ -129,7 +129,7 @@ func validateMergeExceptCombination(merge cockpit.Merge) error {
 	return err
 }
 
-func validateMergeRegexpCombination(merge cockpit.Merge) error {
+func validateMergeRegexpCombination(merge aviator.Merge) error {
 	var err MergeRegexpCombinationError
 	if (merge.Regexp != "") && ((merge.With.Files == nil || len(merge.With.Files) == 0) && merge.WithIn == "" && merge.WithAllIn == "") {
 		err = errors.New(
@@ -139,7 +139,7 @@ func validateMergeRegexpCombination(merge cockpit.Merge) error {
 	return err
 }
 
-func validateForEachCombination(forEach cockpit.ForEach) error {
+func validateForEachCombination(forEach aviator.ForEach) error {
 	var err ForEachCombinationError
 	if forEach.Files != nil && forEach.In != "" {
 		err = errors.New(
@@ -149,7 +149,7 @@ func validateForEachCombination(forEach cockpit.ForEach) error {
 	return err
 }
 
-func validateForEachFilesCombinations(forEach cockpit.ForEach) error {
+func validateForEachFilesCombinations(forEach aviator.ForEach) error {
 	var err ForEachFilesCombinationError
 	if (forEach.InDir != "" || forEach.Skip == true) && forEach.Files == nil {
 		err = errors.New(
@@ -159,7 +159,7 @@ func validateForEachFilesCombinations(forEach cockpit.ForEach) error {
 	return err
 }
 
-func validateForEachInCombinations(forEach cockpit.ForEach) error {
+func validateForEachInCombinations(forEach aviator.ForEach) error {
 	var err ForEachInCombinationError
 	if ((forEach.Except != nil || len(forEach.Except) > 0) || forEach.SubDirs == true) && forEach.In == "" {
 		err = errors.New(
@@ -169,7 +169,7 @@ func validateForEachInCombinations(forEach cockpit.ForEach) error {
 	return err
 }
 
-func validateForEachRegexpCombination(forEach cockpit.ForEach) error {
+func validateForEachRegexpCombination(forEach aviator.ForEach) error {
 	var err ForEachRegexpCombinationError
 	if (forEach.Regexp != "") && ((forEach.Files == nil || len(forEach.Files) == 0) && forEach.In == "") {
 		err = errors.New(
@@ -179,7 +179,7 @@ func validateForEachRegexpCombination(forEach cockpit.ForEach) error {
 	return err
 }
 
-func validateForEachWalkCombinations(forEach cockpit.ForEach) error {
+func validateForEachWalkCombinations(forEach aviator.ForEach) error {
 	var err ForEachWalkCombinationError
 	if (forEach.SubDirs == false) && (forEach.CopyParents == true || forEach.EnableMatching == true || forEach.ForAll != "") {
 		err = errors.New(
@@ -189,7 +189,7 @@ func validateForEachWalkCombinations(forEach cockpit.ForEach) error {
 	return err
 }
 
-func isForEachEmpty(forEach cockpit.ForEach) bool {
+func isForEachEmpty(forEach aviator.ForEach) bool {
 	if (forEach.Files == nil || len(forEach.Files) == 0) &&
 		forEach.InDir == "" &&
 		(forEach.Except == nil || len(forEach.Except) == 0) &&
@@ -205,7 +205,7 @@ func isForEachEmpty(forEach cockpit.ForEach) bool {
 	return false
 }
 
-func isMergeEmpty(merge cockpit.Merge) bool {
+func isMergeEmpty(merge aviator.Merge) bool {
 	if merge.With.InDir == "" &&
 		merge.With.Files == nil &&
 		merge.With.Skip == false &&
@@ -217,7 +217,7 @@ func isMergeEmpty(merge cockpit.Merge) bool {
 	return false
 }
 
-func isMergeArrayEmpty(merges []cockpit.Merge) bool {
+func isMergeArrayEmpty(merges []aviator.Merge) bool {
 	if merges == nil {
 		return true
 	}

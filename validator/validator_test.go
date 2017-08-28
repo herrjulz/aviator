@@ -1,7 +1,7 @@
 package validator_test
 
 import (
-	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/JulzDiverse/aviator"
 	. "github.com/JulzDiverse/aviator/validator"
 
 	. "github.com/onsi/ginkgo"
@@ -10,15 +10,15 @@ import (
 
 var _ = Describe("Validator", func() {
 
-	var cfg cockpit.Spruce
+	var cfg aviator.Spruce
 	var validator *Validator
 
 	BeforeEach(func() {
-		cfg = cockpit.Spruce{
+		cfg = aviator.Spruce{
 			Base: "base.yml",
-			Merge: []cockpit.Merge{
-				cockpit.Merge{
-					With: cockpit.With{},
+			Merge: []aviator.Merge{
+				aviator.Merge{
+					With: aviator.With{},
 				},
 			},
 			To: "target.yml",
@@ -34,7 +34,7 @@ var _ = Describe("Validator", func() {
 					cfg.Merge[0].With.Files = []string{"fake"}
 					cfg.Merge[0].WithIn = "path/"
 
-					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 					Expect(err).To(HaveOccurred())
 
 					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'with', 'with_in', and 'with_all_in' are discrete parameters and cannot be defined together")))
@@ -44,7 +44,7 @@ var _ = Describe("Validator", func() {
 					cfg.Merge[0].With.Files = []string{"fake"}
 					cfg.Merge[0].WithAllIn = "path/"
 
-					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 					Expect(err).To(HaveOccurred())
 
 					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'with', 'with_in', and 'with_all_in' are discrete parameters and cannot be defined together")))
@@ -56,7 +56,7 @@ var _ = Describe("Validator", func() {
 					cfg.Merge[0].WithIn = "path/one/"
 					cfg.Merge[0].WithAllIn = "path/two/"
 
-					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 					Expect(err).To(HaveOccurred())
 
 					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'with', 'with_in', and 'with_all_in' are discrete parameters and cannot be defined together")))
@@ -69,7 +69,7 @@ var _ = Describe("Validator", func() {
 				It("returns an error if 'in_dir' is defined", func() {
 					cfg.Merge[0].With.InDir = "path/"
 
-					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 					Expect(err).To(HaveOccurred())
 
 					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'with.in_dir' or 'with.skip_non_existing' can only be declared in combination with 'with.files'")))
@@ -82,7 +82,7 @@ var _ = Describe("Validator", func() {
 				It("returns an error if 'except' is defined", func() {
 					cfg.Merge[0].Except = []string{"fake", "fake2"}
 
-					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 					Expect(err).To(HaveOccurred())
 
 					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'merge.except' is only allowed in combination with 'merge.with_in' or 'merge.with_all_in'")))
@@ -94,7 +94,7 @@ var _ = Describe("Validator", func() {
 					cfg.Merge[0].WithIn = "path/"
 					cfg.Merge[0].Except = []string{"fake", "fake2"}
 
-					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -104,7 +104,7 @@ var _ = Describe("Validator", func() {
 					cfg.Merge[0].WithAllIn = "path/"
 					cfg.Merge[0].Except = []string{"fake", "fake2"}
 
-					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -115,7 +115,7 @@ var _ = Describe("Validator", func() {
 				It("returns an error if 'with', 'with_in', or 'with_all_in' is NOT defined", func() {
 					cfg.Merge[0].Regexp = ".*.(yml)"
 
-					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 					Expect(err).To(HaveOccurred())
 
 					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'merge.regexp' is only allowed in combination with 'merge.with', 'merge.with_in' or 'merge.with_all_in'")))
@@ -131,7 +131,7 @@ var _ = Describe("Validator", func() {
 					cfg.ForEach.Files = []string{"file", "file2"}
 					cfg.ForEach.In = "path/"
 
-					err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 					Expect(err).To(HaveOccurred())
 
 					Expect(err).To(MatchError(ContainSubstring(
@@ -145,7 +145,7 @@ var _ = Describe("Validator", func() {
 					It("returns an error if 'in_dir' is declared", func() {
 						cfg.ForEach.InDir = "path/"
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).To(HaveOccurred())
 
 						Expect(err).To(MatchError(ContainSubstring(
@@ -156,7 +156,7 @@ var _ = Describe("Validator", func() {
 					It("returns an error if 'skip_non_existing' is enabled", func() {
 						cfg.ForEach.Skip = true
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).To(HaveOccurred())
 
 						Expect(err).To(MatchError(ContainSubstring(
@@ -168,7 +168,7 @@ var _ = Describe("Validator", func() {
 						cfg.ForEach.Skip = true
 						cfg.ForEach.InDir = "path/"
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).To(HaveOccurred())
 
 						Expect(err).To(MatchError(ContainSubstring(
@@ -182,7 +182,7 @@ var _ = Describe("Validator", func() {
 						cfg.ForEach.InDir = "path/"
 						cfg.ForEach.Files = []string{"file", "file2"}
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).ToNot(HaveOccurred())
 					})
 
@@ -190,7 +190,7 @@ var _ = Describe("Validator", func() {
 						cfg.ForEach.Skip = true
 						cfg.ForEach.Files = []string{"file", "file2"}
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).ToNot(HaveOccurred())
 					})
 
@@ -199,7 +199,7 @@ var _ = Describe("Validator", func() {
 						cfg.ForEach.InDir = "path/"
 						cfg.ForEach.Files = []string{"file", "file2"}
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
@@ -210,7 +210,7 @@ var _ = Describe("Validator", func() {
 					It("returns an error if 'except' is declared", func() {
 						cfg.ForEach.Except = []string{"fake"}
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).To(HaveOccurred())
 
 						Expect(err).To(MatchError(ContainSubstring(
@@ -221,7 +221,7 @@ var _ = Describe("Validator", func() {
 					It("returns an error if 'include_sub_dirs' is declared", func() {
 						cfg.ForEach.SubDirs = true
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).To(HaveOccurred())
 
 						Expect(err).To(MatchError(ContainSubstring(
@@ -234,7 +234,7 @@ var _ = Describe("Validator", func() {
 					It("returns an error if 'copy_parents' is enabled", func() {
 						cfg.ForEach.CopyParents = true
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).To(HaveOccurred())
 
 						Expect(err).To(MatchError(ContainSubstring(
@@ -248,7 +248,7 @@ var _ = Describe("Validator", func() {
 					It("It returns an error if declared 'for_ach.regexp'", func() {
 						cfg.ForEach.Regexp = ".*.(yml)"
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).To(HaveOccurred())
 
 						Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'for_each.regexp' is only allowed in combination with 'for_each.in', 'for_each.files'")))
@@ -260,7 +260,7 @@ var _ = Describe("Validator", func() {
 						cfg.ForEach.Regexp = ".*.(yml)"
 						cfg.ForEach.In = "path/"
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
@@ -269,7 +269,7 @@ var _ = Describe("Validator", func() {
 						cfg.ForEach.Regexp = ".*.(yml)"
 						cfg.ForEach.Files = []string{"fake"}
 
-						err := validator.ValidateSpruce([]cockpit.Spruce{cfg})
+						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})

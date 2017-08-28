@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/JulzDiverse/aviator"
 )
 
 var quoteRegex = `\{\{([-\w\p{L}]+)\}\}`
@@ -56,7 +56,7 @@ func concatResults(sl1 [][]byte, sl2 ...[][]byte) [][]byte {
 	return sl1
 }
 
-func mergeType(cfg cockpit.Spruce) string {
+func mergeType(cfg aviator.Spruce) string {
 	if (cfg.ForEach.Files == nil ||
 		len(cfg.ForEach.Files) == 0) &&
 		cfg.ForEach.In == "" {
@@ -118,7 +118,7 @@ func chunk(path string) string {
 	return prefix
 }
 
-func enableMatching(cfg cockpit.ForEach, match string) string {
+func enableMatching(cfg aviator.ForEach, match string) string {
 	if !cfg.EnableMatching {
 		match = ""
 	}

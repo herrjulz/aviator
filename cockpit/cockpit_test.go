@@ -4,8 +4,8 @@ import (
 	"errors"
 	"os"
 
+	fakes "github.com/JulzDiverse/aviator/aviatorfakes"
 	. "github.com/JulzDiverse/aviator/cockpit"
-	fakes "github.com/JulzDiverse/aviator/cockpit/cockpitfakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -15,12 +15,14 @@ var _ = Describe("Cockpit", func() {
 	var aviatorYaml string
 	var spruceProcessor *fakes.FakeSpruceProcessor
 	var flyExecuter *fakes.FakeFlyExecuter
+	var validator *fakes.FakeValidator
 	var cockpit *Cockpit
 
 	BeforeEach(func() {
 		spruceProcessor = new(fakes.FakeSpruceProcessor)
 		flyExecuter = new(fakes.FakeFlyExecuter)
-		cockpit = Init(spruceProcessor, flyExecuter)
+		validator = new(fakes.FakeValidator)
+		cockpit = Init(spruceProcessor, flyExecuter, validator)
 	})
 
 	Context("New", func() {
@@ -256,14 +258,14 @@ var _ = Describe("Cockpit", func() {
   - with_in: some/dir/
   to: output.yml`
 
-			spruceProcessor.ProcessReturns(nil, errors.New("uups"))
+			spruceProcessor.ProcessWithOptsReturns(errors.New("uups"))
 		})
 
 		It("returns a valid error message", func() {
 			var err error
 			aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
 			Expect(err).ToNot(HaveOccurred())
-			_, err = aviator.ProcessSprucePlan()
+			err = aviator.ProcessSprucePlan(false, false)
 
 			Expect(err).To(MatchError(ContainSubstring("Processing Spruce Plan FAILED")))
 			Expect(err).To(MatchError(ContainSubstring("uups")))

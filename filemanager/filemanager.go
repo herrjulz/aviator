@@ -82,14 +82,16 @@ func (ds *FileStore) PrintFiles() {
 }
 
 func createNonExistingDirs(path string) {
-	sliced := strings.Split(path, "/")
-	dirs := sliced[:len(sliced)-1]
-	fol := dirs[0]
-	for i, dir := range dirs {
-		if i > 0 {
-			fol = strings.Join([]string{fol, dir}, "/")
+	if strings.Contains(path, "/") {
+		sliced := strings.Split(path, "/")
+		dirs := sliced[:len(sliced)-1]
+		fol := dirs[0]
+		for i, dir := range dirs {
+			if i > 0 {
+				fol = strings.Join([]string{fol, dir}, "/")
+			}
+			createDir(fol)
 		}
-		createDir(fol)
 	}
 }
 

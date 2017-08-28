@@ -1,9 +1,9 @@
 package processor_test
 
 import (
-	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/JulzDiverse/aviator"
+	fakes "github.com/JulzDiverse/aviator/aviatorfakes"
 	. "github.com/JulzDiverse/aviator/processor"
-	fakes "github.com/JulzDiverse/aviator/processor/processorfakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,23 +12,23 @@ import (
 var _ = Describe("Processor", func() {
 
 	var processor *Processor
-	var spruceConfig []cockpit.Spruce
+	var spruceConfig []aviator.Spruce
 	var spruceClient *fakes.FakeSpruceClient
 	var store *fakes.FakeFileStore
 
 	Describe("Process", func() {
 
-		var cfg cockpit.Spruce
+		var cfg aviator.Spruce
 
 		BeforeEach(func() {
-			cfg = cockpit.Spruce{
+			cfg = aviator.Spruce{
 				Base: "input.yml",
-				Merge: []cockpit.Merge{
-					cockpit.Merge{
-						With: cockpit.With{},
+				Merge: []aviator.Merge{
+					aviator.Merge{
+						With: aviator.With{},
 					},
 				},
-				ForEach: cockpit.ForEach{},
+				ForEach: aviator.ForEach{},
 				To:      "result.yml",
 				ToDir:   "integration/tmp/",
 			}
@@ -40,7 +40,7 @@ var _ = Describe("Processor", func() {
 				Context("Using Merge.With.Files", func() {
 					It("includes the right files with the right amount in the merge ", func() {
 						cfg.Merge[0].With.Files = []string{"file.yml"}
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
@@ -59,7 +59,7 @@ var _ = Describe("Processor", func() {
 						cfg.Merge[0].With.Files = []string{"fake.yml", "fake2.yml"}
 						cfg.Merge[0].With.InDir = "integration/yamls/"
 
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
@@ -80,7 +80,7 @@ var _ = Describe("Processor", func() {
 					//cfg.Merge[0].With.InDir = "integration/yamls/"
 					//cfg.Merge[0].With.Skip = true
 
-					//spruceConfig = []cockpit.Spruce{cfg}
+					//spruceConfig = []aviator.Spruce{cfg}
 					//spruceClient = new(fakes.FakeSpruceClient)
 					//store.ReadFileReturnsOnCall(0, []byte(""), false)
 					//processor = NewTestProcessor(spruceClient, store)
@@ -101,7 +101,7 @@ var _ = Describe("Processor", func() {
 						cfg.Merge[0].With.Files = []string{"nonExisting.yml", "fake.yml", "fake2.yml"}
 						cfg.Merge[0].With.InDir = "integration/yamls/"
 
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
@@ -120,7 +120,7 @@ var _ = Describe("Processor", func() {
 					It("includes all files within a directory, but not subdirectories ", func() {
 						cfg.Merge[0].WithIn = "integration/yamls/"
 
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
@@ -141,7 +141,7 @@ var _ = Describe("Processor", func() {
 						cfg.Merge[0].WithIn = "integration/yamls/"
 						cfg.Merge[0].Except = []string{"base.yml", "fake.yml"}
 
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
@@ -160,7 +160,7 @@ var _ = Describe("Processor", func() {
 						cfg.Merge[0].WithIn = "integration/yamls/"
 						cfg.Merge[0].Regexp = "base.yml"
 
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
@@ -180,7 +180,7 @@ var _ = Describe("Processor", func() {
 						cfg.Merge[0].Regexp = "fake.*.yml"
 						cfg.Merge[0].Except = []string{"fake.yml"}
 
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
@@ -198,7 +198,7 @@ var _ = Describe("Processor", func() {
 					It("includes all files within a directory and all subdirectories", func() {
 						cfg.Merge[0].WithAllIn = "integration/yamls/"
 
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
@@ -216,7 +216,7 @@ var _ = Describe("Processor", func() {
 						cfg.Merge[0].WithAllIn = "integration/yamls/"
 						cfg.Merge[0].Regexp = "file.*.yml"
 
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
@@ -241,7 +241,7 @@ var _ = Describe("Processor", func() {
 					cfg.ForEach.Files = []string{"file1", "file2"}
 					cfg.ToDir = "{{path}}"
 
-					spruceConfig = []cockpit.Spruce{cfg}
+					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store)
 
@@ -265,7 +265,7 @@ var _ = Describe("Processor", func() {
 					cfg.Merge[0].With.Files = []string{"fake1", "fake2"}
 					cfg.ForEach.In = "integration/yamls/addons/sub1/"
 
-					spruceConfig = []cockpit.Spruce{cfg}
+					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store)
 
@@ -288,7 +288,7 @@ var _ = Describe("Processor", func() {
 					cfg.ForEach.In = "integration/yamls/"
 					cfg.ForEach.Except = []string{"fake2.yml"}
 
-					spruceConfig = []cockpit.Spruce{cfg}
+					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store)
 
@@ -313,7 +313,7 @@ var _ = Describe("Processor", func() {
 					cfg.ForEach.In = "integration/yamls/"
 					cfg.ForEach.Regexp = "base.yml"
 
-					spruceConfig = []cockpit.Spruce{cfg}
+					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store)
 
@@ -335,7 +335,7 @@ var _ = Describe("Processor", func() {
 					cfg.ForEach.In = "integration/yamls/"
 					cfg.ForEach.Regexp = "base.yml"
 
-					spruceConfig = []cockpit.Spruce{cfg}
+					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store)
 
@@ -360,7 +360,7 @@ var _ = Describe("Processor", func() {
 						cfg.ForEach.In = "integration/yamls/addons/"
 						cfg.ForEach.SubDirs = true
 
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 
@@ -382,7 +382,7 @@ var _ = Describe("Processor", func() {
 						cfg.ForEach.SubDirs = true
 						cfg.ForEach.ForAll = "integration/yamls/"
 
-						spruceConfig = []cockpit.Spruce{cfg}
+						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
 						processor = NewTestProcessor(spruceClient, store)
 

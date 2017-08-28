@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/JulzDiverse/aviator"
 	"github.com/starkandwayne/goutils/ansi"
 )
 
 type Print func(string, ...interface{}) (int, error)
 
-func AnsiPrint(opts cockpit.MergeConf, to string, warnings []string, verbose bool) {
+func AnsiPrint(opts aviator.MergeConf, to string, warnings []string, verbose bool) {
 	BeautyfulPrint(opts, to, warnings, verbose, ansi.Printf)
 }
 
-func BeautyfulPrint(opts cockpit.MergeConf, to string, warnings []string, verbose bool, printf Print) {
-	fmt.Println("SPRUCE MERGE:")
+func BeautyfulPrint(opts aviator.MergeConf, to string, warnings []string, verbose bool, printf Print) {
+	printf("@G{SPRUCE MERGE:}\n")
 	if len(opts.Prune) != 0 {
 		for _, prune := range opts.Prune {
 			printf("\t@C{--prune} %s\n", prune)
@@ -25,7 +25,7 @@ func BeautyfulPrint(opts cockpit.MergeConf, to string, warnings []string, verbos
 		printf("\t%s\n", file)
 	}
 	printf("\t@G{to: %s}\n\n", to)
-	if verbose && (len(warnings) != 0) { //global variable
+	if verbose && (len(warnings) > 0) { //global variable
 		printf("\t@Y{WARNINGS:}\n")
 		for _, w := range warnings {
 			sl := strings.Split(w, ":")
