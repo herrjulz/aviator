@@ -32,7 +32,10 @@ func main() {
 			err = aviator.ProcessSprucePlan(c.Bool("verbose"), c.Bool("silent"))
 			exitWithError(err)
 
-			//TODO: Execute Fly
+			fly := aviator.AviatorYaml.Fly
+			if fly.Name != "" && fly.Target != "" && fly.Config != "" {
+				aviator.ExecuteFly()
+			}
 		}
 
 		return nil

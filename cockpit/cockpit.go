@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"github.com/JulzDiverse/aviator"
+	"github.com/JulzDiverse/aviator/executor"
 	"github.com/JulzDiverse/aviator/processor"
 	"github.com/JulzDiverse/aviator/validator"
 	"github.com/JulzDiverse/osenv"
@@ -15,7 +16,7 @@ import (
 
 type Cockpit struct {
 	spruceProcessor aviator.SpruceProcessor
-	flyExecuter     aviator.FlyExecuter
+	flyExecutor     aviator.Executor
 	validator       aviator.Validator
 }
 
@@ -26,7 +27,7 @@ type Aviator struct {
 
 func Init(
 	spruceProcessor aviator.SpruceProcessor,
-	flyExecuter aviator.FlyExecuter,
+	flyExecuter aviator.Executor,
 	validator aviator.Validator,
 ) *Cockpit {
 	return &Cockpit{spruceProcessor, flyExecuter, validator}
@@ -36,6 +37,7 @@ func New() *Cockpit {
 	return &Cockpit{
 		spruceProcessor: processor.New(),
 		validator:       validator.New(),
+		flyExecutor:     executor.NewFlyExecutor(),
 	}
 }
 
@@ -69,7 +71,7 @@ func (a *Aviator) ProcessSprucePlan(verbose bool, silent bool) error {
 }
 
 func (a *Aviator) ExecuteFly() error {
-	err := a.cockpit.flyExecuter.Execute(a.AviatorYaml.Fly)
+	err := a.cockpit.flyExecutor.Execute(a.AviatorYaml.Fly)
 	if err != nil {
 		return errors.Wrap(err, "Executing Fly FAILED")
 	}

@@ -85,3 +85,8 @@ type FileStore interface {
 type Validator interface {
 	ValidateSpruce([]Spruce) error
 }
+
+//go:generate counterfeiter . Executor
+type Executor interface {
+	Execute(interface{}) error
+}
