@@ -111,7 +111,7 @@ func validateMergeCombinations(merge aviator.Merge) error {
 
 func validateMergeWithCombinations(with aviator.With) error {
 	var err MergeWithCombinationError
-	if len(with.Files) == 0 && (with.InDir != "" || with.Skip == true) {
+	if (len(with.Files) == 0 || with.Files == nil) && (with.InDir != "" || with.Skip == true) {
 		err = errors.New(
 			"INVALID SYNTAX: 'with.in_dir' or 'with.skip_non_existing' can only be declared in combination with 'with.files'",
 		)
@@ -131,9 +131,9 @@ func validateMergeExceptCombination(merge aviator.Merge) error {
 
 func validateMergeRegexpCombination(merge aviator.Merge) error {
 	var err MergeRegexpCombinationError
-	if (merge.Regexp != "") && ((merge.With.Files == nil || len(merge.With.Files) == 0) && merge.WithIn == "" && merge.WithAllIn == "") {
+	if (merge.Regexp != "") && (merge.WithIn == "" && merge.WithAllIn == "") {
 		err = errors.New(
-			"INVALID SYNTAX: 'merge.regexp' is only allowed in combination with 'merge.with', 'merge.with_in' or 'merge.with_all_in'",
+			"INVALID SYNTAX: 'merge.regexp' is only allowed in combination with 'merge.with_in' or 'merge.with_all_in'",
 		)
 	}
 	return err
@@ -171,9 +171,9 @@ func validateForEachInCombinations(forEach aviator.ForEach) error {
 
 func validateForEachRegexpCombination(forEach aviator.ForEach) error {
 	var err ForEachRegexpCombinationError
-	if (forEach.Regexp != "") && ((forEach.Files == nil || len(forEach.Files) == 0) && forEach.In == "") {
+	if (forEach.Regexp != "") && (forEach.In == "") {
 		err = errors.New(
-			"INVALID SYNTAX: 'for_each.regexp' is only allowed in combination with 'for_each.in', 'for_each.files'",
+			"INVALID SYNTAX: 'for_each.regexp' is only allowed in combination with 'for_each.in'",
 		)
 	}
 	return err

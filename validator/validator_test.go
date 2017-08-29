@@ -75,6 +75,18 @@ var _ = Describe("Validator", func() {
 					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'with.in_dir' or 'with.skip_non_existing' can only be declared in combination with 'with.files'")))
 				})
 			})
+
+			Context("When 'with' is not defined", func() {
+				It("returns an error if 'skip_non_existing' is defined", func() {
+					cfg.Merge[0].With.Skip = true
+					cfg.Merge[0].WithIn = "path/"
+
+					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
+					Expect(err).To(HaveOccurred())
+
+					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'with.in_dir' or 'with.skip_non_existing' can only be declared in combination with 'with.files'")))
+				})
+			})
 		})
 
 		Context("WithIn & WithAllIn", func() {
@@ -118,7 +130,7 @@ var _ = Describe("Validator", func() {
 					err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 					Expect(err).To(HaveOccurred())
 
-					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'merge.regexp' is only allowed in combination with 'merge.with', 'merge.with_in' or 'merge.with_all_in'")))
+					Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'merge.regexp' is only allowed in combination with 'merge.with_in' or 'merge.with_all_in'")))
 				})
 			})
 		})
@@ -251,7 +263,7 @@ var _ = Describe("Validator", func() {
 						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
 						Expect(err).To(HaveOccurred())
 
-						Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'for_each.regexp' is only allowed in combination with 'for_each.in', 'for_each.files'")))
+						Expect(err).To(MatchError(ContainSubstring("INVALID SYNTAX: 'for_each.regexp' is only allowed in combination with 'for_each.in'")))
 					})
 				})
 
@@ -265,12 +277,12 @@ var _ = Describe("Validator", func() {
 					})
 				})
 				Context("When 'for_each.files' is declared", func() {
-					It("can be combined with 'for_each.regexp'", func() {
+					It("can not be combined with 'for_each.regexp'", func() {
 						cfg.ForEach.Regexp = ".*.(yml)"
 						cfg.ForEach.Files = []string{"fake"}
 
 						err := validator.ValidateSpruce([]aviator.Spruce{cfg})
-						Expect(err).ToNot(HaveOccurred())
+						Expect(err).To(HaveOccurred())
 					})
 				})
 			})

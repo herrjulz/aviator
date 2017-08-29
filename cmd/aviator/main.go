@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/JulzDiverse/aviator/validator"
 	"github.com/starkandwayne/goutils/ansi"
 	"github.com/urfave/cli"
 )
@@ -27,7 +28,7 @@ func main() {
 
 			cockpit := cockpit.New()
 			aviator, err := cockpit.NewAviator(aviatorYml)
-			exitWithError(err)
+			handleError(err)
 
 			err = aviator.ProcessSprucePlan(c.Bool("verbose"), c.Bool("silent"))
 			exitWithError(err)
@@ -66,6 +67,34 @@ func exitWithError(err error) {
 	if err != nil {
 		fmt.Println(err.Error())
 		ansi.Printf("@R{%s}\n", err.Error())
+		os.Exit(1)
+	}
+}
+
+func handleError(err error) {
+	if err != nil {
+		switch err.(type) {
+		case validator.MergeCombinationError:
+			printMergeCombinationError(err)
+		case validator.MergeWithCombinationError:
+			printMergeWithCombinationError(err)
+		case validator.MergeRegexpCombinationError:
+			printMergeRegexpCombinationError(err)
+		case validator.MergeExceptCombinationError:
+			printMergeExceptCombinationError(err)
+		case validator.ForEachCombinationError:
+			printForEachCombinationError(err)
+		case validator.ForEachFilesCombinationError:
+			printForEachFilesCombinationError(err)
+		case validator.ForEachInCombinationError:
+			printForEachInCombinationError(err)
+		case validator.ForEachWalkCombinationError:
+			printForEachWalkCombinationError(err)
+		case validator.ForEachRegexpCombinationError:
+			printForEachRegexpCombinationError(err)
+		default:
+			ansi.Printf(err.Error())
+		}
 		os.Exit(1)
 	}
 }

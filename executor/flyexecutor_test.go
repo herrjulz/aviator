@@ -31,6 +31,7 @@ var _ = Describe("Flyexecutor", func() {
 					Vars:   []string{"credentials.yml", "props.yml"},
 				}
 			})
+
 			It("calls the runner with the right commands", func() {
 				err := flyExecutor.ExecuteWithCustomRunner(fly)
 				Expect(err).ToNot(HaveOccurred())
