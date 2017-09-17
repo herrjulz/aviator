@@ -11,7 +11,7 @@ import (
 	"github.com/JulzDiverse/aviator"
 )
 
-var quoteRegex = `\{\{([-\w\p{L}]+)\}\}`
+var quoteRegex = `\{\{([-\_\.\/\w\p{L}]+)\}\}`
 var re = regexp.MustCompile("(" + quoteRegex + ")")
 
 func except(except []string, file string) bool {
@@ -78,6 +78,7 @@ func mergeType(cfg aviator.Spruce) string {
 	return ""
 }
 
+//TODO: filemanager
 func getAllFilesIncludingSubDirs(path string) []string {
 	sl := []string{}
 	err := filepath.Walk(path, fillSliceWithFiles(&sl))
@@ -133,4 +134,14 @@ func createTargetName(prefix string, suffix string) string {
 	}
 
 	return filepath.Join(prefix, suffix)
+}
+
+func resolveBraces(s string) string {
+	if re.MatchString(s) {
+		matches := re.FindSubmatch([]byte(s))
+		s = string(matches[len(matches)-1])
+		return s
+	}
+
+	return s
 }

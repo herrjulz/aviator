@@ -9,7 +9,7 @@ import (
 
 var _ = Describe("Filemanager", func() {
 
-	var store *FileStore
+	var store *FileManager
 
 	BeforeEach(func() {
 		store = Store()

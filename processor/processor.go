@@ -66,6 +66,9 @@ func (p *Processor) ProcessWithOpts(config []aviator.Spruce, verbose bool, silen
 		case "walkThroughForAll":
 			err = p.forAll(cfg)
 		}
+		if err != nil {
+			return err
+		}
 	}
 	return err
 }
@@ -92,7 +95,7 @@ func (p *Processor) forEachFileMerge(cfg aviator.Spruce) error {
 }
 
 func (p *Processor) forEachInMerge(cfg aviator.Spruce) error {
-	filePaths, err := ioutil.ReadDir(cfg.ForEach.In)
+	filePaths, err := p.store.ReadDir(cfg.ForEach.In) //ioutil.ReadDir(cfg.ForEach.In)
 	if err != nil {
 		return err
 	}
@@ -106,8 +109,8 @@ func (p *Processor) forEachInMerge(cfg aviator.Spruce) error {
 		}
 		matched, _ := regexp.MatchString(regex, f.Name())
 		if !f.IsDir() && matched {
-			prefix := chunk(cfg.ForEach.In)
-			mergeFiles := append(files, cfg.ForEach.In+f.Name())
+			prefix := chunk(resolveBraces((cfg.ForEach.In)))
+			mergeFiles := append(files, createTargetName(cfg.ForEach.In, f.Name()))
 			targetName := createTargetName(cfg.ToDir, fmt.Sprintf("%s_%s", prefix, f.Name()))
 			if err := p.mergeAndWrite(mergeFiles, cfg, targetName); err != nil {
 				return errors.Wrap(err, "Spruce Merge FAILED")
@@ -120,7 +123,11 @@ func (p *Processor) forEachInMerge(cfg aviator.Spruce) error {
 }
 
 func (p *Processor) walk(cfg aviator.Spruce, outer string) error {
-	sl := getAllFilesIncludingSubDirs(cfg.ForEach.In)
+	sl, err := p.store.Walk(cfg.ForEach.In) //getAllFilesIncludingSubDirs(cfg.ForEach.In)
+	if err != nil {
+		return err
+	}
+
 	regex := getRegexp(cfg.ForEach.Regexp)
 	for _, f := range sl {
 		filename, parent := concatFileNameWithPath(f)
@@ -150,7 +157,7 @@ func (p *Processor) walk(cfg aviator.Spruce, outer string) error {
 func (p *Processor) forAll(cfg aviator.Spruce) error {
 	forAll := cfg.ForEach.ForAll
 	if forAll != "" {
-		files, _ := ioutil.ReadDir(forAll)
+		files, _ := ioutil.ReadDir(forAll) //TODO filemanager
 		for _, f := range files {
 			if !f.IsDir() {
 				if err := p.walk(cfg, cfg.ForEach.ForAll+f.Name()); err != nil {
@@ -179,7 +186,6 @@ func (p *Processor) mergeAndWrite(files []string, cfg aviator.Spruce, to string)
 	if err != nil {
 		return errors.Wrap(err, "Spruce Merge FAILED")
 	}
-
 	err = p.store.WriteFile(to, result)
 	if err != nil {
 		return err
@@ -189,7 +195,7 @@ func (p *Processor) mergeAndWrite(files []string, cfg aviator.Spruce, to string)
 }
 
 func (p *Processor) collectFiles(cfg aviator.Spruce) []string {
-	files := []string{cfg.Base}
+	files := []string{resolveBraces(cfg.Base)} //TODO: that can not be right
 	for _, m := range cfg.Merge {
 		with := p.collectFilesFromWithSection(m)
 		within := p.collectFilesFromWithInSection(m)
@@ -221,7 +227,7 @@ func (p *Processor) collectFilesFromWithInSection(merge aviator.Merge) []string 
 	result := []string{}
 	if merge.WithIn != "" {
 		within := merge.WithIn
-		files, _ := ioutil.ReadDir(within)
+		files, _ := ioutil.ReadDir(within) //TODO Filemanager
 		regex := getRegexp(merge.Regexp)
 		for _, f := range files {
 			if except(merge.Except, f.Name()) {

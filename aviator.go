@@ -1,5 +1,7 @@
 package aviator
 
+import "os"
+
 type AviatorYaml struct {
 	Spruce []Spruce `yaml:"spruce"`
 	Fly    Fly      `yaml:"fly"`
@@ -79,6 +81,8 @@ type SpruceClient interface {
 type FileStore interface {
 	ReadFile(string) ([]byte, bool)
 	WriteFile(string, []byte) error
+	ReadDir(string) ([]os.FileInfo, error)
+	Walk(string) ([]string, error)
 }
 
 //go:generate counterfeiter . Validator

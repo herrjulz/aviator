@@ -65,7 +65,6 @@ func exitWithNoAviatorFile() {
 
 func exitWithError(err error) {
 	if err != nil {
-		fmt.Println(err.Error())
 		ansi.Printf("@R{%s}\n", err.Error())
 		os.Exit(1)
 	}

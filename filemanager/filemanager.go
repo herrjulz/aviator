@@ -1,61 +1,59 @@
 package filemanager
 
 import (
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
+	"github.com/JulzDiverse/mingoak"
 	"github.com/starkandwayne/goutils/ansi"
 )
 
-type FileStore struct {
-	files map[string][]byte
+type FileManager struct {
+	root *mingoak.Dir
 }
 
-var quoteRegex = `\{\{([-\w\p{L}]+)\}\}`
+var quoteRegex = `\{\{([-\_\.\/\w\p{L}\/]+)\}\}`
 var re = regexp.MustCompile("(" + quoteRegex + ")")
 var dere = regexp.MustCompile("['\"](" + quoteRegex + ")[\"']")
-var store *FileStore
+var store *FileManager
 
-func Store() *FileStore {
+func Store() *FileManager {
 	if store == nil {
-		store = &FileStore{map[string][]byte{}}
+		store = &FileManager{mingoak.MkRoot()}
 	}
 	return store
 }
 
-func (ds *FileStore) ReadFile(key string) ([]byte, bool) {
+func (ds *FileManager) ReadFile(key string) ([]byte, bool) {
 	if _, err := os.Stat(key); os.IsNotExist(err) {
 		if re.MatchString(key) {
-			matches := re.FindSubmatch([]byte(key))
-			key = string(matches[len(matches)-1])
+			key = getKeyFromRegexp(key)
 		}
-		if file, ok := ds.files[key]; ok {
+		if file, err := ds.root.ReadFile(key); err == nil {
 			return file, true
 		}
+		return nil, false
 	}
 
 	file, err := ioutil.ReadFile(key)
 	if err != nil {
 		return nil, false
 	}
-
 	return file, true
 }
 
-func (ds *FileStore) WriteFile(key string, file []byte) error {
+func (ds *FileManager) WriteFile(key string, file []byte) error {
 	file = dequoteCurlyBraces(file)
 	if re.MatchString(key) {
-		matches := re.FindSubmatch([]byte(key))
-		key = string(matches[len(matches)-1])
-
-		if _, ok := ds.files[key]; ok {
-			return errors.New(fmt.Sprintf("file %s in virtual filestore already exists", key))
-		}
-		ds.files[key] = []byte(file)
+		key = getKeyFromRegexp(key)
+		//if _, err := ds.root.ReadFile(key); err == nil {
+		//return errors.New(fmt.Sprintf("file %s in virtual filestore already exists", key))
+		//}
+		ds.root.MkDirAll(getPathFromFilePath(key))
+		ds.root.WriteFile(key, []byte(file))
 	} else {
 		createNonExistingDirs(key)
 		err := ioutil.WriteFile(key, file, 0644)
@@ -63,21 +61,62 @@ func (ds *FileStore) WriteFile(key string, file []byte) error {
 			ansi.Errorf("@R{Error writing file} @m{%s}: %s\n", key, err.Error())
 		}
 	}
-
 	return nil
 }
 
-func quoteCurlyBraces(input []byte) []byte {
-	return re.ReplaceAll(input, []byte("\"$1\""))
+func getPathFromFilePath(filepath string) string {
+	sl := strings.Split(filepath, "/")
+	sl = sl[:len(sl)-1]
+	result := strings.Join(sl, "/")
+	return result
 }
 
-func dequoteCurlyBraces(input []byte) []byte {
-	return []byte(dere.ReplaceAllString(string(input), "$1"))
+func (fm *FileManager) ReadDir(path string) ([]os.FileInfo, error) {
+	var filePaths []os.FileInfo
+	if re.MatchString(path) {
+
+		path = getKeyFromRegexp(path)
+		files, err := fm.root.ReadDir(path)
+		if err != nil {
+			return nil, err
+		}
+		filePaths = files
+	} else {
+
+		files, err := ioutil.ReadDir(path)
+		if err != nil {
+			return nil, err
+		}
+		filePaths = files
+	}
+
+	return filePaths, nil
 }
 
-func (ds *FileStore) PrintFiles() {
-	for key, file := range ds.files {
-		fmt.Println(key, string(file))
+func (fm *FileManager) Walk(path string) ([]string, error) {
+	sl := []string{}
+	if re.MatchString(path) {
+		path = getKeyFromRegexp(path)
+		files, err := fm.root.Walk(path)
+		if err != nil {
+			return nil, err
+		}
+		sl = files
+	} else {
+		err := filepath.Walk(path, fillSliceWithFiles(&sl))
+		if err != nil {
+			return nil, err
+		}
+	}
+	return sl, nil
+}
+
+func fillSliceWithFiles(files *[]string) filepath.WalkFunc {
+	return func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			*files = append(*files, path)
+		}
+		return nil
 	}
 }
 
@@ -99,4 +138,17 @@ func createDir(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		os.Mkdir(path, 0711)
 	}
+}
+
+func quoteCurlyBraces(input []byte) []byte {
+	return re.ReplaceAll(input, []byte("\"$1\""))
+}
+
+func dequoteCurlyBraces(input []byte) []byte {
+	return []byte(dere.ReplaceAllString(string(input), "$1"))
+}
+
+func getKeyFromRegexp(key string) string {
+	matches := re.FindSubmatch([]byte(key))
+	return string(matches[len(matches)-1])
 }

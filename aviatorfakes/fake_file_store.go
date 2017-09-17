@@ -2,6 +2,7 @@
 package aviatorfakes
 
 import (
+	"os"
 	"sync"
 
 	"github.com/JulzDiverse/aviator"
@@ -32,6 +33,32 @@ type FakeFileStore struct {
 	}
 	writeFileReturnsOnCall map[int]struct {
 		result1 error
+	}
+	ReadDirStub        func(string) ([]os.FileInfo, error)
+	readDirMutex       sync.RWMutex
+	readDirArgsForCall []struct {
+		arg1 string
+	}
+	readDirReturns struct {
+		result1 []os.FileInfo
+		result2 error
+	}
+	readDirReturnsOnCall map[int]struct {
+		result1 []os.FileInfo
+		result2 error
+	}
+	WalkStub        func(string) ([]string, error)
+	walkMutex       sync.RWMutex
+	walkArgsForCall []struct {
+		arg1 string
+	}
+	walkReturns struct {
+		result1 []string
+		result2 error
+	}
+	walkReturnsOnCall map[int]struct {
+		result1 []string
+		result2 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
@@ -142,6 +169,108 @@ func (fake *FakeFileStore) WriteFileReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
+func (fake *FakeFileStore) ReadDir(arg1 string) ([]os.FileInfo, error) {
+	fake.readDirMutex.Lock()
+	ret, specificReturn := fake.readDirReturnsOnCall[len(fake.readDirArgsForCall)]
+	fake.readDirArgsForCall = append(fake.readDirArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("ReadDir", []interface{}{arg1})
+	fake.readDirMutex.Unlock()
+	if fake.ReadDirStub != nil {
+		return fake.ReadDirStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fake.readDirReturns.result1, fake.readDirReturns.result2
+}
+
+func (fake *FakeFileStore) ReadDirCallCount() int {
+	fake.readDirMutex.RLock()
+	defer fake.readDirMutex.RUnlock()
+	return len(fake.readDirArgsForCall)
+}
+
+func (fake *FakeFileStore) ReadDirArgsForCall(i int) string {
+	fake.readDirMutex.RLock()
+	defer fake.readDirMutex.RUnlock()
+	return fake.readDirArgsForCall[i].arg1
+}
+
+func (fake *FakeFileStore) ReadDirReturns(result1 []os.FileInfo, result2 error) {
+	fake.ReadDirStub = nil
+	fake.readDirReturns = struct {
+		result1 []os.FileInfo
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeFileStore) ReadDirReturnsOnCall(i int, result1 []os.FileInfo, result2 error) {
+	fake.ReadDirStub = nil
+	if fake.readDirReturnsOnCall == nil {
+		fake.readDirReturnsOnCall = make(map[int]struct {
+			result1 []os.FileInfo
+			result2 error
+		})
+	}
+	fake.readDirReturnsOnCall[i] = struct {
+		result1 []os.FileInfo
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeFileStore) Walk(arg1 string) ([]string, error) {
+	fake.walkMutex.Lock()
+	ret, specificReturn := fake.walkReturnsOnCall[len(fake.walkArgsForCall)]
+	fake.walkArgsForCall = append(fake.walkArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("Walk", []interface{}{arg1})
+	fake.walkMutex.Unlock()
+	if fake.WalkStub != nil {
+		return fake.WalkStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fake.walkReturns.result1, fake.walkReturns.result2
+}
+
+func (fake *FakeFileStore) WalkCallCount() int {
+	fake.walkMutex.RLock()
+	defer fake.walkMutex.RUnlock()
+	return len(fake.walkArgsForCall)
+}
+
+func (fake *FakeFileStore) WalkArgsForCall(i int) string {
+	fake.walkMutex.RLock()
+	defer fake.walkMutex.RUnlock()
+	return fake.walkArgsForCall[i].arg1
+}
+
+func (fake *FakeFileStore) WalkReturns(result1 []string, result2 error) {
+	fake.WalkStub = nil
+	fake.walkReturns = struct {
+		result1 []string
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeFileStore) WalkReturnsOnCall(i int, result1 []string, result2 error) {
+	fake.WalkStub = nil
+	if fake.walkReturnsOnCall == nil {
+		fake.walkReturnsOnCall = make(map[int]struct {
+			result1 []string
+			result2 error
+		})
+	}
+	fake.walkReturnsOnCall[i] = struct {
+		result1 []string
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeFileStore) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -149,6 +278,10 @@ func (fake *FakeFileStore) Invocations() map[string][][]interface{} {
 	defer fake.readFileMutex.RUnlock()
 	fake.writeFileMutex.RLock()
 	defer fake.writeFileMutex.RUnlock()
+	fake.readDirMutex.RLock()
+	defer fake.readDirMutex.RUnlock()
+	fake.walkMutex.RLock()
+	defer fake.walkMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
