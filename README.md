@@ -1,12 +1,12 @@
 # Aviator
 
-[![GoDoc](https://godoc.org/github.com/JulzDiverse/aviator/aviator?status.svg)](https://godoc.org/github.com/JulzDiverse/aviator/aviator)
+[![GoDoc](https://godoc.org/github.com/JulzDiverse/aviator/cockpit?status.svg)](https://godoc.org/github.com/JulzDiverse/aviator/cockpit)
 
 Aviator is a tool to merge YAML files in a convenient fashion based on a configuration file called `aviator.yml`. The merge itself utilizes Spruce for the merge and therefore enables you to use all the Spruce operators in your YAML files.
 
 If you have to handle rather complex YAML files (for BOSH or Concourse), you just provide the flight plan (`aviator.yml`), the Aviator flies you there.
 
-# Table of Content
+
 
 ## Installation
 
@@ -44,7 +44,7 @@ To run Aviator navigate to a directory that contains an `aviator.yml` and run:
 $ aviator
 ```
 
-OR 
+OR
 
 Specify an AVIATOR YAML file  with the [--file|-f] option:
 
@@ -54,7 +54,7 @@ $ aviator -f myAviatorFile.yml
 
 ## Configure an `aviator.yml`
 
-Aviator provides a verbose style of configuration. It is the result of configuring a spruce merge plan and optionally an execution plan (e.g `fly`). 
+Aviator provides a verbose style of configuration. It is the result of configuring a spruce merge plan and optionally an execution plan (e.g `fly`).
 
 Example for a simple aviator file:
 
@@ -68,7 +68,7 @@ spruce:
   to: result.yml
 ```
 
-### Spruce Section 
+### Spruce Section
 
 The `spruce` section is an array of merge steps. It provides different parameters to provide high flexibility when merging YAML files. You can:
 
@@ -76,7 +76,7 @@ The `spruce` section is an array of merge steps. It provides different parameter
 - specify a specific directory to include into your merge
 - specify a specific directory including all subdirectories to include into your merge
 
-However, this is not enough. Additionally you can use *regular expressions*, *environment-variables*, and more. Read about all parameters and what they do in this section. 
+However, this is not enough. Additionally you can use *regular expressions*, *environment-variables*, and more. Read about all parameters and what they do in this section.
 
 #### Base (`string`)
 
@@ -86,7 +86,7 @@ The `base` property specifies the path to the base YAML file. All other YAML fil
 
 #### Prune (`Array`)
 
-`prune` defines YAML properties which will be pruned during the merge. For more information check the `spruce` [merge semantics](https://github.com/geofffranks/spruce/blob/master/doc/merging.md#order-of-operations). 
+`prune` defines YAML properties which will be pruned during the merge. For more information check the `spruce` [merge semantics](https://github.com/geofffranks/spruce/blob/master/doc/merging.md#order-of-operations).
 
 Example:
 
@@ -139,7 +139,7 @@ You can configure three different merge types inside the `merge` section: `with`
 
 - `in_dir` (optional): If all of the files you want to include into the merge are in one specific directory, you can specify the directoyr path and list only file names in the `files` list. _Note: Whenever a directory is defined, the path requires a trailing "/"!!!_
 
-- `skip_non_existing` (optional): Setting this property to `true` will skip non existing files that are specified in the `files` list rather then returning an error. This is useful, if a file is not necessarely there. 
+- `skip_non_existing` (optional): Setting this property to `true` will skip non existing files that are specified in the `files` list rather then returning an error. This is useful, if a file is not necessarely there.
 
 Example:
 
@@ -257,7 +257,7 @@ spruce:
 #### To (`string`)
 
 
-`to` specifies the target file, where the merged files should be saved to. It can be used only in combination with the basic merge types `files`, `with_in`, and `with_all_in`. 
+`to` specifies the target file, where the merged files should be saved to. It can be used only in combination with the basic merge types `files`, `with_in`, and `with_all_in`.
 
 ---
 
@@ -309,7 +309,7 @@ spruce:
 
 **Except**
 
-`except` works in combination with `in`: list of files that you want to exclude from the merge. 
+`except` works in combination with `in`: list of files that you want to exclude from the merge.
 
 Example:
 
@@ -339,10 +339,10 @@ spruce:
       files:
       - top.yml
   regexp: ".*.(yml)"
-  for_each: 
+  for_each:
     in: path/to/dir
     include_sub_dirs: true
-    enable_matching: true 
+    enable_matching: true
     copy_parents: true
   to_dir: results/
 ```
@@ -365,10 +365,10 @@ spruce:
       files:
       - top.yml
   regexp: ".*.(yml)"
-  for_each: 
+  for_each:
     in: path/to/dir
     include_sub_dirs: true
-    enable_matching: true 
+    enable_matching: true
     copy_parents: true
     regexp: ".*.(yml)"
   to_dir: results/
@@ -436,9 +436,9 @@ spruce:
 
 ---
 
-## Executors 
+### Executors
 
-### The `fly` section (Optional)
+#### The `fly` section (Optional)
 
 If you want to merge and set Concourse pipeline YAML files on the fly, you can specify additionally the `fly` section. If Aviator find this section it will _automagically_ execute fly for you if the following configurations are set:
 
@@ -471,5 +471,5 @@ $ go get github.com/JulzDiverse/aviator
 Navigate to `aviator` directory
 
 ```
-$ glide install 
+$ glide install
 ```
