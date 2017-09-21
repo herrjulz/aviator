@@ -8,31 +8,6 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 
 # Table of Content
 
-<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
-
-- [Aviator](#aviator)
-- [Table of Content](#table-of-content)
-	- [Installation](#installation)
-		- [OS X](#os-x)
-		- [Linux](#linux)
-	- [Prereqs](#prereqs)
-	- [Usage](#usage)
-	- [Configure an `aviator.yml`](#configure-an-aviatoryml)
-		- [Spruce Section (required)](#spruce-section-required)
-			- [Base (`string`)](#base-string)
-			- [Prune (`[string]Array`)](#prune-stringarray)
-			- [Merge (`Array`)](#merge-array)
-			- [skip_eval (`bool`)](#skip_eval-bool)
-			- [cherry_pick (`array`)](#cherry_pick-array)
-			- [To (`string`)](#to-string)
-			- [Read From & Write To Variables](#read-from-write-to-variables)
-			- [Environment Variables](#environment-variables)
-			- [ForEach, ForEachIn & WalkThrough](#foreach-foreachin--walkthrough)
-		- [The `fly` section (Optional)](#the-fly-section-optional)
-- [Development](#development)
-
-<!-- /TOC -->
-
 ## Installation
 
 ### OS X
@@ -54,11 +29,12 @@ $ brew install aviator
 $ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.5.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
 ```
 
-## Prereqs
+## Executors
 
-Aviator does not require any further prereqs, except you want to use `aviator` to _automagically_ set your concourse pipeline (for more information see [Concourse Section](#Concourse_Section)).
+With `aviator` you can execute different YAML based tools:
 
-- For more information about [CLICK HERE](https://github.com/concourse/fly)
+- Concourse [fly](https://github.com/concourse/fly)
+- Bosh (comming soon)
 
 ## Usage
 
@@ -76,13 +52,13 @@ Specify an AVIATOR YAML file  with the [--file|-f] option:
 $ aviator -f myAviatorFile.yml
 ```
 
-That's it! :)
-
 ## Configure an `aviator.yml`
 
-Aviator provides a verbose style of configuration. You can read it like a sentence. For example the sentence _"Take the `base.yml`, merge it with `top.yml` and save it to `result.yml`"_ looks as follows in an `aviator.yml`:
+Aviator provides a verbose style of configuration. It is the result of configuring a spruce merge plan and optionally an execution plan (e.g `fly`). 
 
-```
+Example for a simple aviator file:
+
+```yaml
 spruce:
 - base: path/to/base.yml
   merge:
@@ -92,23 +68,29 @@ spruce:
   to: result.yml
 ```
 
-### Spruce Section (required)
+### Spruce Section 
 
-The `spruce` section is an array that defines the "plan" how YAML files should be merged. You can defines an arbitrary amount of spruce steps in this section.
+The `spruce` section is an array of merge steps. It provides different parameters to provide high flexibility when merging YAML files. You can:
+
+- specify specific files to include into your merge
+- specify a specific directory to include into your merge
+- specify a specific directory including all subdirectories to include into your merge
+
+However, this is not enough. Additionally you can use *regular expressions*, *environment-variables*, and more. Read about all parameters and what they do in this section. 
 
 #### Base (`string`)
 
-The `base` property specifies the path to the base YAML file. All other YAML files will be merged on top of the YAML files specified in this property.
+The `base` property specifies the path to the base YAML file. All other YAML files will be merged on top of this YAML file.
 
 ---
 
-#### Prune (`[string]Array`)
+#### Prune (`Array`)
 
-`prune` defines YAML properties which will be pruned during the merge.
+`prune` defines YAML properties which will be pruned during the merge. For more information check the `spruce` [merge semantics](https://github.com/geofffranks/spruce/blob/master/doc/merging.md#order-of-operations). 
 
 Example:
 
-```
+```yaml
 spruce:
 - base: base.yml
   prune:
@@ -123,25 +105,45 @@ spruce:
 
 In this case `meta` and `properties` will be pruned during merge.
 
+#### cherry_pick (`array`)
+
+Enables [Spruce](https://github.com/geofffranks/spruce/blob/master/doc/merging.md#order-of-operations) `cherry pick` option: With the `cherry_pick` property you can specify specific YAML subtrees you want to have in your restulting YAML file (opposite of `prune`)  
+
+Example:
+
+```yaml
+spruce:
+- base: path/to/base.yml
+  cherry_pick:
+  - properties
+  merge:
+  - with_in: path/to/dir/
+  - with:
+      files:
+      - top.yml
+  regexp: ".*.(yml)"
+  skip_eval: true
+  to: result.yml
+```
 ---
 
 #### Merge (`Array`)
 
-You can configure two types of objects in a `merge`: `with` and `with_in`.
+You can configure three different merge types inside the `merge` section: `with`, `with_in`, `with_all_in`:
 
 **with**
 
-With `with` you can specify specific files you want to include into the merge.
+`with` specifies specific files you want to include into the merge.
 
 - `files` (required): List of paths to YAML files
 
-- `in_dir` (optional): If all of the files you want to include into the merge are in one specific directory, you can specify this directory in this property and only list the file names in the `files` list. _Note: Do not forget to add the trailing "/" when specifing a path_
+- `in_dir` (optional): If all of the files you want to include into the merge are in one specific directory, you can specify the directoyr path and list only file names in the `files` list. _Note: Whenever a directory is defined, the path requires a trailing "/"!!!_
 
-- `skip_non_existing` (optional): Setting this property to `true` (default `false`) will skip non existing files that are specified in the `files` list rather then returning an error.
+- `skip_non_existing` (optional): Setting this property to `true` will skip non existing files that are specified in the `files` list rather then returning an error. This is useful, if a file is not necessarely there. 
 
 Example:
 
-```
+```yaml
 spruce:
 - base: path/to/base.yml
   merge:
@@ -161,7 +163,7 @@ spruce:
 
 Example:
 
-```
+```yaml
 spruce:
 - base: path/to/base.yml
   merge:
@@ -169,13 +171,13 @@ spruce:
   to: result.yml
 ```
 
-**except** (`array`)
+`except` (`array`)
 
-With except you can specify a list of files you want to exclude from the path specified in `with_in`
+With `except` you can specify a list of files you want to exclude from the path specified in `with_in`
 
 Example:
 
-```
+```yaml
 spruce:
 - base: path/to/base.yml
   merge:
@@ -187,22 +189,46 @@ spruce:
 ```
 
 This will exclude `path/to/dir/file1` and `path/to/dir/file2` from the merge.
- 
-**regexp** (`string`(quoted))
 
-Only files matching the regular expression will be included in the merge. It affects both `with` and `with_in`. This could be required if the target directory contains other then only YAML files.
+
+**with_all_in**
+
+`with_all_in` specifies a path (do not forget the trailing "/") to a directory. All files within this directory -including all subdirectories - will be included in the merge.
 
 Example:
 
+```yaml
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with_all_in: path/to/dir/
+    except:
+    - someFiles.yml
+    - youWant.yml
+    - toExclude.yml
+  to: result.yml
 ```
+
+*NOTE: `except` also works for `with_all_in`*
+
+**regexp** (`string`(quoted))
+
+Only files matching the regular expression will be included in the merge. It can be specified for all three merge types `with`, `with_in`, and `with_all_in`. This could be required if the target directory contains other then only YAML files.
+
+Example:
+
+```yaml
 spruce:
 - base: path/to/base.yml
   merge:
   - with_in: path/to/dir/
+    regexp: ".*.(yml)"
   - with:
       files:
       - top.yml
-  regexp: ".*.(yml)"
+    regexp: ".*.(yml)"
+  - with_all_in: path/to/another/dir/
+    regexp: ".*.(yml)"
   to: result.yml
 ```
 
@@ -213,31 +239,10 @@ spruce:
 Enabling this skip-eval will merge without resolve spruce expressions. For more information check [Spruce doc](https://github.com/geofffranks/spruce/blob/master/doc/merging.md#order-of-operations)
 
 Example:
-```
+
+```yaml
 spruce:
 - base: path/to/base.yml
-  merge:
-  - with_in: path/to/dir/
-  - with:
-      files:
-      - top.yml
-  regexp: ".*.(yml)"
-  skip_eval: true
-  to: result.yml
-```
-
----
-
-#### cherry_pick (`array`)
-
-Enables [Spruce](https://github.com/geofffranks/spruce/blob/master/doc/merging.md#order-of-operations) `cherry pick` option: With the `cherry_pick` property you can specify specific YAML subtrees you want to have in your restulting YAML file (opposite of `prune`)  
-
-Example:
-```
-spruce:
-- base: path/to/base.yml
-  cherry_pick:
-  - properties
   merge:
   - with_in: path/to/dir/
   - with:
@@ -251,17 +256,132 @@ spruce:
 ---
 #### To (`string`)
 
-`to` specifies the target file, where the merged files should be saved to.
+
+`to` specifies the target file, where the merged files should be saved to. It can be used only in combination with the basic merge types `files`, `with_in`, and `with_all_in`. 
 
 ---
 
-#### Read From & Write To Variables
+#### ForEach
 
-Sometimes it is required to do more than one merge step, which creates intermediate YAML files. In this case you can save merge results to variables which are defined in double courly braces `{{var}}`. You can read from & write to such a variable.
+On top of the basic `merge` you can do more complex merges with `for_each`. More precisely, you can execute the basic `merge` for multiple files specified in `for_each`. When specifying files with `for_each` you need to use `to_dir` instead of `to` to specify a target directory instead of a target file.    
+
+**files**
+
+`files` specifies a list of files that will be included in your merge seperately.
 
 Example:
 
+```yaml
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with:
+      files:
+      - top.yml
+    regexp: ".*.(yml)"
+  for_each:
+    files:
+    - env.yml
+    - env2.yml
+  to_dir: results/
 ```
+
+This merge step will execute two merges and generate two files. It will merge `base.yml` and `top.yml` with `env.yml`, write it to `results/` and do the same with `env2.yml`.
+
+**in**
+
+`in` is basically the same as `files` with the difference that it will merge all files for a given path sperately
+
+Example:
+
+```yaml
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with:
+      files:
+      - top.yml
+    regexp: ".*.(yml)"
+  for_each:
+    in: path/to/dir/
+  to_dir: results/
+```
+
+**Except**
+
+`except` works in combination with `in`: list of files that you want to exclude from the merge. 
+
+Example:
+
+```yaml
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with:
+      files:
+      - top.yml
+  regexp: ".*.(yml)"
+  for_each_in: path/to/dir/
+  except:
+  - some.yml
+  to_dir: results/
+```
+
+**include_sub_dirs**
+
+`include_sub_dirs` includes all files including files in all subdirectories of a directory into the merge seperately.
+
+```yaml
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with:
+      files:
+      - top.yml
+  regexp: ".*.(yml)"
+  for_each: 
+    in: path/to/dir
+    include_sub_dirs: true
+    enable_matching: true 
+    copy_parents: true
+  to_dir: results/
+```
+
+When `include_sub_dirs` is defined you can specify further properties:
+
+- `enable_matching`: this will only include files in the merge, that contains the same substring as the parent directory.
+
+- `copy_parents`: setting this property to `true` (default `false`) will copy the parent folder of a file to the target directory (in the above example `results/`)
+
+**regexp**
+
+The `regexp` property can also be set in combination with `for_each`, `for_each_in`, and `walk_through` to only include files matching the regular expression.
+
+```yaml
+spruce:
+- base: path/to/base.yml
+  merge:
+  - with:
+      files:
+      - top.yml
+  regexp: ".*.(yml)"
+  for_each: 
+    in: path/to/dir
+    include_sub_dirs: true
+    enable_matching: true 
+    copy_parents: true
+    regexp: ".*.(yml)"
+  to_dir: results/
+```
+---
+
+#### Read From & Write To Internal Variables
+
+Sometimes it is required to do more than one merge step, which creates intermediate YAML files. In this case you can save merge results to internal variables which are defined in double courly braces `{{var}}`. You can read from & write to such a variable. Internal variables also work as directories and can be used with `to_dir`.
+
+Example:
+
+```yaml
 spruce:
 - base: path/to/base.yml
   merge:
@@ -276,11 +396,11 @@ spruce:
 
 #### Environment Variables
 
-Aviator supports to read from Environment Variables. Environment variables can be set with `$VAR` or `${VAR}` at an arbitrary place in the `aviator.yml`.
+Aviator supports to read _Environment Variables_. Environment variables can be set with `$VAR` or `${VAR}` at an arbitrary place in the `aviator.yml`.
 
 Example:
 
-```
+```yaml
 spruce:
 - base: $BASE_PATH/app-${NUMBER}.yml
   merge:
@@ -301,7 +421,7 @@ $ BASE_PATH=/tmp/ NUMBER=1 RESULT_YAML=result.yml aviator
 
 will resolve:
 
-```
+```yaml
 spruce:
 - base: /tmp/app-1.yml
   merge:
@@ -316,103 +436,11 @@ spruce:
 
 ---
 
-#### ForEach, ForEachIn & WalkThrough
-
-On top of the basic `merge` the user can do more complex merges with `for_each`, `for_each_in` and `walk_through`. Note that only one of these properties can be specified per merge. For example, it is not allowed to combine `for_each` and `walk_through` in one merge step. Moreover, it requires to specify `to_dir` isntead `to` to save the merged files.  
-
-**for_each**
-
-`for_each` specifies a list of files that will be included in your merge seperately.
-
-Example:
-
-```
-spruce:
-- base: path/to/base.yml
-  merge:
-  - with:
-      files:
-      - top.yml
-  regexp: ".*.(yml)"
-  for_each:
-  - env.yml
-  - env2.yml
-  to_dir: results/
-```
-
-This merge step will execute two merges and generate two files. It will merge `base.yml` and `top.yml` with `env.yml`, write it to `results/` and do the same with `env2.yml`.
-
-**for_each_in**
-
-`for_each_in` is basically the same as `for_each` with the difference that it will merge all files for a given path sperately
-
-Example:
-
-```
-spruce:
-- base: path/to/base.yml
-  merge:
-  - with:
-      files:
-      - top.yml
-  regexp: ".*.(yml)"
-  for_each_in: path/to/dir/
-  to_dir: results/
-```
-
-**Except**
-
-Only in combination with `for_each_in`: list of files that you want to exclude from the merge. 
-
-Example:
-
-```
-spruce:
-- base: path/to/base.yml
-  merge:
-  - with:
-      files:
-      - top.yml
-  regexp: ".*.(yml)"
-  for_each_in: path/to/dir/
-  except:
-  - some.yml
-  to_dir: results/
-```
-
-**walk_through**
-
-`walk_through` includes all files in a directory into a merge seperately. Including all subdirectories.
-
-```
-spruce:
-- base: path/to/base.yml
-  merge:
-  - with:
-      files:
-      - top.yml
-  regexp: ".*.(yml)"
-  walk_through: path/to/dir/
-  enable_matching: true
-  copy_parents: true
-  to_dir: results/
-```
-
-In combination with `walk_through` there are another two proprties you can define:
-
-- `enable_matching`: this will only include files in the merge, that contains the same substring as the parent directory.
-
-- `copy_parents`: setting this property to `true` (default `false`) will copy the parent folder of a file to the target directory (in the above example `results/`)
-
-**regexp**
-
-The `regexp` property can also be set in combination with `for_each`, `for_each_in`, and `walk_through` to only include files matching the regular expression.
-
----
+## Executors 
 
 ### The `fly` section (Optional)
 
-If you want to merge Concourse pipeline YAML files and set them on the fly you can specify additionally the `fly` section. If Aviator find this section it will _automagically_ execute fly for you if the following configurations are set:
+If you want to merge and set Concourse pipeline YAML files on the fly, you can specify additionally the `fly` section. If Aviator find this section it will _automagically_ execute fly for you if the following configurations are set:
 
 - **name**: Name of the pipeline
 - **target**: Target short name (`fly` target)
@@ -421,19 +449,13 @@ If you want to merge Concourse pipeline YAML files and set them on the fly you c
 
 Example:
 
-```
-spruce:
-- base: path/to/stub.yml
-  merge:
-  - with_in: path/to/dir/
-  to: pipeline.yml
-
+```yaml
 fly:
-	name: myPipelineName
-	target: myFlyTarget
-	config: pipeline.yml
-	vars:
-	- credentials.yml
+  name: myPipelineName
+  target: myFlyTarget
+  config: pipeline.yml
+  vars:
+  - credentials.yml
 ```
 
 Note, that the generated `pipeline.yml` is used in the `fly` section as `config`.
