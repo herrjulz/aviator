@@ -471,5 +471,5 @@ $ go get github.com/JulzDiverse/aviator
 Navigate to `aviator` directory
 
 ```
-$ godep save
+$ glide install 
 ```
