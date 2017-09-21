@@ -1,0 +1,79 @@
+---
+meta:
+  cf:
+    app:
+      name: play.spruce.cf
+      domain: spruce.cf
+      source: git@github.com:jhunt/play.spruce.cf.git
+    org: (( vault "secret/pipelines/spruce/cf:org" ))
+    space: (( vault "secret/pipelines/spruce/cf:space" ))
+    user: (( vault "secret/pipelines/spruce/cf:user" ))
+    password: (( vault "secret/pipelines/spruce/cf:password" ))
+    url: "https://api.run.pivotal.io"
+    github_token: (( vault "secret/pipelines/spruce/cf:github_token" ))
+
+  go:
+    version: 1.7
+    cmd_module: (( concat meta.go.module "/cmd/spruce" ))
+    force_static_binary: true
+  github:
+    owner: geofffranks
+    repo: spruce
+    private_key: (( vault "secret/pipelines/spruce/github:private" ))
+    access_token: (( vault "secret/pipelines/spruce/github:token" ))
+
+  slack:
+    webhook: (( vault "secret/pipelines/spruce/slack:webhook" ))
+    channel: "#spruce"
+
+  aws:
+    access_key: (( vault "secret/aws/cfcommunity:access" ))
+    secret_key: (( vault "secret/aws/cfcommunity:secret" ))
+    bucket: spruce-release-pipeline
+
+  name: spruce-release
+  target: sw
+  url: https://ci.starkandwayne.com
+
+groups:
+- name: (( grab meta.pipeline ))
+  jobs:
+  - (( append ))
+  - (( grab meta.cf.app.name ))
+
+jobs:
+  - name: (( grab meta.cf.app.name ))
+    public: true
+    serial: true
+    plan:
+    - aggregate:
+      - get: github
+        passed: [shipit]
+        trigger: true
+      - get: (( grab meta.cf.app.name ))
+        trigger: true
+    - put: live-app
+      params:
+        manifest: (( concat meta.cf.app.name "/manifest.yml" ))
+        path: (( grab meta.cf.app.name ))
+        current_app_name: (( grab meta.cf.app.name ))
+        environment_variables:
+          GITHUB_TOKEN: (( grab meta.cf.github_token ))
+
+resources:
+- name: (( grab meta.cf.app.name ))
+  type: git
+  source:
+    uri: (( grab meta.cf.app.source ))
+    branch: master
+    private_key: (( grab meta.github.private_key ))
+
+- name: live-app
+  type: cf
+  source:
+    api:             (( grab meta.cf.url ))
+    username:        (( grab meta.cf.user ))
+    password:        (( grab meta.cf.password ))
+    organization:    (( grab meta.cf.org ))
+    space:           (( grab meta.cf.space ))
+    skip_cert_check: false

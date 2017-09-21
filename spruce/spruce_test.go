@@ -1,7 +1,7 @@
 package spruce_test
 
 import (
-	"github.com/JulzDiverse/aviator/aviatortypes"
+	"github.com/JulzDiverse/aviator"
 	"github.com/JulzDiverse/aviator/filemanager"
 	. "github.com/JulzDiverse/aviator/spruce"
 
@@ -21,7 +21,7 @@ var _ = Describe("Spruce", func() {
 
 	Context("CmdMergeEval", func() {
 		It("simple merge two files", func() {
-			opts := aviatortypes.MergeConf{
+			opts := aviator.MergeConf{
 				Files: []string{
 					"../processor/integration/yamls/base.yml",
 					"../processor/integration/yamls/fake.yml",
@@ -38,7 +38,7 @@ var _ = Describe("Spruce", func() {
 		})
 
 		It("should be able to prune", func() {
-			opts := aviatortypes.MergeConf{
+			opts := aviator.MergeConf{
 				Files: []string{
 					"../processor/integration/yamls/base.yml",
 					"../processor/integration/yamls/fake.yml",
