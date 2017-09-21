@@ -1,5 +1,5 @@
 install.sh
-vendor/
+vendor
 aviator-linux-*
 aviator-darwin-*
 processor/integration/tmp
