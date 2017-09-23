@@ -2,7 +2,6 @@ package processor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -157,10 +156,10 @@ func (p *Processor) walk(cfg aviator.Spruce, outer string) error {
 func (p *Processor) forAll(cfg aviator.Spruce) error {
 	forAll := cfg.ForEach.ForAll
 	if forAll != "" {
-		files, _ := ioutil.ReadDir(forAll) //TODO filemanager
+		files, _ := p.store.ReadDir(forAll) //TODO filemanager
 		for _, f := range files {
 			if !f.IsDir() {
-				if err := p.walk(cfg, cfg.ForEach.ForAll+f.Name()); err != nil {
+				if err := p.walk(cfg, resolveBraces(cfg.ForEach.ForAll)+f.Name()); err != nil {
 					return err
 				}
 			}
@@ -227,7 +226,7 @@ func (p *Processor) collectFilesFromWithInSection(merge aviator.Merge) []string 
 	result := []string{}
 	if merge.WithIn != "" {
 		within := merge.WithIn
-		files, _ := ioutil.ReadDir(within) //TODO Filemanager
+		files, _ := p.store.ReadDir(within)
 		regex := getRegexp(merge.Regexp)
 		for _, f := range files {
 			if except(merge.Except, f.Name()) {
@@ -236,7 +235,7 @@ func (p *Processor) collectFilesFromWithInSection(merge aviator.Merge) []string 
 
 			matched, _ := regexp.MatchString(regex, f.Name())
 			if !f.IsDir() && matched {
-				result = append(result, within+f.Name())
+				result = append(result, resolveBraces(within)+f.Name())
 			} else {
 				p.warnings = append(p.warnings, "EXCLUDED BY REGEXP "+regex+": "+merge.WithIn+f.Name())
 			}
