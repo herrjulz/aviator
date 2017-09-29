@@ -1,7 +1,6 @@
 package cockpit
 
 import (
-	"regexp"
 
 	"github.com/JulzDiverse/aviator"
 	"github.com/JulzDiverse/aviator/executor"
@@ -48,7 +47,6 @@ func (c *Cockpit) NewAviator(aviatorYml []byte) (*Aviator, error) {
 		return nil, errors.Wrap(err, ansi.Sprintf("@R{Reading Failed}"))
 	}
 
-	aviatorYml = quoteCurlyBraces(aviatorYml)
 	err = yaml.Unmarshal(aviatorYml, &aviator)
 	if err != nil {
 		return nil, errors.Wrap(err, ansi.Sprintf("@R{Parsing Failed}"))
@@ -81,10 +79,4 @@ func (a *Aviator) ExecuteFly() error {
 func resolveEnvVars(input []byte) ([]byte, error) {
 	result, err := osenv.ExpandEnv(string(input))
 	return []byte(result), err
-}
-
-func quoteCurlyBraces(input []byte) []byte {
-	quoteRegex := `\{\{([-\.\_\/\w\p{L}]+)\}\}`
-	re := regexp.MustCompile("(" + quoteRegex + ")")
-	return re.ReplaceAll(input, []byte("\"$1\""))
 }
