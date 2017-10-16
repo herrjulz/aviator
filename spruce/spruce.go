@@ -16,7 +16,7 @@ type SpruceClient struct {
 	store aviator.FileStore
 }
 
-var concourseRegex = `\{\{([-\w\p{L}]+)\}\}`
+var concourseRegex = `(\{\{|\+\+)([-\_\.\/\w\p{L}\/]+)(\}\}|\+\+)`
 var re = regexp.MustCompile("(" + concourseRegex + ")")
 var dere = regexp.MustCompile("['\"](" + concourseRegex + ")[\"']")
 

@@ -15,7 +15,8 @@ type FileManager struct {
 	root *mingoak.Dir
 }
 
-var quoteRegex = `\{\{([-\_\.\/\w\p{L}\/]+)\}\}`
+//var quoteRegexOld = `\{\{([-\_\.\/\w\p{L}\/]+)\}\}`
+var quoteRegex = `(\{\{|\+\+)([-\_\.\/\w\p{L}\/]+)(\}\}|\+\+)`
 var re = regexp.MustCompile("(" + quoteRegex + ")")
 var dere = regexp.MustCompile("['\"](" + quoteRegex + ")[\"']")
 var store *FileManager
@@ -150,5 +151,5 @@ func dequoteCurlyBraces(input []byte) []byte {
 
 func getKeyFromRegexp(key string) string {
 	matches := re.FindSubmatch([]byte(key))
-	return string(matches[len(matches)-1])
+	return string(matches[len(matches)-2])
 }

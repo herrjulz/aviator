@@ -84,7 +84,7 @@ func resolveEnvVars(input []byte) ([]byte, error) {
 }
 
 func quoteCurlyBraces(input []byte) []byte {
-	quoteRegex := `\{\{([-\.\_\/\w\p{L}]+)\}\}`
+	quoteRegex := `(\{\{|\+\+)([-\_\.\/\w\p{L}\/]+)(\}\}|\+\+)`
 	re := regexp.MustCompile("(" + quoteRegex + ")")
 	return re.ReplaceAll(input, []byte("\"$1\""))
 }

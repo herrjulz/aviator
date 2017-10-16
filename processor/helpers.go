@@ -11,7 +11,7 @@ import (
 	"github.com/JulzDiverse/aviator"
 )
 
-var quoteRegex = `\{\{([-\_\.\/\w\p{L}]+)\}\}`
+var quoteRegex = `(\{\{|\+\+)([-\_\.\/\w\p{L}\/]+)(\}\}|\+\+)`
 var re = regexp.MustCompile("(" + quoteRegex + ")")
 
 func except(except []string, file string) bool {
@@ -129,8 +129,8 @@ func enableMatching(cfg aviator.ForEach, match string) string {
 func createTargetName(prefix string, suffix string) string {
 	if re.MatchString(prefix) {
 		matches := re.FindSubmatch([]byte(prefix))
-		prefix = string(matches[len(matches)-1])
-		return fmt.Sprintf("{{%s}}", filepath.Join(prefix, suffix))
+		prefix = string(matches[len(matches)-2])
+		return fmt.Sprintf("%s%s%s", string(matches[len(matches)-3]), filepath.Join(prefix, suffix), string(matches[len(matches)-1]))
 	}
 
 	return filepath.Join(prefix, suffix)
@@ -139,7 +139,7 @@ func createTargetName(prefix string, suffix string) string {
 func resolveBraces(s string) string {
 	if re.MatchString(s) {
 		matches := re.FindSubmatch([]byte(s))
-		s = string(matches[len(matches)-1])
+		s = string(matches[len(matches)-2])
 		return s
 	}
 
