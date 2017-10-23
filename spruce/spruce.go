@@ -42,13 +42,16 @@ func (sc *SpruceClient) MergeWithOpts(options aviator.MergeConf) ([]byte, error)
 
 	ev := &Evaluator{Tree: root, SkipEval: options.SkipEval}
 	err = ev.Run(options.Prune, options.CherryPicks)
+	if err != nil {
+		return nil, err
+	}
 
 	resultYml, err := yaml.Marshal(ev.Tree)
 	if err != nil {
 		return nil, err
 	}
 
-	return resultYml, err
+	return resultYml, nil
 }
 
 func (sc *SpruceClient) MergeWithOptsRaw(options aviator.MergeConf) (map[interface{}]interface{}, error) {
@@ -82,7 +85,10 @@ func (sc *SpruceClient) mergeAllDocs(root map[interface{}]interface{}, paths []s
 			return ansi.Errorf("@m{%s}: @R{%s}\n", path, err.Error())
 		}
 
-		m.Merge(root, doc)
+		err = m.Merge(root, doc)
+		if err != nil {
+			return err
+		}
 	}
 
 	return m.Error()
