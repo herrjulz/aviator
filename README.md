@@ -434,6 +434,70 @@ spruce:
   to: result.yml
 ```
 
+#### Modifier
+
+With modifier you can modify the resulting (merged) YAML file. You can either delete, set, or update a property. The modifier will always be applied on the result. If you use `for_each` it will be applied on each `for_each` merge step. 
+
+Consider a resulting YAML from a merge process `result.yml`, which has a property `person.name`:
+
+```yaml
+---
+person:
+  name: Julz
+```
+
+1. the property can be deleted
+
+  ```yaml
+  spruce:
+  - base: base.yml
+    merge:
+    - with:
+        files:
+        - top.yml
+    modify:
+      delete: persone.name
+    to: result.yml
+  ```
+
+  It deletes a property only if it exists. There will be no error if a proerty does NOT exist. 
+
+2. the property can be updated:
+
+  ```yaml
+  spruce:
+  - base: base.yml
+    merge:
+    - with:
+        files:
+        - top.yml
+    modify:
+      update: persone.name
+      value: NewName
+    to: result.yml
+  ```
+
+  Using update will update existing properties only.
+
+3. Other properties can be added/updated with set:
+
+  ```yaml
+  spruce:
+  - base: base.yml
+    merge:
+    - with:
+        files:
+        - top.yml
+    modify:
+      set: persone.name
+      value: NewName
+    to: result.yml
+  ```
+
+  Set updates or adds a property to an array. If a property exists it will be overwritten, if the property does not exist it will be added.
+
+Aviator uses [goml](https://github.com/JulzDiverse/goml) as YAML modifier. If you want to read more about `update`, `delete`, and `set`, check the README. 
+
 ---
 
 ### Executors

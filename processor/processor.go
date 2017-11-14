@@ -8,6 +8,7 @@ import (
 
 	"github.com/JulzDiverse/aviator"
 	"github.com/JulzDiverse/aviator/filemanager"
+	"github.com/JulzDiverse/aviator/modifier"
 	"github.com/JulzDiverse/aviator/printer"
 	"github.com/JulzDiverse/aviator/spruce"
 	"github.com/pkg/errors"
@@ -18,15 +19,17 @@ type WriterFunc func([]byte, string) error
 type Processor struct {
 	spruceClient aviator.SpruceClient
 	store        aviator.FileStore
+	modifier     aviator.Modifier
 	verbose      bool
 	silent       bool
 	warnings     []string
 }
 
-func NewTestProcessor(spruceClient aviator.SpruceClient, store aviator.FileStore) *Processor {
+func NewTestProcessor(spruceClient aviator.SpruceClient, store aviator.FileStore, modifier aviator.Modifier) *Processor {
 	return &Processor{
 		spruceClient: spruceClient,
 		store:        store,
+		modifier:     modifier,
 	}
 }
 
@@ -34,6 +37,7 @@ func New() *Processor {
 	return &Processor{
 		store:        filemanager.Store(),
 		spruceClient: spruce.New(),
+		modifier:     modifier.New(),
 	}
 }
 
@@ -185,6 +189,14 @@ func (p *Processor) mergeAndWrite(files []string, cfg aviator.Spruce, to string)
 	if err != nil {
 		return errors.Wrap(err, "Spruce Merge FAILED")
 	}
+
+	if cfg.Modify.Delete != "" || cfg.Modify.Set != "" || cfg.Modify.Update != "" {
+		result, err = p.modifier.Modify(result, cfg.Modify)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = p.store.WriteFile(to, result)
 	if err != nil {
 		return err

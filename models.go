@@ -16,6 +16,7 @@ type Spruce struct {
 	SkipEval    bool     `yaml:"skip_eval"`
 	To          string   `yaml:"to"`
 	ToDir       string   `yaml:"to_dir"`
+	Modify      Modify   `yaml:"modify"`
 }
 
 type Merge struct {
@@ -61,6 +62,13 @@ type MergeConf struct {
 	FallbackAppend bool
 }
 
+type Modify struct {
+	Delete string `yaml:"delete"`
+	Set    string `yaml:"set"`
+	Update string `yaml:"update"`
+	Value  string `yaml:"value"`
+}
+
 //go:generate counterfeiter . SpruceProcessor
 type SpruceProcessor interface {
 	Process([]Spruce) error
@@ -93,4 +101,16 @@ type Validator interface {
 //go:generate counterfeiter . Executor
 type Executor interface {
 	Execute(interface{}) error
+}
+
+//go:generate counterfeiter . Modifier
+type Modifier interface {
+	Modify([]byte, Modify) ([]byte, error)
+}
+
+//go:generate counterfeiter . GomlClient
+type GomlClient interface {
+	Delete([]byte, string) ([]byte, error)
+	Set([]byte, string, string) ([]byte, error)
+	Update([]byte, string, string) ([]byte, error)
 }

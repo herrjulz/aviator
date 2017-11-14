@@ -16,6 +16,7 @@ var _ = Describe("Processor", func() {
 	var spruceConfig []aviator.Spruce
 	var spruceClient *fakes.FakeSpruceClient
 	var store *filemanager.FileManager //*fakes.FakeFileStore
+	var modifier *fakes.FakeModifier
 
 	Describe("Process", func() {
 
@@ -34,6 +35,56 @@ var _ = Describe("Processor", func() {
 				ToDir:   "integration/tmp/",
 			}
 			store = filemanager.Store() //new(fakes.FakeFileStore)
+			modifier = new(fakes.FakeModifier)
+		})
+
+		Context("Modify", func() {
+			Context("Delete", func() {
+				It("When delete is defined it should call modify", func() {
+					cfg.Merge[0].With.Files = []string{"file.yml"}
+					cfg.Modify.Delete = "some.path"
+					spruceConfig = []aviator.Spruce{cfg}
+					spruceClient = new(fakes.FakeSpruceClient)
+					processor = NewTestProcessor(spruceClient, store, modifier)
+
+					err := processor.ProcessSilent(spruceConfig)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(modifier.ModifyCallCount()).To(Equal(1))
+				})
+			})
+
+			Context("Set", func() {
+				It("When set is defined it should call modify", func() {
+					cfg.Merge[0].With.Files = []string{"file.yml"}
+					cfg.Modify.Set = "some.path"
+					cfg.Modify.Value = "val"
+					spruceConfig = []aviator.Spruce{cfg}
+					spruceClient = new(fakes.FakeSpruceClient)
+					processor = NewTestProcessor(spruceClient, store, modifier)
+
+					err := processor.ProcessSilent(spruceConfig)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(modifier.ModifyCallCount()).To(Equal(1))
+				})
+			})
+
+			Context("Update", func() {
+				It("When set is defined it should call modify", func() {
+					cfg.Merge[0].With.Files = []string{"file.yml"}
+					cfg.Modify.Update = "some.path"
+					cfg.Modify.Value = "val"
+					spruceConfig = []aviator.Spruce{cfg}
+					spruceClient = new(fakes.FakeSpruceClient)
+					processor = NewTestProcessor(spruceClient, store, modifier)
+
+					err := processor.ProcessSilent(spruceConfig)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(modifier.ModifyCallCount()).To(Equal(1))
+				})
+			})
 		})
 
 		Context("Default Merge", func() {
@@ -43,7 +94,7 @@ var _ = Describe("Processor", func() {
 						cfg.Merge[0].With.Files = []string{"file.yml"}
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -62,7 +113,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -104,7 +155,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -123,7 +174,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -144,7 +195,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -163,7 +214,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -183,7 +234,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -201,7 +252,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -219,7 +270,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -244,7 +295,7 @@ var _ = Describe("Processor", func() {
 
 					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
-					processor = NewTestProcessor(spruceClient, store)
+					processor = NewTestProcessor(spruceClient, store, modifier)
 
 					err := processor.ProcessSilent(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
@@ -267,7 +318,7 @@ var _ = Describe("Processor", func() {
 
 					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
-					processor = NewTestProcessor(spruceClient, store)
+					processor = NewTestProcessor(spruceClient, store, modifier)
 
 					err := processor.ProcessSilent(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
@@ -290,7 +341,7 @@ var _ = Describe("Processor", func() {
 
 					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
-					processor = NewTestProcessor(spruceClient, store)
+					processor = NewTestProcessor(spruceClient, store, modifier)
 
 					err := processor.ProcessSilent(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
@@ -315,7 +366,7 @@ var _ = Describe("Processor", func() {
 
 					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
-					processor = NewTestProcessor(spruceClient, store)
+					processor = NewTestProcessor(spruceClient, store, modifier)
 
 					err := processor.ProcessSilent(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
@@ -337,7 +388,7 @@ var _ = Describe("Processor", func() {
 
 					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
-					processor = NewTestProcessor(spruceClient, store)
+					processor = NewTestProcessor(spruceClient, store, modifier)
 
 					err := processor.ProcessSilent(spruceConfig)
 					Expect(err).ToNot(HaveOccurred())
@@ -362,7 +413,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
@@ -384,7 +435,7 @@ var _ = Describe("Processor", func() {
 
 						spruceConfig = []aviator.Spruce{cfg}
 						spruceClient = new(fakes.FakeSpruceClient)
-						processor = NewTestProcessor(spruceClient, store)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
 						err := processor.ProcessSilent(spruceConfig)
 						Expect(err).ToNot(HaveOccurred())
