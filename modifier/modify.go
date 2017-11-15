@@ -28,6 +28,8 @@ func (m *Modifier) Modify(file []byte, mod aviator.Modify) ([]byte, error) {
 	if mod.Delete != "" {
 		if yml, err := m.goml.Delete(file, mod.Delete); err == nil {
 			return yml, nil
+		} else {
+			return file, nil
 		}
 	} else if mod.Set != "" {
 		if yml, err := m.goml.Set(file, mod.Set, mod.Value); err == nil {
