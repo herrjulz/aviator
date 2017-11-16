@@ -40,25 +40,45 @@ var _ = Describe("Processor", func() {
 
 		Context("Modify", func() {
 			Context("Delete", func() {
-				It("When delete is defined it should call modify", func() {
-					cfg.Merge[0].With.Files = []string{"file.yml"}
-					cfg.Modify.Delete = "some.path"
-					spruceConfig = []aviator.Spruce{cfg}
-					spruceClient = new(fakes.FakeSpruceClient)
-					processor = NewTestProcessor(spruceClient, store, modifier)
+				Context("When Delete is defined", func() {
+					It("it should call modify", func() {
+						cfg.Merge[0].With.Files = []string{"file.yml"}
+						cfg.Modify.Delete = []string{"some.path"}
+						spruceConfig = []aviator.Spruce{cfg}
+						spruceClient = new(fakes.FakeSpruceClient)
+						processor = NewTestProcessor(spruceClient, store, modifier)
 
-					err := processor.ProcessSilent(spruceConfig)
-					Expect(err).ToNot(HaveOccurred())
+						err := processor.ProcessSilent(spruceConfig)
+						Expect(err).ToNot(HaveOccurred())
 
-					Expect(modifier.ModifyCallCount()).To(Equal(1))
+						Expect(modifier.ModifyCallCount()).To(Equal(1))
+					})
+
+					It("should invoke delete with the expected values", func() {
+						cfg.Merge[0].With.Files = []string{"file.yml"}
+						cfg.Modify.Delete = []string{"some.path", "second.path", "third.path"}
+						spruceConfig = []aviator.Spruce{cfg}
+						spruceClient = new(fakes.FakeSpruceClient)
+						processor = NewTestProcessor(spruceClient, store, modifier)
+
+						err := processor.ProcessSilent(spruceConfig)
+						Expect(err).ToNot(HaveOccurred())
+						_, mods := modifier.ModifyArgsForCall(0)
+						Expect(mods.Delete[0]).To(Equal("some.path"))
+						Expect(mods.Delete[1]).To(Equal("second.path"))
+						Expect(mods.Delete[2]).To(Equal("third.path"))
+						Expect(len(mods.Set)).To(Equal(0))
+						Expect(len(mods.Update)).To(Equal(0))
+					})
 				})
 			})
 
 			Context("Set", func() {
 				It("When set is defined it should call modify", func() {
 					cfg.Merge[0].With.Files = []string{"file.yml"}
-					cfg.Modify.Set = "some.path"
-					cfg.Modify.Value = "val"
+					set1 := aviator.PathVal{"some.path", "val"}
+					set := []aviator.PathVal{set1}
+					cfg.Modify.Set = set
 					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store, modifier)
@@ -68,13 +88,34 @@ var _ = Describe("Processor", func() {
 
 					Expect(modifier.ModifyCallCount()).To(Equal(1))
 				})
+
+				//It("should invoke set with the expected values", func() {
+				//cfg.Merge[0].With.Files = []string{"file.yml"}
+				//s := aviator.PathVal{Path: "some.path", Value: "val"}
+				//s2 := aviator.PathVal{Path: "second.path", Value: "val2"}
+				//set := []aviator.PathVal{s, s2}
+				//cfg.Modify.Set = set
+				//fmt.Println(cfg.Modify.Set)
+				//spruceClient = new(fakes.FakeSpruceClient)
+				//processor = NewTestProcessor(spruceClient, store, modifier)
+
+				//err := processor.ProcessSilent(spruceConfig)
+				//Expect(err).ToNot(HaveOccurred())
+				//_, mods := modifier.ModifyArgsForCall(0)
+				//fmt.Println(mods)
+				//Expect(mods.Set[0].Path).To(Equal("some.path"))
+				//Expect(mods.Set[0].Value).To(Equal("val"))
+				//Expect(mods.Set[1].Path).To(Equal("second.path"))
+				//Expect(mods.Set[1].Value).To(Equal("val2"))
+				//})
 			})
 
 			Context("Update", func() {
 				It("When set is defined it should call modify", func() {
 					cfg.Merge[0].With.Files = []string{"file.yml"}
-					cfg.Modify.Update = "some.path"
-					cfg.Modify.Value = "val"
+					u := aviator.PathVal{"some.path", "val"}
+					update := []aviator.PathVal{u}
+					cfg.Modify.Set = update
 					spruceConfig = []aviator.Spruce{cfg}
 					spruceClient = new(fakes.FakeSpruceClient)
 					processor = NewTestProcessor(spruceClient, store, modifier)

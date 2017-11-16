@@ -63,10 +63,14 @@ type MergeConf struct {
 }
 
 type Modify struct {
-	Delete string `yaml:"delete"`
-	Set    string `yaml:"set"`
-	Update string `yaml:"update"`
-	Value  string `yaml:"value"`
+	Delete []string  `yaml:"delete"`
+	Set    []PathVal `yaml:"set"`
+	Update []PathVal `yaml:"update"`
+}
+
+type PathVal struct {
+	Path  string `yaml:"path"`
+	Value string `yaml:"value"`
 }
 
 //go:generate counterfeiter . SpruceProcessor

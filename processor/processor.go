@@ -190,7 +190,7 @@ func (p *Processor) mergeAndWrite(files []string, cfg aviator.Spruce, to string)
 		return errors.Wrap(err, "Spruce Merge FAILED")
 	}
 
-	if cfg.Modify.Delete != "" || cfg.Modify.Set != "" || cfg.Modify.Update != "" {
+	if len(cfg.Modify.Delete) > 0 || len(cfg.Modify.Set) > 0 || len(cfg.Modify.Update) > 0 {
 		result, err = p.modifier.Modify(result, cfg.Modify)
 		if err != nil {
 			return err

@@ -1,8 +1,6 @@
 package modifier
 
 import (
-	"errors"
-
 	"github.com/JulzDiverse/aviator"
 	"github.com/JulzDiverse/aviator/gomlclient"
 )
@@ -25,22 +23,27 @@ func New() *Modifier {
 
 func (m *Modifier) Modify(file []byte, mod aviator.Modify) ([]byte, error) {
 	var err error
-	if mod.Delete != "" {
-		if yml, err := m.goml.Delete(file, mod.Delete); err == nil {
-			return yml, nil
-		} else {
-			return file, nil
+	modified := file
+	if len(mod.Delete) > 0 {
+		for _, v := range mod.Delete {
+			if yml, err := m.goml.Delete(modified, v); err == nil {
+				modified = yml
+			}
 		}
-	} else if mod.Set != "" {
-		if yml, err := m.goml.Set(file, mod.Set, mod.Value); err == nil {
-			return yml, nil
-		}
-	} else if mod.Update != "" {
-		if yml, err := m.goml.Update(file, mod.Update, mod.Value); err == nil {
-			return yml, nil
-		}
-	} else {
-		return nil, errors.New("modification path not provided")
 	}
-	return nil, err
+	if len(mod.Set) > 0 {
+		for _, set := range mod.Set {
+			if yml, err := m.goml.Set(modified, set.Path, set.Value); err == nil {
+				modified = yml
+			}
+		}
+	}
+	if len(mod.Update) > 0 {
+		for _, update := range mod.Update {
+			if yml, err := m.goml.Update(modified, update.Path, update.Value); err == nil {
+				modified = yml
+			}
+		}
+	}
+	return modified, err
 }
