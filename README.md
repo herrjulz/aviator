@@ -456,7 +456,8 @@ person:
         files:
         - top.yml
     modify:
-      delete: persone.name
+      delete: 
+      - "persone.name"
     to: result.yml
   ```
 
@@ -472,8 +473,9 @@ person:
         files:
         - top.yml
     modify:
-      update: persone.name
-      value: NewName
+      update: 
+      - path: persone.name
+      - value: newName
     to: result.yml
   ```
 
@@ -489,12 +491,13 @@ person:
         files:
         - top.yml
     modify:
-      set: persone.name
-      value: NewName
+      set: 
+      - path: persone.name
+        value: NewName
     to: result.yml
   ```
 
-  Set updates or adds a property to an array. If a property exists it will be overwritten, if the property does not exist it will be added.
+  Set updates or adds a property to an array. If a property exists it will be overwritten, if the property does not exist it will be added (works only for maps not arrays).
 
 Aviator uses [goml](https://github.com/JulzDiverse/goml) as YAML modifier. If you want to read more about `update`, `delete`, and `set`, check the README. 
 
