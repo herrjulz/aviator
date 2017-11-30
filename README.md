@@ -457,7 +457,7 @@ person:
         - top.yml
     modify:
       delete: 
-      - "persone.name"
+      - "person.name"
     to: result.yml
   ```
 
@@ -474,7 +474,7 @@ person:
         - top.yml
     modify:
       update: 
-      - path: persone.name
+      - path: person.name
       - value: newName
     to: result.yml
   ```
@@ -492,7 +492,7 @@ person:
         - top.yml
     modify:
       set: 
-      - path: persone.name
+      - path: person.name
         value: NewName
     to: result.yml
   ```
