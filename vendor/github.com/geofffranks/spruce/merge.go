@@ -2,6 +2,7 @@ package spruce
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -283,9 +284,13 @@ func (m *Merger) mergeArray(orig []interface{}, n []interface{}, node string) []
 func (m *Merger) mergeArrayDefault(orig []interface{}, n []interface{}, node string) []interface{} {
 	DEBUG("%s: performing index-based array merge", node)
 	var err error
-	if err = canKeyMergeArray("original", orig, node, "name"); err == nil {
-		if err = canKeyMergeArray("new", n, node, "name"); err == nil {
-			return m.mergeArrayByKey(orig, n, node, "name")
+	key := "name"
+	if os.Getenv("DEFAULT_ARRAY_MERGE_KEY") != "" {
+		key = os.Getenv("DEFAULT_ARRAY_MERGE_KEY")
+	}
+	if err = canKeyMergeArray("original", orig, node, key); err == nil {
+		if err = canKeyMergeArray("new", n, node, key); err == nil {
+			return m.mergeArrayByKey(orig, n, node, key)
 		}
 	}
 
@@ -395,8 +400,9 @@ func getArrayModifications(obj []interface{}) []ModificationDefinition {
 	prependRegEx := regexp.MustCompile("^\\Q((\\E\\s*prepend\\s*\\Q))\\E$")
 	insertByIdxRegEx := regexp.MustCompile("^\\Q((\\E\\s*insert\\s+(after|before)\\s+(\\d+)\\s*\\Q))\\E$")
 	insertByNameRegEx := regexp.MustCompile("^\\Q((\\E\\s*insert\\s+(after|before)\\s+([^ ]+)?\\s*\"(.+)\"\\s*\\Q))\\E$")
-	deleteByIdxRegEx := regexp.MustCompile("^\\Q((\\E\\s*delete\\s+(\\d+)\\s*\\Q))\\E$")
+	deleteByIdxRegEx := regexp.MustCompile("^\\Q((\\E\\s*delete\\s+(-?\\d+)\\s*\\Q))\\E$")
 	deleteByNameRegEx := regexp.MustCompile("^\\Q((\\E\\s*delete\\s+([^ ]+)?\\s*\"(.+)\"\\s*\\Q))\\E$")
+	deleteByNameUnquotedRegEx := regexp.MustCompile("^\\Q((\\E\\s*delete\\s+([^ ]+)?\\s*(.+)\\s*\\Q))\\E$")
 
 	for _, entry := range obj {
 		e, isString := entry.(string)
@@ -471,6 +477,22 @@ func getArrayModifications(obj []interface{}) []ModificationDefinition {
 				result = append(result, ModificationDefinition{key: key, name: name, delete: true})
 				continue
 			}
+		case deleteByNameUnquotedRegEx.MatchString(e): // check for (( delete "<name>" ))
+			/* #0 is the whole string,
+			 * #1 contains the optional '<key>' string
+			 * #2 is finally the target "<name>" string
+			 */
+			if captures := deleteByNameUnquotedRegEx.FindStringSubmatch(e); len(captures) == 3 {
+				key := strings.TrimSpace(captures[1])
+				name := strings.TrimSpace(captures[2])
+				if name == "" {
+					name = key
+					key = "name"
+				}
+
+				result = append(result, ModificationDefinition{key: key, name: name, delete: true})
+				continue
+			}
 		}
 
 		lastResultIdx := len(result) - 1
@@ -483,6 +505,9 @@ func getArrayModifications(obj []interface{}) []ModificationDefinition {
 
 func shouldKeyMergeArray(obj []interface{}) (bool, string) {
 	key := "name"
+	if os.Getenv("DEFAULT_ARRAY_MERGE_KEY") != "" {
+		key = os.Getenv("DEFAULT_ARRAY_MERGE_KEY")
+	}
 
 	if len(obj) >= 1 && obj[0] != nil && reflect.TypeOf(obj[0]).Kind() == reflect.String {
 		re := regexp.MustCompile("^\\Q((\\E\\s*merge(?:\\s+on\\s+(.*?))?\\s*\\Q))\\E$")

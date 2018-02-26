@@ -45,14 +45,13 @@ var _ = Describe("Filemanager", func() {
 		})
 	})
 
-	Context("Setting a file that already exists", func() {
-		It("returns an error", func() {
+	Context("overwrting a file", func() {
+		It("is successful", func() {
 			err := store.WriteFile("{{keyD}}", []byte("content D"))
 			Expect(err).ToNot(HaveOccurred())
 
 			err = store.WriteFile("{{keyD}}", []byte("content D"))
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError(ContainSubstring("file keyD in virtual filestore already exists")))
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 

@@ -2,6 +2,7 @@ package spruce
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -83,6 +84,15 @@ func TestShouldKeyMergeArrayOfHashes(t *testing.T) {
 			yes, key := shouldKeyMergeArray([]interface{}{"(( merge on id ))", "stuff"})
 			So(yes, ShouldBeTrue)
 			So(key, ShouldEqual, "id")
+		})
+		Convey("when DEFAULT_ARRAY_MERGE_KEY is set", func() {
+			os.Setenv("DEFAULT_ARRAY_MERGE_KEY", "id")
+			Convey("shouldKeyMergeArray picks up on it", func() {
+				yes, key := shouldKeyMergeArray([]interface{}{"(( merge ))", "stuff"})
+				So(yes, ShouldBeTrue)
+				So(key, ShouldEqual, "id")
+			})
+			os.Setenv("DEFAULT_ARRAY_MERGE_KEY", "")
 		})
 		Convey("Is whitespace agnostic", func() {
 			Convey("No surrounding whitespace", func() {
@@ -402,12 +412,6 @@ func TestGetArrayModifications(t *testing.T) {
 
 	Convey("Only default merge if no operators given", t, func() {
 		results := getArrayModifications([]interface{}{"not a magic token", "stuff"})
-		So(results, ShouldHaveLength, 1)
-		So(results[0], shouldBeDefault)
-	})
-
-	Convey("Don't return a delete if index is obviously out of bounds", t, func() {
-		results := getArrayModifications([]interface{}{"(( delete -2 ))", "stuff"})
 		So(results, ShouldHaveLength, 1)
 		So(results[0], shouldBeDefault)
 	})
@@ -1171,6 +1175,58 @@ func TestMergeArray(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 		})
+		Convey("setting DEFAULT_ARRAY_MERGE_KEY", func() {
+			os.Setenv("DEFAULT_ARRAY_MERGE_KEY", "id")
+			Convey("can override key-merge by default", func() {
+				first := []interface{}{
+					map[interface{}]interface{}{
+						"name": "first",
+						"k1":   "v1",
+						"id":   "1",
+					},
+					map[interface{}]interface{}{
+						"name": "second",
+						"done": "yes",
+						"id":   "2",
+					},
+				}
+				second := []interface{}{
+					map[interface{}]interface{}{
+						"name": "second",
+						"2":    "best",
+						"test": "test",
+						"id":   "2",
+					},
+					map[interface{}]interface{}{
+						"name": "first",
+						"k1":   "1",
+						"k2":   "2",
+						"id":   "1",
+					},
+				}
+
+				m := &Merger{}
+				o := m.mergeObj(first, second, "an.inlined.merge")
+				err := m.Error()
+				So(o, ShouldResemble, []interface{}{
+					map[interface{}]interface{}{
+						"name": "first",
+						"k1":   "1",
+						"k2":   "2",
+						"id":   "1",
+					},
+					map[interface{}]interface{}{
+						"name": "second",
+						"2":    "best",
+						"done": "yes",
+						"test": "test",
+						"id":   "2",
+					},
+				})
+				So(err, ShouldBeNil)
+			})
+			os.Setenv("DEFAULT_ARRAY_MERGE_KEY", "")
+		})
 		Convey("without magical merge token replaces entire array", func() {
 			orig := []interface{}{"first", "second"}
 			array := []interface{}{"my", "new", "array"}
@@ -1762,6 +1818,17 @@ func TestMergeArray(t *testing.T) {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldContainSubstring, "unable to modify the list, because specified index 6 is out of bounds")
 			})
+			Convey("throw an error if delete point is negative", func() {
+				orig := []interface{}{"first", "second", "third", "fourth", "fifth", "sixth"}
+				array := []interface{}{"(( delete -2 ))"}
+
+				m := &Merger{}
+				a := m.mergeArray(orig, array, "node-path")
+				err := m.Error()
+				So(a, ShouldBeNil)
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "unable to modify the list, because specified index -2 is out of bounds")
+			})
 
 			Convey("Delete '<default>: first'", func() {
 				orig := []interface{}{
@@ -1783,6 +1850,26 @@ func TestMergeArray(t *testing.T) {
 				So(a, ShouldResemble, expect)
 				So(err, ShouldBeNil)
 			})
+			Convey("Delete '<default>: first' (no quotes)", func() {
+				orig := []interface{}{
+					map[interface{}]interface{}{"name": "first", "release": "v1"},
+					map[interface{}]interface{}{"name": "second", "release": "v1"},
+				}
+
+				array := []interface{}{
+					"(( delete first ))",
+				}
+
+				expect := []interface{}{
+					map[interface{}]interface{}{"name": "second", "release": "v1"},
+				}
+
+				m := &Merger{}
+				a := m.mergeArray(orig, array, "node-path")
+				err := m.Error()
+				So(a, ShouldResemble, expect)
+				So(err, ShouldBeNil)
+			})
 
 			Convey("Delete 'id: second'", func() {
 				orig := []interface{}{
@@ -1792,6 +1879,27 @@ func TestMergeArray(t *testing.T) {
 
 				array := []interface{}{
 					"(( delete id \"second\" ))",
+				}
+
+				expect := []interface{}{
+					map[interface{}]interface{}{"id": "first", "release": "v1"},
+				}
+
+				m := &Merger{}
+				a := m.mergeArray(orig, array, "node-path")
+				err := m.Error()
+				So(a, ShouldResemble, expect)
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Allow inquoted names in delete", func() {
+				orig := []interface{}{
+					map[interface{}]interface{}{"id": "first", "release": "v1"},
+					map[interface{}]interface{}{"id": "second", "release": "v1"},
+				}
+
+				array := []interface{}{
+					"(( delete id second ))",
 				}
 
 				expect := []interface{}{

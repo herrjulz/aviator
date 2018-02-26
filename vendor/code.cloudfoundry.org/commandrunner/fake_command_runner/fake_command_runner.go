@@ -17,8 +17,9 @@ type FakeCommandRunner struct {
 	killedCommands       []*exec.Cmd
 	signalledCommands    map[*exec.Cmd]os.Signal
 
-	commandCallbacks map[*CommandSpec]func(*exec.Cmd) error
-	waitingCallbacks map[*CommandSpec]func(*exec.Cmd) error
+	commandCallbacks  map[*CommandSpec]func(*exec.Cmd) error
+	waitingCallbacks  map[*CommandSpec]func(*exec.Cmd) error
+	startingCallbacks map[*CommandSpec]func(*exec.Cmd) error
 
 	process *os.Process
 
@@ -73,8 +74,9 @@ func New() *FakeCommandRunner {
 	return &FakeCommandRunner{
 		signalledCommands: make(map[*exec.Cmd]os.Signal),
 
-		commandCallbacks: make(map[*CommandSpec]func(*exec.Cmd) error),
-		waitingCallbacks: make(map[*CommandSpec]func(*exec.Cmd) error),
+		commandCallbacks:  make(map[*CommandSpec]func(*exec.Cmd) error),
+		waitingCallbacks:  make(map[*CommandSpec]func(*exec.Cmd) error),
+		startingCallbacks: make(map[*CommandSpec]func(*exec.Cmd) error),
 	}
 }
 
@@ -110,12 +112,19 @@ func (r *FakeCommandRunner) RunInjectsProcessToCmd(process *os.Process) {
 
 func (r *FakeCommandRunner) Start(cmd *exec.Cmd) error {
 	r.RLock()
+	startingCallbacks := r.startingCallbacks
 	callbacks := r.commandCallbacks
 	r.RUnlock()
 
 	r.Lock()
 	r.startedCommands = append(r.startedCommands, cmd)
 	r.Unlock()
+
+	for spec, callback := range startingCallbacks {
+		if spec.Matches(cmd) {
+			return callback(cmd)
+		}
+	}
 
 	for spec, callback := range callbacks {
 		if spec.Matches(cmd) {
@@ -198,6 +207,13 @@ func (r *FakeCommandRunner) WhenWaitingFor(spec CommandSpec, callback func(*exec
 	defer r.Unlock()
 
 	r.waitingCallbacks[&spec] = callback
+}
+
+func (r *FakeCommandRunner) WhenStarting(spec CommandSpec, callback func(*exec.Cmd) error) {
+	r.Lock()
+	defer r.Unlock()
+
+	r.startingCallbacks[&spec] = callback
 }
 
 func (r *FakeCommandRunner) ExecutedCommands() []*exec.Cmd {

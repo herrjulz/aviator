@@ -8,10 +8,10 @@ import (
 )
 
 type FakeExecutor struct {
-	ExecuteStub        func(interface{}) error
+	ExecuteStub        func(aviator.Fly) error
 	executeMutex       sync.RWMutex
 	executeArgsForCall []struct {
-		arg1 interface{}
+		arg1 aviator.Fly
 	}
 	executeReturns struct {
 		result1 error
@@ -23,11 +23,11 @@ type FakeExecutor struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeExecutor) Execute(arg1 interface{}) error {
+func (fake *FakeExecutor) Execute(arg1 aviator.Fly) error {
 	fake.executeMutex.Lock()
 	ret, specificReturn := fake.executeReturnsOnCall[len(fake.executeArgsForCall)]
 	fake.executeArgsForCall = append(fake.executeArgsForCall, struct {
-		arg1 interface{}
+		arg1 aviator.Fly
 	}{arg1})
 	fake.recordInvocation("Execute", []interface{}{arg1})
 	fake.executeMutex.Unlock()
@@ -46,7 +46,7 @@ func (fake *FakeExecutor) ExecuteCallCount() int {
 	return len(fake.executeArgsForCall)
 }
 
-func (fake *FakeExecutor) ExecuteArgsForCall(i int) interface{} {
+func (fake *FakeExecutor) ExecuteArgsForCall(i int) aviator.Fly {
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
 	return fake.executeArgsForCall[i].arg1
