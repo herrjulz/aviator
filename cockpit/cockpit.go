@@ -16,7 +16,7 @@ import (
 
 type Cockpit struct {
 	spruceProcessor aviator.SpruceProcessor
-	flyExecutor     aviator.Executor
+	flyExecutor     aviator.FlyExecuter
 	validator       aviator.Validator
 }
 
@@ -27,7 +27,7 @@ type Aviator struct {
 
 func Init(
 	spruceProcessor aviator.SpruceProcessor,
-	flyExecuter aviator.Executor,
+	flyExecuter aviator.FlyExecuter,
 	validator aviator.Validator,
 ) *Cockpit {
 	return &Cockpit{spruceProcessor, flyExecuter, validator}

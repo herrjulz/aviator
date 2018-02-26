@@ -77,7 +77,8 @@ func main() {
 			Files goptions.Remainder `goptions:"description='Show the semantic differences between two YAML files'"`
 		} `goptions:"diff"`
 		VaultInfo struct {
-			Files goptions.Remainder `goptions:"description='List vault references in the given files'"`
+			EnableGoPatch bool               `goptions:"--go-patch, description='Enable the use of go-patch when parsing files to be merged'"`
+			Files         goptions.Remainder `goptions:"description='List vault references in the given files'"`
 		} `goptions:"vaultinfo"`
 	}
 	getopts(&options)
@@ -121,6 +122,7 @@ func main() {
 
 		var output string
 		if handleConcourseQuoting {
+			PrintfStdErr(ansi.Sprintf("@Y{--concourse is deprecated. Consider using built-in spruce operators when merging Concourse YAML files}\n"))
 			output = dequoteConcourse(merged)
 		} else {
 			output = string(merged)
@@ -131,6 +133,7 @@ func main() {
 		VaultRefs = map[string][]string{}
 		SkipVault = true
 		options.Merge.Files = options.VaultInfo.Files
+		options.Merge.EnableGoPatch = options.VaultInfo.EnableGoPatch
 		_, err := cmdMergeEval(options.Merge)
 		if err != nil {
 			PrintfStdErr("%s\n", err.Error())
@@ -161,17 +164,21 @@ func main() {
 		}
 
 	case "diff":
+		ansi.Color(isatty.IsTerminal(os.Stdout.Fd()))
 		if len(options.Diff.Files) != 2 {
 			usage()
 			return
 		}
-		output, err := diffFiles(options.Diff.Files)
+		output, differences, err := diffFiles(options.Diff.Files)
 		if err != nil {
 			PrintfStdErr("%s\n", err)
 			exit(2)
 			return
 		}
 		printfStdOut("%s\n", output)
+		if differences {
+			exit(1)
+		}
 
 	default:
 		usage()
@@ -339,38 +346,38 @@ func dequoteConcourse(input []byte) string {
 	return re.ReplaceAllString(string(input), "$1")
 }
 
-func diffFiles(paths []string) (string, error) {
+func diffFiles(paths []string) (string, bool, error) {
 	if len(paths) != 2 {
-		return "", ansi.Errorf("incorrect number of files given to diffFiles(); please file a bug report")
+		return "", false, ansi.Errorf("incorrect number of files given to diffFiles(); please file a bug report")
 	}
 
 	data, err := ioutil.ReadFile(paths[0])
 	if err != nil {
-		return "", ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", paths[0], err)
+		return "", false, ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", paths[0], err)
 	}
 	a, err := parseYAML(data)
 	if err != nil {
-		return "", ansi.Errorf("@m{%s}: @R{%s}\n", paths[0], err)
+		return "", false, ansi.Errorf("@m{%s}: @R{%s}\n", paths[0], err)
 	}
 
 	data, err = ioutil.ReadFile(paths[1])
 	if err != nil {
-		return "", ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", paths[1], err)
+		return "", false, ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", paths[1], err)
 	}
 	b, err := parseYAML(data)
 	if err != nil {
-		return "", ansi.Errorf("@m{%s}: @R{%s}\n", paths[1], err)
+		return "", false, ansi.Errorf("@m{%s}: @R{%s}\n", paths[1], err)
 	}
 
 	d, err := Diff(a, b)
 	if err != nil {
-		return "", ansi.Errorf("@R{Failed to diff} @m{%s} -> @m{%s}: %s\n", paths[0], paths[1], err)
+		return "", false, ansi.Errorf("@R{Failed to diff} @m{%s} -> @m{%s}: %s\n", paths[0], paths[1], err)
 	}
 
 	if !d.Changed() {
-		return ansi.Sprintf("@G{both files are semantically equivalent; no differences found!}\n"), nil
+		return ansi.Sprintf("@G{both files are semantically equivalent; no differences found!}\n"), false, nil
 	}
-	return d.String("$"), nil
+	return d.String("$"), true, nil
 }
 
 type RootIsArrayError struct {

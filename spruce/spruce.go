@@ -7,6 +7,7 @@ import (
 
 	"github.com/JulzDiverse/aviator"
 	"github.com/JulzDiverse/aviator/filemanager"
+	"github.com/cppforlife/go-patch/patch"
 	"github.com/geofffranks/simpleyaml"
 	. "github.com/geofffranks/spruce"
 	"github.com/starkandwayne/goutils/ansi"
@@ -35,7 +36,7 @@ func NewWithFileFilemanager(filemanager aviator.FileStore) *SpruceClient {
 func (sc *SpruceClient) MergeWithOpts(options aviator.MergeConf) ([]byte, error) {
 	root := make(map[interface{}]interface{})
 
-	err := sc.mergeAllDocs(root, options.Files, options.FallbackAppend)
+	err := sc.mergeAllDocs(root, options.Files, options.FallbackAppend, options.EnableGoPatch)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +58,7 @@ func (sc *SpruceClient) MergeWithOpts(options aviator.MergeConf) ([]byte, error)
 func (sc *SpruceClient) MergeWithOptsRaw(options aviator.MergeConf) (map[interface{}]interface{}, error) {
 	root := make(map[interface{}]interface{})
 
-	err := sc.mergeAllDocs(root, options.Files, options.FallbackAppend)
+	err := sc.mergeAllDocs(root, options.Files, options.FallbackAppend, options.EnableGoPatch)
 	if err != nil {
 		return nil, err
 	}
@@ -68,26 +69,38 @@ func (sc *SpruceClient) MergeWithOptsRaw(options aviator.MergeConf) (map[interfa
 	return ev.Tree, err
 }
 
-func (sc *SpruceClient) mergeAllDocs(root map[interface{}]interface{}, paths []string, fallbackAppend bool) error {
+func (sc *SpruceClient) mergeAllDocs(root map[interface{}]interface{}, paths []string, fallbackAppend bool, goPatchEnabled bool) error {
 	m := &Merger{AppendByDefault: fallbackAppend}
 	for _, path := range paths {
+		var data []byte
 		var err error
 
 		data, ok := sc.store.ReadFile(path)
 		if !ok {
 			return ansi.Errorf("@R{Error reading file from filesystem or internal datastore} @m{%s} \n", path)
 		}
-
 		data = quoteConcourse(data)
-
 		doc, err := parseYAML(data)
 		if err != nil {
-			return ansi.Errorf("@m{%s}: @R{%s}\n", path, err.Error())
-		}
-
-		err = m.Merge(root, doc)
-		if err != nil {
-			return err
+			if isArrayError(err) && goPatchEnabled {
+				ops, err := parseGoPatch(data)
+				if err != nil {
+					return ansi.Errorf("@m{%s}: @R{%s}\n", path, err.Error())
+				}
+				newObj, err := ops.Apply(root)
+				if err != nil {
+					return ansi.Errorf("@m{%s}: @R{%s}\n", path, err.Error())
+				}
+				if newRoot, ok := newObj.(map[interface{}]interface{}); !ok {
+					return ansi.Errorf("@m{%s}: @R{Unable to convert go-patch output into a hash/map for further merging|\n", path)
+				} else {
+					root = newRoot
+				}
+			} else {
+				return ansi.Errorf("@m{%s}: @R{%s}\n", path, err.Error())
+			}
+		} else {
+			m.Merge(root, doc)
 		}
 	}
 
@@ -102,6 +115,9 @@ func parseYAML(data []byte) (map[interface{}]interface{}, error) {
 
 	doc, err := y.Map()
 	if err != nil {
+		if _, arrayErr := y.Array(); arrayErr == nil {
+			return nil, RootIsArrayError{msg: ansi.Sprintf("@R{Root of YAML document is not a hash/map}: %s\n", err)}
+		}
 		return nil, ansi.Errorf("@R{Root of YAML document is not a hash/map}: %s\n", err.Error())
 	}
 
@@ -114,4 +130,30 @@ func quoteConcourse(input []byte) []byte {
 
 func dequoteConcourse(input []byte) string {
 	return dere.ReplaceAllString(string(input), "$1")
+}
+
+type RootIsArrayError struct {
+	msg string
+}
+
+func (r RootIsArrayError) Error() string {
+	return r.msg
+}
+
+func isArrayError(err error) bool {
+	_, ok := err.(RootIsArrayError)
+	return ok
+}
+
+func parseGoPatch(data []byte) (patch.Ops, error) {
+	opdefs := []patch.OpDefinition{}
+	err := yaml.Unmarshal(data, &opdefs)
+	if err != nil {
+		return nil, ansi.Errorf("@R{Root of YAML document is not a hash/map. Tried parsing it as go-patch, but got}: %s\n", err)
+	}
+	ops, err := patch.NewOpsFromDefinitions(opdefs)
+	if err != nil {
+		return nil, ansi.Errorf("@R{Unable to parse go-patch definitions: %s\n", err)
+	}
+	return ops, nil
 }

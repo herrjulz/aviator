@@ -174,10 +174,11 @@ func (p *Processor) forAll(cfg aviator.Spruce) error {
 
 func (p *Processor) mergeAndWrite(files []string, cfg aviator.Spruce, to string) error {
 	mergeConf := aviator.MergeConf{
-		Files:       files,
-		SkipEval:    cfg.SkipEval,
-		Prune:       cfg.Prune,
-		CherryPicks: cfg.CherryPicks,
+		Files:         files,
+		SkipEval:      cfg.SkipEval,
+		Prune:         cfg.Prune,
+		CherryPicks:   cfg.CherryPicks,
+		EnableGoPatch: cfg.GoPatch,
 	}
 
 	if !p.silent {

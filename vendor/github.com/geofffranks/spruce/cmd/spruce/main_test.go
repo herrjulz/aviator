@@ -286,7 +286,7 @@ map:
   name: thing2
 
 `)
-			So(stderr, ShouldEqual, "")
+			So(stderr, ShouldEqual, "--concourse is deprecated. Consider using built-in spruce operators when merging Concourse YAML files\n")
 		})
 
 		Convey("Should not evaluate spruce logic when --no-eval", func() {
@@ -294,11 +294,14 @@ map:
 			stdout = ""
 			stderr = ""
 			main()
-			So(stdout, ShouldEqual, `jobs:
+			So(stdout, ShouldEqual, `injected_jobs:
+  .: (( inject jobs ))
+jobs:
 - name: consul
 - name: route
 - name: cell
 - name: cc_bridge
+param: (( param "Fill this in later" ))
 properties:
   loggregator: true
   no_eval: (( grab property ))
@@ -313,7 +316,10 @@ properties:
 			stdout = ""
 			stderr = ""
 			main()
-			So(stdout, ShouldEqual, `properties:
+			So(stdout, ShouldEqual, `injected_jobs:
+  .: (( inject jobs ))
+param: (( param "Fill this in later" ))
+properties:
   loggregator: true
   no_eval: (( grab property ))
   no_prune: (( prune ))
@@ -735,6 +741,25 @@ quux: quux
   - three
 
 `)
+		})
+		Convey("vaultinfo handles gopatch files", func() {
+			os.Args = []string{"spruce", "vaultinfo", "--go-patch", "../../assets/vaultinfo/merge1.yml", "../../assets/vaultinfo/go-patch.yml"}
+			stdout = ""
+			stderr = ""
+			main()
+			So(stdout, ShouldEqual, `secrets:
+- key: secret/beep:boop
+  references:
+  - bar
+- key: secret/blork:blork
+  references:
+  - new_key
+- key: secret/foo:bar
+  references:
+  - foo
+
+`)
+			So(stderr, ShouldEqual, "")
 		})
 
 		Convey("Adding (static) prune support for list entries (edge case scenario)", func() {
@@ -1859,6 +1884,27 @@ spruce_array_grab:
 				So(stderr, ShouldContainSubstring, "Root of YAML document is not a hash/map. Tried parsing it as go-patch, but got:")
 				So(stdout, ShouldEqual, "")
 			})
+		})
+		Convey("setting DEFAULT_ARRAY_MERGE_KEY", func() {
+
+			os.Setenv("DEFAULT_ARRAY_MERGE_KEY", "id")
+			Convey("changes how arrays of maps are merged by default", func() {
+				os.Args = []string{"spruce", "merge", "../../assets/default-array-merge-var/first.yml", "../../assets/default-array-merge-var/second.yml"}
+				stdout = ""
+				stderr = ""
+				main()
+				So(stderr, ShouldEqual, "")
+				So(stdout, ShouldEqual, `array:
+- id: first
+  value: 123
+- id: second
+  value: 987
+- id: third
+  value: true
+
+`)
+			})
+			os.Setenv("DEFAULT_ARRAY_MERGE_KEY", "")
 		})
 	})
 

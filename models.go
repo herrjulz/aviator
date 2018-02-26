@@ -14,6 +14,7 @@ type Spruce struct {
 	Prune       []string `yaml:"prune"`
 	CherryPicks []string `yaml:"cherry_pick"`
 	SkipEval    bool     `yaml:"skip_eval"`
+	GoPatch     bool     `yaml:"go_patch"`
 	To          string   `yaml:"to"`
 	ToDir       string   `yaml:"to_dir"`
 	Modify      Modify   `yaml:"modify"`
@@ -60,6 +61,7 @@ type MergeConf struct {
 	CherryPicks    []string
 	SkipEval       bool
 	FallbackAppend bool
+	EnableGoPatch  bool
 }
 
 type Modify struct {
@@ -81,7 +83,7 @@ type SpruceProcessor interface {
 
 //go:generate counterfeiter . FlyExecuter
 type FlyExecuter interface {
-	Execute(Fly) error
+	Execute(interface{}) error
 }
 
 //go:generate counterfeiter . SpruceClient
@@ -104,7 +106,7 @@ type Validator interface {
 
 //go:generate counterfeiter . Executor
 type Executor interface {
-	Execute(interface{}) error
+	Execute(Fly) error
 }
 
 //go:generate counterfeiter . Modifier
