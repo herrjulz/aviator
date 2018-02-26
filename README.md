@@ -127,6 +127,25 @@ spruce:
 ```
 ---
 
+#### go_patch (`bool`)
+
+To use spruce in conjuction with the `go-patch` format it can be enabled within the aviator `spruce` section as a toplevel bool property:
+
+```
+spruce:
+- base: some.yml
+   go_patch: true
+   merge:
+   - with:
+        files:
+        - some/ops/file.yml
+   to: result.yml
+```
+
+Read more about it [here](https://github.com/geofffranks/spruce/blob/master/doc/merging-go-patch-files.md)
+
+---
+
 #### Merge (`Array`)
 
 You can configure three different merge types inside the `merge` section: `with`, `with_in`, `with_all_in`:
