@@ -45,8 +45,8 @@
 [[projects]]
   name = "github.com/geofffranks/spruce"
   packages = [".","log"]
-  revision = "1ab756d00176e4a18f9338db908ed3ca759e545a"
-  version = "v1.16.1"
+  revision = "05f75ba481cd7496cd2150bca0e5907697e71890"
+  version = "v1.16.2"
 
 [[projects]]
   branch = "v2"
