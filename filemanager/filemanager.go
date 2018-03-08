@@ -104,9 +104,13 @@ func (fm *FileManager) Walk(path string) ([]string, error) {
 		}
 		sl = files
 	} else {
-		err := filepath.Walk(path, fillSliceWithFiles(&sl))
-		if err != nil {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
 			return nil, err
+		} else {
+			err := filepath.Walk(path, fillSliceWithFiles(&sl))
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return sl, nil

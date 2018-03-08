@@ -79,7 +79,7 @@ func (p *Processor) ProcessWithOpts(config []aviator.Spruce, verbose bool, silen
 func (p *Processor) defaultMerge(cfg aviator.Spruce) error {
 	files := p.collectFiles(cfg)
 	if err := p.mergeAndWrite(files, cfg, cfg.To); err != nil {
-		return errors.Wrap(err, "Spruce Merge FAILED")
+		return err
 	}
 	return nil
 }
@@ -91,7 +91,7 @@ func (p *Processor) forEachFileMerge(cfg aviator.Spruce) error {
 		mergeFiles = append(mergeFiles, file)
 		targetName := createTargetName(cfg.ToDir, fileName)
 		if err := p.mergeAndWrite(mergeFiles, cfg, targetName); err != nil {
-			return errors.Wrap(err, "Spruce Merge FAILED")
+			return err
 		}
 	}
 	return nil
@@ -116,7 +116,7 @@ func (p *Processor) forEachInMerge(cfg aviator.Spruce) error {
 			mergeFiles := append(files, createTargetName(cfg.ForEach.In, f.Name()))
 			targetName := createTargetName(cfg.ToDir, fmt.Sprintf("%s_%s", prefix, f.Name()))
 			if err := p.mergeAndWrite(mergeFiles, cfg, targetName); err != nil {
-				return errors.Wrap(err, "Spruce Merge FAILED")
+				return err
 			}
 		} else {
 			p.warnings = append(p.warnings, "EXCLUDED BY REGEXP "+regex+": "+cfg.ForEach.In+f.Name())
@@ -150,7 +150,7 @@ func (p *Processor) walk(cfg aviator.Spruce, outer string) error {
 
 			targetName := createTargetName(cfg.ToDir, filepath.Join(parent, filename))
 			if err := p.mergeAndWrite(files, cfg, targetName); err != nil {
-				return errors.Wrap(err, "Spruce Merge FAILED")
+				return err
 			}
 		}
 	}
@@ -260,7 +260,12 @@ func (p *Processor) collectFilesFromWithInSection(merge aviator.Merge) []string 
 func (p *Processor) collectFilesFromWithAllInSection(merge aviator.Merge) []string {
 	result := []string{}
 	if merge.WithAllIn != "" {
-		allFiles := getAllFilesIncludingSubDirs(merge.WithAllIn)
+		allFiles, err := p.store.Walk(merge.WithAllIn)
+		if err != nil {
+			p.warnings = append(p.warnings, "Given Path for with_all_in does not exist: "+merge.WithAllIn)
+		}
+
+		//allFiles := getAllFilesIncludingSubDirs(merge.WithAllIn)
 		regex := getRegexp(merge.Regexp)
 		for _, file := range allFiles {
 			matched, _ := regexp.MatchString(regex, file)

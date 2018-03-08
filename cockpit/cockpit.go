@@ -51,12 +51,12 @@ func (c *Cockpit) NewAviator(aviatorYml []byte) (*Aviator, error) {
 	aviatorYml = quoteCurlyBraces(aviatorYml)
 	err = yaml.Unmarshal(aviatorYml, &aviator)
 	if err != nil {
-		return nil, errors.Wrap(err, ansi.Sprintf("@R{Parsing Failed}"))
+		return nil, errors.Wrap(err, ansi.Sprintf("@R{YAML Parsing Failed}"))
 	}
 
 	err = c.validator.ValidateSpruce(aviator.Spruce)
 	if err != nil {
-		return nil, errors.Wrap(err, ansi.Sprintf("@R{Validation Failed}"))
+		return nil, err
 	}
 
 	return &Aviator{c, &aviator}, nil
@@ -65,7 +65,7 @@ func (c *Cockpit) NewAviator(aviatorYml []byte) (*Aviator, error) {
 func (a *Aviator) ProcessSprucePlan(verbose bool, silent bool) error {
 	err := a.cockpit.spruceProcessor.ProcessWithOpts(a.AviatorYaml.Spruce, verbose, silent)
 	if err != nil {
-		return errors.Wrap(err, "Processing Spruce Plan FAILED:")
+		return errors.Wrap(err, "Processing Spruce Plan FAILED")
 	}
 	return nil
 }

@@ -4,20 +4,21 @@ import (
 	"errors"
 
 	"github.com/JulzDiverse/aviator"
+	"github.com/starkandwayne/goutils/ansi"
 )
 
 //Error Types: Merge-Section
-type MergeCombinationError error
-type MergeWithCombinationError error
-type MergeExceptCombinationError error
-type MergeRegexpCombinationError error
+type MergeCombinationError struct{ error }
+type MergeWithCombinationError struct{ error }
+type MergeExceptCombinationError struct{ error }
+type MergeRegexpCombinationError struct{ error }
 
 //Error Types: ForEach-Section
-type ForEachCombinationError error
-type ForEachFilesCombinationError error
-type ForEachInCombinationError error
-type ForEachRegexpCombinationError error
-type ForEachWalkCombinationError error
+type ForEachCombinationError struct{ error }
+type ForEachFilesCombinationError struct{ error }
+type ForEachInCombinationError struct{ error }
+type ForEachRegexpCombinationError struct{ error }
+type ForEachWalkCombinationError struct{ error }
 
 type Validator struct{}
 
@@ -100,93 +101,94 @@ func validateForEachSection(forEach aviator.ForEach) error {
 }
 
 func validateMergeCombinations(merge aviator.Merge) error {
-	var err MergeCombinationError
 	if (merge.With.Files != nil) && (merge.WithIn != "" || merge.WithAllIn != "") || (merge.WithIn != "" && merge.WithAllIn != "") {
-		err = errors.New(
-			"INVALID SYNTAX: 'with', 'with_in', and 'with_all_in' are discrete parameters and cannot be defined together",
+		err := errors.New(
+			ansi.Sprintf("@R{INVALID SYNTAX}: 'with', 'with_in', and 'with_all_in' are discrete parameters and cannot be defined together"),
 		)
+		return MergeCombinationError{err}
 	}
-	return err
+	return nil
 }
 
 func validateMergeWithCombinations(with aviator.With) error {
-	var err MergeWithCombinationError
 	if (len(with.Files) == 0 || with.Files == nil) && (with.InDir != "" || with.Skip == true) {
-		err = errors.New(
-			"INVALID SYNTAX: 'with.in_dir' or 'with.skip_non_existing' can only be declared in combination with 'with.files'",
+		err := errors.New(
+			ansi.Sprintf("@R{INVALID SYNTAX}: 'with.in_dir' or 'with.skip_non_existing' can only be declared in combination with 'with.files'"),
 		)
+		return MergeWithCombinationError{err}
+
 	}
-	return err
+	return nil
 }
 
 func validateMergeExceptCombination(merge aviator.Merge) error {
-	var err MergeExceptCombinationError
 	if (len(merge.Except) > 0) && (merge.WithIn == "" && merge.WithAllIn == "") {
-		err = errors.New(
-			"INVALID SYNTAX: 'merge.except' is only allowed in combination with 'merge.with_in' or 'merge.with_all_in'",
+		err := errors.New(
+			ansi.Sprintf("@R{INVALID SYNTAX}: 'merge.except' is only allowed in combination with 'merge.with_in' or 'merge.with_all_in'"),
 		)
+		return MergeExceptCombinationError{err}
 	}
-	return err
+	return nil
 }
 
 func validateMergeRegexpCombination(merge aviator.Merge) error {
-	var err MergeRegexpCombinationError
 	if (merge.Regexp != "") && (merge.WithIn == "" && merge.WithAllIn == "") {
-		err = errors.New(
-			"INVALID SYNTAX: 'merge.regexp' is only allowed in combination with 'merge.with_in' or 'merge.with_all_in'",
+		err := errors.New(
+			ansi.Sprintf("@R{INVALID SYNTAX}: 'merge.regexp' is only allowed in combination with 'merge.with_in' or 'merge.with_all_in'"),
 		)
+		return MergeRegexpCombinationError{err}
 	}
-	return err
+	return nil
 }
 
 func validateForEachCombination(forEach aviator.ForEach) error {
-	var err ForEachCombinationError
 	if forEach.Files != nil && forEach.In != "" {
-		err = errors.New(
-			"INVALID SYNTAX: Mutually exclusive parameters declared 'for_each.in' and 'for_each.files'",
+		err := errors.New(
+			ansi.Sprintf("@R{INVALID SYNTAX}: Mutually exclusive parameters declared 'for_each.in' and 'for_each.files'"),
 		)
+		return ForEachCombinationError{err}
 	}
-	return err
+	return nil
 }
 
 func validateForEachFilesCombinations(forEach aviator.ForEach) error {
-	var err ForEachFilesCombinationError
 	if (forEach.InDir != "" || forEach.Skip == true) && forEach.Files == nil {
-		err = errors.New(
-			"INVALID SYNTAX: 'for_each.in_dir' and 'for_each.skip_non_existing' can only be declared in combination with 'for_each.files'",
+		err := errors.New(
+			ansi.Sprintf("@R{INVALID SYNTAX}: 'for_each.in_dir' and 'for_each.skip_non_existing' can only be declared in combination with 'for_each.files'"),
 		)
+		return ForEachFilesCombinationError{err}
 	}
-	return err
+	return nil
 }
 
 func validateForEachInCombinations(forEach aviator.ForEach) error {
-	var err ForEachInCombinationError
 	if ((forEach.Except != nil || len(forEach.Except) > 0) || forEach.SubDirs == true) && forEach.In == "" {
-		err = errors.New(
-			"INVALID SYNTAX: 'for_each.except' and 'for_each.include_sub_dirs' can only be declared in combination with 'for_each.in'",
+		err := errors.New(
+			ansi.Sprintf("@R{INVALID SYNTAX}: 'for_each.except' and 'for_each.include_sub_dirs' can only be declared in combination with 'for_each.in'"),
 		)
+		return ForEachInCombinationError{err}
 	}
-	return err
+	return nil
 }
 
 func validateForEachRegexpCombination(forEach aviator.ForEach) error {
-	var err ForEachRegexpCombinationError
 	if (forEach.Regexp != "") && (forEach.In == "") {
-		err = errors.New(
-			"INVALID SYNTAX: 'for_each.regexp' is only allowed in combination with 'for_each.in'",
+		err := errors.New(
+			ansi.Sprintf("@R{INVALID SYNTAX}: 'for_each.regexp' is only allowed in combination with 'for_each.in'"),
 		)
+		return ForEachRegexpCombinationError{err}
 	}
-	return err
+	return nil
 }
 
 func validateForEachWalkCombinations(forEach aviator.ForEach) error {
-	var err ForEachWalkCombinationError
 	if (forEach.SubDirs == false) && (forEach.CopyParents == true || forEach.EnableMatching == true || forEach.ForAll != "") {
-		err = errors.New(
-			"INVALID SYNTAX: 'for_each.copy_parents', 'for_each.enable_matching', 'for_each.for_all' can only be declared in combination with 'for_each.inlcude_sub_dirs'",
+		err := errors.New(
+			ansi.Sprintf("INVALID SYNTAX: 'for_each.copy_parents', 'for_each.enable_matching', 'for_each.for_all' can only be declared in combination with 'for_each.inlcude_sub_dirs'"),
 		)
+		return ForEachWalkCombinationError{err}
 	}
-	return err
+	return nil
 }
 
 func isForEachEmpty(forEach aviator.ForEach) bool {
