@@ -549,13 +549,13 @@ fly:
   name: myPipelineName
   target: myFlyTarget
   config: pipeline.yml
-	non_interactive: true
+  non_interactive: true
   load_vars_from:
   - credentials.yml
-	vars:
-	  var1: myvar
-		var2: myvar2
-	expose: true
+  vars:
+    var1: myvar
+    var2: myvar2
+  expose: true
 ```
 
 Note, that the generated `pipeline.yml` is used in the `fly` section as `config`.
