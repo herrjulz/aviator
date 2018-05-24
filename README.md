@@ -13,7 +13,7 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 ### OS X
 
 ```
-$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.17.1/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
+$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.18.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
 ```
 
 **Via Homebrew**
@@ -26,7 +26,13 @@ $ brew install aviator
 ### Linux
 
 ```
-$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.17.1/aviator-linux-amd64 && chmod +x /usr/bin/aviator
+$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.18.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
+```
+
+### Windows (NOT TESTED)
+
+```
+https://github.com/JulzDiverse/aviator/releases/download/v0.18.0/aviator-win
 ```
 
 ## Executors
@@ -531,7 +537,10 @@ If you want to merge and set Concourse pipeline YAML files on the fly, you can s
 - **name**: Name of the pipeline
 - **target**: Target short name (`fly` target)
 - **config (string):** the pipeline config file (yml)
-- **vars (array):** List of all property files (-l)
+- **load_vars_from (array):** List of all property files (-l)
+- **vars (map):** Map of variables (--var)
+- **non_interactive (bool):** Enables non-interactive mode (-n)
+- **expose (bool):** Exposes the pipeline (expose-pipeline)
 
 Example:
 
@@ -540,8 +549,13 @@ fly:
   name: myPipelineName
   target: myFlyTarget
   config: pipeline.yml
-  vars:
+	non_interactive: true
+  load_vars_from:
   - credentials.yml
+	vars:
+	  var1: myvar
+		var2: myvar2
+	expose: true
 ```
 
 Note, that the generated `pipeline.yml` is used in the `fly` section as `config`.
