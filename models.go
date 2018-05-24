@@ -48,11 +48,13 @@ type ForEach struct {
 }
 
 type Fly struct {
-	Name   string   `yaml:"name"`
-	Target string   `yaml:"target"`
-	Config string   `yaml:"config"`
-	Vars   []string `yaml:"vars"`
-	Expose bool     `yaml:"expose"`
+	Name           string            `yaml:"name"`
+	Target         string            `yaml:"target"`
+	Config         string            `yaml:"config"`
+	Vars           []string          `yaml:"load_vars_from"`
+	Expose         bool              `yaml:"expose"`
+	Var            map[string]string `yaml:"vars"`
+	NonInteractive bool              `yaml:"non_interactive"`
 }
 
 type MergeConf struct {

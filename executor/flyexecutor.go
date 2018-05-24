@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"fmt"
 	"reflect"
 
 	"code.cloudfoundry.org/commandrunner"
@@ -38,6 +39,14 @@ func (e *FlyExecutor) Execute(cfg interface{}) error {
 
 	for _, v := range fly.Vars {
 		args = append(args, "-l", v)
+	}
+
+	for k, v := range fly.Var {
+		args = append(args, "-v", fmt.Sprintf("%s=%s", k, v))
+	}
+
+	if fly.NonInteractive == true {
+		args = append(args, "-n")
 	}
 
 	err := execCmd("fly", args)
