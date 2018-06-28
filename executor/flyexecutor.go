@@ -51,14 +51,14 @@ func (e *FlyExecutor) Execute(cfg interface{}) error {
 
 	err := execCmd("fly", args)
 	if err != nil {
-		return errors.Wrap(err, ansi.Sprintf("@R{Failed to execute Fly}"))
+		return err
 	}
 
 	if fly.Expose {
 		args = []string{"-t", fly.Target, "expose-pipeline", "-p", fly.Name}
 		err := execCmd("fly", args)
 		if err != nil {
-			return errors.Wrap(err, ansi.Sprintf("@R{Failed to execute Fly}"))
+			return err
 		}
 	}
 	return nil

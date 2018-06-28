@@ -73,7 +73,7 @@ func (a *Aviator) ProcessSprucePlan(verbose bool, silent bool) error {
 func (a *Aviator) ExecuteFly() error {
 	err := a.cockpit.flyExecutor.Execute(a.AviatorYaml.Fly)
 	if err != nil {
-		return errors.Wrap(err, "Executing Fly FAILED")
+		return err
 	}
 	return nil
 }
