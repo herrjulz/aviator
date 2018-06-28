@@ -214,8 +214,10 @@ var _ = Describe("Cockpit", func() {
   target: targetName
   config: configFile
   expose: true
+  load_vars_from:
+  - credentials.yml
   vars:
-  - credentials.yml`
+    key: value`
 				})
 
 				It("is able to read all properties from the fly section", func() {
@@ -228,22 +230,7 @@ var _ = Describe("Cockpit", func() {
 					Expect(aviator.AviatorYaml.Fly.Config).To(Equal("configFile"))
 					Expect(aviator.AviatorYaml.Fly.Expose).To(BeTrue())
 					Expect(len(aviator.AviatorYaml.Fly.Vars)).To(Equal(1))
-				})
-
-				Context("executing fly returns a valid error", func() {
-					BeforeEach(func() {
-						flyExecuter.ExecuteReturns(errors.New("uups"))
-					})
-
-					It("", func() {
-						var err error
-						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
-						Expect(err).ToNot(HaveOccurred())
-
-						err = aviator.ExecuteFly()
-						Expect(err).To(MatchError(ContainSubstring("Executing Fly FAILED")))
-						Expect(err).To(MatchError(ContainSubstring("uups")))
-					})
+					Expect(aviator.AviatorYaml.Fly.Var["key"]).To(Equal("value"))
 				})
 			})
 		})

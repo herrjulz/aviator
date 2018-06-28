@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Validator", func() {
+var _ = PDescribe("Validator", func() {
 
 	var cfg aviator.Spruce
 	var validator *Validator

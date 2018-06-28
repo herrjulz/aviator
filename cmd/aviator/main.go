@@ -35,7 +35,8 @@ func main() {
 
 			fly := aviator.AviatorYaml.Fly
 			if fly.Name != "" && fly.Target != "" && fly.Config != "" {
-				aviator.ExecuteFly()
+				err = aviator.ExecuteFly()
+				exitWithError(err)
 			}
 		}
 
