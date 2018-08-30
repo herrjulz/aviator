@@ -13,7 +13,7 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 ### OS X
 
 ```
-$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.19.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
+$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.20.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
 ```
 
 **Via Homebrew**
@@ -26,13 +26,13 @@ $ brew install aviator
 ### Linux
 
 ```
-$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.19.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
+$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.20.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
 ```
 
 ### Windows (NOT TESTED)
 
 ```
-https://github.com/JulzDiverse/aviator/releases/download/v0.19.0/aviator-win
+https://github.com/JulzDiverse/aviator/releases/download/v0.20.0/aviator-win
 ```
 
 ## Executors
@@ -458,6 +458,34 @@ spruce:
   - with_in: $TARGET_PATH
   to: result.yml
 ```
+
+#### Variables
+
+You can provide variables to aviator files using the `--var` flag. Basic CLI usage:
+
+`$ aviator --var key=value`
+
+In you aviator file you need to specify the name of the variable you want to interpolate. The syntax for a variable is the following `(( varName ))` (note the space before and after the variable name!)
+
+Example: 
+
+```yaml
+---
+spruce:
+- base: (( key ))
+  ...
+```
+
+In this example the variable `key` will be replaced by the value `value`. So the result would look like this:
+
+```yaml
+---
+spruce:
+- base: value
+  ...
+```
+
+Values for aviator variables can be multi-line
 
 #### Modifier
 

@@ -17,12 +17,14 @@ var _ = Describe("Cockpit", func() {
 	var flyExecuter *fakes.FakeFlyExecuter
 	var validator *fakes.FakeValidator
 	var cockpit *Cockpit
+	var vars map[string]string
 
 	BeforeEach(func() {
 		spruceProcessor = new(fakes.FakeSpruceProcessor)
 		flyExecuter = new(fakes.FakeFlyExecuter)
 		validator = new(fakes.FakeValidator)
 		cockpit = Init(spruceProcessor, flyExecuter, validator)
+		vars = map[string]string{}
 	})
 
 	Context("New", func() {
@@ -49,7 +51,7 @@ var _ = Describe("Cockpit", func() {
   to: result.yml`
 
 						var err error
-						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml), vars)
 						Expect(err).ToNot(HaveOccurred())
 
 						Expect(len(aviator.AviatorYaml.Spruce[0].Merge[0].With.Files)).To(Equal(2))
@@ -74,7 +76,7 @@ var _ = Describe("Cockpit", func() {
   to_dir: foo/bar/`
 
 						var err error
-						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml), vars)
 						Expect(err).ToNot(HaveOccurred())
 
 						Expect(len(aviator.AviatorYaml.Spruce[0].CherryPicks)).To(Equal(3))
@@ -95,7 +97,7 @@ var _ = Describe("Cockpit", func() {
   to: $RESULT`
 
 							var err error
-							aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+							aviator, err = cockpit.NewAviator([]byte(aviatorYaml), vars)
 							Expect(err).ToNot(HaveOccurred())
 							Expect(aviator.AviatorYaml.Spruce[0].Base).To(Equal("envVar"))
 							Expect(aviator.AviatorYaml.Spruce[0].Merge[0].With.Files[0]).To(Equal("another"))
@@ -115,7 +117,7 @@ var _ = Describe("Cockpit", func() {
   to: $RESULT`
 
 							var err error
-							aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+							aviator, err = cockpit.NewAviator([]byte(aviatorYaml), vars)
 							Expect(err).To(HaveOccurred())
 						})
 
@@ -132,7 +134,7 @@ var _ = Describe("Cockpit", func() {
   to: {{result}}`
 
 							var err error
-							aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+							aviator, err = cockpit.NewAviator([]byte(aviatorYaml), vars)
 							Expect(err).ToNot(HaveOccurred())
 						})
 					})
@@ -153,7 +155,7 @@ var _ = Describe("Cockpit", func() {
   to_dir: some/tmp/dir/`
 
 						var err error
-						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml), vars)
 						Expect(err).ToNot(HaveOccurred())
 
 						Expect(len(aviator.AviatorYaml.Spruce[0].ForEach.Files)).To(Equal(2))
@@ -176,7 +178,7 @@ var _ = Describe("Cockpit", func() {
   to_dir: some/tmp/dir/`
 
 						var err error
-						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml), vars)
 						Expect(err).ToNot(HaveOccurred())
 
 						Expect(aviator.AviatorYaml.Spruce[0].ForEach.In).To(Equal("path/"))
@@ -197,7 +199,7 @@ var _ = Describe("Cockpit", func() {
   to_dir: some/tmp/dir/`
 
 						var err error
-						aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+						aviator, err = cockpit.NewAviator([]byte(aviatorYaml), vars)
 						Expect(err).ToNot(HaveOccurred())
 
 						Expect(aviator.AviatorYaml.Spruce[0].ForEach.SubDirs).To(Equal(true))
@@ -222,7 +224,7 @@ var _ = Describe("Cockpit", func() {
 
 				It("is able to read all properties from the fly section", func() {
 					var err error
-					aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+					aviator, err = cockpit.NewAviator([]byte(aviatorYaml), vars)
 					Expect(err).ToNot(HaveOccurred())
 
 					Expect(aviator.AviatorYaml.Fly.Name).To(Equal("pipelineName"))
@@ -250,7 +252,7 @@ var _ = Describe("Cockpit", func() {
 
 		It("returns a valid error message", func() {
 			var err error
-			aviator, err = cockpit.NewAviator([]byte(aviatorYaml))
+			aviator, err = cockpit.NewAviator([]byte(aviatorYaml), vars)
 			Expect(err).ToNot(HaveOccurred())
 			err = aviator.ProcessSprucePlan(false, false)
 

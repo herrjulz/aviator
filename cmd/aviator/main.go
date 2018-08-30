@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/JulzDiverse/aviator/cockpit"
 	"github.com/JulzDiverse/aviator/validator"
@@ -15,19 +16,20 @@ func main() {
 	cmd := setCli()
 
 	cmd.Action = func(c *cli.Context) error {
-
 		aviatorFile := c.String("file")
 		if !verifyAviatorFileExists(aviatorFile) {
 
 			exitWithNoAviatorFile()
 
 		} else {
+			vars := c.StringSlice("var")
+			varsMap := varsToMap(vars)
 
 			aviatorYml, err := ioutil.ReadFile(aviatorFile)
 			exitWithError(err)
 
 			cockpit := cockpit.New()
-			aviator, err := cockpit.NewAviator(aviatorYml)
+			aviator, err := cockpit.NewAviator(aviatorYml, varsMap)
 			handleError(err)
 
 			err = aviator.ProcessSprucePlan(c.Bool("verbose"), c.Bool("silent"))
@@ -43,6 +45,15 @@ func main() {
 		return nil
 	}
 	cmd.Run(os.Args)
+}
+
+func varsToMap(vars []string) map[string]string {
+	result := map[string]string{}
+	for _, v := range vars {
+		sl := strings.Split(v, "=")
+		result[sl[0]] = sl[1]
+	}
+	return result
 }
 
 func verifyAviatorFileExists(file string) bool {

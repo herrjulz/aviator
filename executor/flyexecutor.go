@@ -24,6 +24,7 @@ func NewFlyExecutorWithCustomRunner(runner commandrunner.CommandRunner) *FlyExec
 func NewFlyExecutor() *FlyExecutor {
 	return &FlyExecutor{
 		runner: linux_command_runner.New(),
+		//runner: windows_command_runner.New(false),
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"github.com/JulzDiverse/aviator"
+	"github.com/JulzDiverse/aviator/evaluator"
 	"github.com/JulzDiverse/aviator/executor"
 	"github.com/JulzDiverse/aviator/processor"
 	"github.com/JulzDiverse/aviator/validator"
@@ -41,11 +42,16 @@ func New() *Cockpit {
 	}
 }
 
-func (c *Cockpit) NewAviator(aviatorYml []byte) (*Aviator, error) {
+func (c *Cockpit) NewAviator(aviatorYml []byte, varsMap map[string]string) (*Aviator, error) {
 	var aviator aviator.AviatorYaml
 	aviatorYml, err := resolveEnvVars(aviatorYml)
 	if err != nil {
 		return nil, errors.Wrap(err, ansi.Sprintf("@R{Reading Failed}"))
+	}
+
+	aviatorYml, err = evaluator.Evaluate(aviatorYml, varsMap)
+	if err != nil {
+		return nil, err
 	}
 
 	aviatorYml = quoteCurlyBraces(aviatorYml)
