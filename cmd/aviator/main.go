@@ -18,9 +18,7 @@ func main() {
 	cmd.Action = func(c *cli.Context) error {
 		aviatorFile := c.String("file")
 		if !verifyAviatorFileExists(aviatorFile) {
-
 			exitWithNoAviatorFile()
-
 		} else {
 			vars := c.StringSlice("var")
 			varsMap := varsToMap(vars)
@@ -28,12 +26,18 @@ func main() {
 			aviatorYml, err := ioutil.ReadFile(aviatorFile)
 			exitWithError(err)
 
-			cockpit := cockpit.New()
+			cockpit := cockpit.New(c.Bool("curly-braces"))
 			aviator, err := cockpit.NewAviator(aviatorYml, varsMap)
 			handleError(err)
 
 			err = aviator.ProcessSprucePlan(c.Bool("verbose"), c.Bool("silent"))
 			exitWithError(err)
+
+			squash := aviator.AviatorYaml.Squash
+			if len(squash.Content) != 0 {
+				err = aviator.ProcessSquashPlan()
+				exitWithError(err)
+			}
 
 			fly := aviator.AviatorYaml.Fly
 			if fly.Name != "" && fly.Target != "" && fly.Config != "" {

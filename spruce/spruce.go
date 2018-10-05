@@ -14,21 +14,24 @@ import (
 )
 
 type SpruceClient struct {
-	store aviator.FileStore
+	CurlyBraces bool
+	store       aviator.FileStore
 }
 
 var concourseRegex = `(\{\{|\+\+)([-\_\.\/\w\p{L}\/]+)(\}\}|\+\+)`
 var re = regexp.MustCompile("(" + concourseRegex + ")")
 var dere = regexp.MustCompile("['\"](" + concourseRegex + ")[\"']")
 
-func New() *SpruceClient {
+func New(curlyBraces bool) *SpruceClient {
 	return &SpruceClient{
-		filemanager.Store(),
+		curlyBraces,
+		filemanager.Store(curlyBraces),
 	}
 }
 
-func NewWithFileFilemanager(filemanager aviator.FileStore) *SpruceClient {
+func NewWithFileFilemanager(filemanager aviator.FileStore, curlyBraces bool) *SpruceClient {
 	return &SpruceClient{
+		curlyBraces,
 		filemanager,
 	}
 }
@@ -79,7 +82,11 @@ func (sc *SpruceClient) mergeAllDocs(root map[interface{}]interface{}, paths []s
 		if !ok {
 			return ansi.Errorf("@R{Error reading file from filesystem or internal datastore} @m{%s} \n", path)
 		}
-		data = quoteConcourse(data)
+
+		if sc.CurlyBraces {
+			data = quoteConcourse(data)
+		}
+
 		doc, err := parseYAML(data)
 		if err != nil {
 			if isArrayError(err) && goPatchEnabled {

@@ -6,7 +6,9 @@ import (
 	"github.com/JulzDiverse/aviator"
 	"github.com/JulzDiverse/aviator/evaluator"
 	"github.com/JulzDiverse/aviator/executor"
+	"github.com/JulzDiverse/aviator/filemanager"
 	"github.com/JulzDiverse/aviator/processor"
+	"github.com/JulzDiverse/aviator/squasher"
 	"github.com/JulzDiverse/aviator/validator"
 	"github.com/JulzDiverse/osenv"
 	"github.com/pkg/errors"
@@ -34,9 +36,9 @@ func Init(
 	return &Cockpit{spruceProcessor, flyExecuter, validator}
 }
 
-func New() *Cockpit {
+func New(curlyBraces bool) *Cockpit {
 	return &Cockpit{
-		spruceProcessor: processor.New(),
+		spruceProcessor: processor.New(curlyBraces),
 		validator:       validator.New(),
 		flyExecutor:     executor.NewFlyExecutor(),
 	}
@@ -73,6 +75,40 @@ func (a *Aviator) ProcessSprucePlan(verbose bool, silent bool) error {
 	if err != nil {
 		return errors.Wrap(err, "Processing Spruce Plan FAILED")
 	}
+	return nil
+}
+
+func (a *Aviator) ProcessSquashPlan() error {
+	var err error
+	var result []byte
+
+	store := filemanager.Store(false)
+	fp := processor.FileProcessor{store}
+
+	content := a.AviatorYaml.Squash.Content
+	for _, c := range content {
+		var squashed []byte
+		if len(c.Files) != 0 {
+			files := store.ReadFiles(c.Files)
+			squashed, err = squasher.Squash(files)
+		} else {
+			paths := fp.CollectFilesFromDir(c.Dir, "", []string{})
+			files := store.ReadFiles(paths)
+			squashed, err = squasher.Squash(files)
+		}
+
+		if err != nil {
+			return err
+		}
+
+		result = append(result, squashed...)
+	}
+
+	err = store.WriteFile(a.AviatorYaml.Squash.To, result)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

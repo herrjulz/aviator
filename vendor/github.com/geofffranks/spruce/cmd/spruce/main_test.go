@@ -274,20 +274,6 @@ map:
 `)
 			So(stderr, ShouldEqual, "")
 		})
-		Convey("Should not fail when handling concourse-style yaml and --concourse", func() {
-			os.Args = []string{"spruce", "--concourse", "merge", "../../assets/concourse/first.yml", "../../assets/concourse/second.yml"}
-			stdout = ""
-			stderr = ""
-			main()
-			So(stdout, ShouldEqual, `jobs:
-- curlies: {{my-variable_123}}
-  name: thing1
-- curlies: {{more}}
-  name: thing2
-
-`)
-			So(stderr, ShouldEqual, "--concourse is deprecated. Consider using built-in spruce operators when merging Concourse YAML files\n")
-		})
 
 		Convey("Should not evaluate spruce logic when --no-eval", func() {
 			os.Args = []string{"spruce", "merge", "--skip-eval", "../../assets/no-eval/first.yml", "../../assets/no-eval/second.yml"}
@@ -1332,6 +1318,100 @@ z:
 			}
 		})
 
+		Convey("Sort test cases", func() {
+			Convey("sort operator functionality", func() {
+				os.Args = []string{"spruce", "merge", "../../assets/sort/base.yml", "../../assets/sort/op.yml"}
+				stdout = ""
+				stderr = ""
+				main()
+				So(stderr, ShouldEqual, "")
+				So(stdout, ShouldEqual, `float_list:
+- 1.42
+- 2.42
+- 3.42
+- 4.42
+- 5.42
+- 6.42
+- 7.42
+- 8.42
+- 9.42
+foobar_list:
+- foobar: item-6
+- foobar: item-7
+- foobar: item-8
+- foobar: item-9
+- foobar: item-g
+- foobar: item-h
+- foobar: item-i
+- foobar: item-j
+- foobar: item-k
+- foobar: item-l
+- foobar: item-m
+int_list:
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+key_list:
+- key: item-1
+- key: item-2
+- key: item-3
+- key: item-4
+- key: item-a
+- key: item-b
+- key: item-c
+- key: item-d
+- key: item-e
+- key: item-f
+- key: item-g
+- key: item-h
+- key: item-i
+name_list:
+- name: item-1
+- name: item-2
+- name: item-3
+- name: item-4
+- name: item-5
+- name: item-6
+- name: item-7
+- name: item-8
+- name: item-9
+- name: item-a
+- name: item-b
+- name: item-c
+- name: item-d
+- name: item-e
+- name: item-f
+- name: item-g
+- name: item-h
+- name: item-i
+- name: item-j
+- name: item-k
+- name: item-l
+- name: item-m
+- name: item-n
+- name: item-o
+- name: item-p
+- name: item-q
+- name: item-r
+- name: item-s
+- name: item-t
+- name: item-u
+- name: item-v
+- name: item-w
+- name: item-x
+- name: item-y
+- name: item-z
+
+`)
+			})
+		})
+
 		Convey("Cherry picking test cases", func() {
 			Convey("Cherry pick just one root level path", func() {
 				os.Args = []string{"spruce", "merge", "--cherry-pick", "properties", "../../assets/cherry-pick/fileA.yml", "../../assets/cherry-pick/fileB.yml"}
@@ -1824,6 +1904,7 @@ warning: Falling back to inline merge strategy
 `)
 				So(stdout, ShouldEqual, "")
 			})
+
 			Convey("Issue #172 - error instead of panic if merge on key was specifically requested but target key has map value", func() {
 				os.Args = []string{"spruce", "merge", "../../assets/issue-172/explicitmergeonkey1.yml"}
 				stdout = ""
@@ -1900,6 +1981,73 @@ meta:
 
 `)
 		})
+
+		Convey("Issue #267 - specifying an explicit merge operator must behave in the same way as relying on the default implicit merge operation", func() {
+			Convey("Option 1 - standard use-case: no explicit merge, named-entry list identifier key is the default called 'name'", func() {
+				os.Args = []string{"spruce", "merge", "../../assets/issue-267/option1-fileA.yml", "../../assets/issue-267/option1-fileB.yml"}
+				stdout = ""
+				stderr = ""
+
+				main()
+				So(stderr, ShouldEqual, "")
+				So(stdout, ShouldEqual, `serverFiles:
+  prometheus.yml:
+    scrape_configs:
+    - name: one
+    - name: two
+
+`)
+			})
+
+			Convey("Option 2 - academic version of the option 1: same set-up, but with explicit usage of the merge operator", func() {
+				os.Args = []string{"spruce", "merge", "../../assets/issue-267/option2-fileA.yml", "../../assets/issue-267/option2-fileB.yml"}
+				stdout = ""
+				stderr = ""
+
+				main()
+				So(stderr, ShouldEqual, "")
+				So(stdout, ShouldEqual, `serverFiles:
+  prometheus.yml:
+    scrape_configs:
+    - name: one
+    - name: two
+
+`)
+			})
+
+			Convey("Option 3 - even more academic version of the option 1: same set-up, but with explicit usage of the merge operator and specification of the default identifier key called 'name'", func() {
+				os.Args = []string{"spruce", "merge", "../../assets/issue-267/option3-fileA.yml", "../../assets/issue-267/option3-fileB.yml"}
+				stdout = ""
+				stderr = ""
+
+				main()
+				So(stderr, ShouldEqual, "")
+				So(stdout, ShouldEqual, `serverFiles:
+  prometheus.yml:
+    scrape_configs:
+    - name: one
+    - name: two
+
+`)
+			})
+
+			Convey("Option 4 - actual real world use case, where the identifier key is call 'job_name' and therefore explicit merge on key is required", func() {
+				os.Args = []string{"spruce", "merge", "../../assets/issue-267/option4-fileA.yml", "../../assets/issue-267/option4-fileB.yml"}
+				stdout = ""
+				stderr = ""
+
+				main()
+				So(stderr, ShouldEqual, "")
+				So(stdout, ShouldEqual, `serverFiles:
+  prometheus.yml:
+    scrape_configs:
+    - job_name: one
+    - job_name: two
+
+`)
+			})
+		})
+
 		Convey("Support go-patch files", func() {
 			Convey("go-patch can modify yaml files in the merge phase, and insert spruce operators as required", func() {
 				os.Args = []string{"spruce", "merge", "--go-patch", "../../assets/go-patch/base.yml", "../../assets/go-patch/patch.yml", "../../assets/go-patch/toMerge.yml"}
@@ -1974,7 +2122,6 @@ spruce_array_grab:
 			os.Setenv("DEFAULT_ARRAY_MERGE_KEY", "")
 		})
 	})
-
 }
 
 func TestDebug(t *testing.T) {
@@ -2033,39 +2180,6 @@ func TestDebug(t *testing.T) {
 			DebugOn = false
 			main()
 			So(DebugOn, ShouldBeFalse)
-		})
-	})
-}
-
-func TestQuoteConcourse(t *testing.T) {
-	Convey("quoteConcourse()", t, func() {
-		Convey("Correctly double-quotes incoming {{\\S}} patterns", func() {
-			Convey("adds quotes", func() {
-				input := []byte("name: {{var-_1able}}")
-				So(string(quoteConcourse(input)), ShouldEqual, "name: \"{{var-_1able}}\"")
-			})
-		})
-		Convey("doesn't affect regularly quoted things", func() {
-			input := []byte("name: \"my value\"")
-			So(string(quoteConcourse(input)), ShouldEqual, "name: \"my value\"")
-		})
-	})
-}
-func TestDequoteConcourse(t *testing.T) {
-	Convey("dequoteConcourse()", t, func() {
-		Convey("Correctly removes quotes from incoming {{\\S}} patterns", func() {
-			Convey("with single quotes", func() {
-				input := []byte("name: '{{var-_1able}}'")
-				So(dequoteConcourse(input), ShouldEqual, "name: {{var-_1able}}")
-			})
-			Convey("with double quotes", func() {
-				input := []byte("name: \"{{var-_1able}}\"")
-				So(dequoteConcourse(input), ShouldEqual, "name: {{var-_1able}}")
-			})
-		})
-		Convey("doesn't affect regularly quoted things", func() {
-			input := []byte("name: \"my value\"")
-			So(dequoteConcourse(input), ShouldEqual, "name: \"my value\"")
 		})
 	})
 }

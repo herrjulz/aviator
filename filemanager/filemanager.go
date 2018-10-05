@@ -12,7 +12,8 @@ import (
 )
 
 type FileManager struct {
-	root *mingoak.Dir
+	CurlyBraces bool
+	root        *mingoak.Dir
 }
 
 //var quoteRegexOld = `\{\{([-\_\.\/\w\p{L}\/]+)\}\}`
@@ -21,9 +22,9 @@ var re = regexp.MustCompile("(" + quoteRegex + ")")
 var dere = regexp.MustCompile("['\"](" + quoteRegex + ")[\"']")
 var store *FileManager
 
-func Store() *FileManager {
+func Store(curlyBraces bool) *FileManager {
 	if store == nil {
-		store = &FileManager{mingoak.MkRoot()}
+		store = &FileManager{curlyBraces, mingoak.MkRoot()}
 	}
 	return store
 }
@@ -46,8 +47,20 @@ func (ds *FileManager) ReadFile(key string) ([]byte, bool) {
 	return file, true
 }
 
+func (ds *FileManager) ReadFiles(keys []string) [][]byte {
+	result := [][]byte{}
+	for _, k := range keys {
+		file, _ := ds.ReadFile(k)
+		result = append(result, file)
+	}
+	return result
+}
+
 func (ds *FileManager) WriteFile(key string, file []byte) error {
-	file = dequoteCurlyBraces(file)
+	if ds.CurlyBraces {
+		file = dequoteCurlyBraces(file)
+	}
+
 	if re.MatchString(key) {
 		key = getKeyFromRegexp(key)
 		//if _, err := ds.root.ReadFile(key); err == nil {

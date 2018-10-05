@@ -33,10 +33,10 @@ func NewTestProcessor(spruceClient aviator.SpruceClient, store aviator.FileStore
 	}
 }
 
-func New() *Processor {
+func New(curlyBraces bool) *Processor {
 	return &Processor{
-		store:        filemanager.Store(),
-		spruceClient: spruce.New(),
+		store:        filemanager.Store(curlyBraces),
+		spruceClient: spruce.New(curlyBraces),
 		modifier:     modifier.New(),
 	}
 }

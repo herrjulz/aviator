@@ -37,6 +37,10 @@ func getFlags() []cli.Flag {
 			Name:  "var",
 			Usage: "provides a variable to an aviator file: [key=value]",
 		},
+		cli.BoolFlag{
+			Name:  "curly-braces, b",
+			Usage: "allow {{}} syntax in yaml files",
+		},
 	}
 	return flags
 }

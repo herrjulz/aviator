@@ -13,7 +13,7 @@ If you have to handle rather complex YAML files (for BOSH or Concourse), you jus
 ### OS X
 
 ```
-$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.20.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
+$ wget -O /usr/local/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v1.0.0/aviator-darwin-amd64 && chmod +x /usr/local/bin/aviator
 ```
 
 **Via Homebrew**
@@ -26,13 +26,13 @@ $ brew install aviator
 ### Linux
 
 ```
-$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v0.20.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
+$ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/download/v1.0.0/aviator-linux-amd64 && chmod +x /usr/bin/aviator
 ```
 
 ### Windows (NOT TESTED)
 
 ```
-https://github.com/JulzDiverse/aviator/releases/download/v0.20.0/aviator-win
+https://github.com/JulzDiverse/aviator/releases/download/v1.0.0/aviator-win
 ```
 
 ## Executors
@@ -589,6 +589,29 @@ fly:
 Note, that the generated `pipeline.yml` is used in the `fly` section as `config`.
 
 _NOTE: You will need to fly login first, before executing `aviator`_
+
+
+---
+
+### CLI Options
+
+#### `--curly-braces`
+
+Some YAML based tools (like concourse in the past) are using `{{}}` sytnax. This is not YAML conform. Using the `--curly-braces` option you can allow this syntax. 
+
+#### `--silent`
+
+This option will output no infromation to stdout. 
+
+#### `--verbose`
+
+This option prints which files are excluded from a merge. 
+
+#### `--var`
+
+You can provide variables to the aviator file.
+
+---
 
 # Development
 

@@ -11,68 +11,6 @@ import (
 	"github.com/starkandwayne/goutils/tree"
 )
 
-func TestShouldReplaceArray(t *testing.T) {
-	Convey("We should replace arrays", t, func() {
-		Convey("If the element is a string with the right append token", func() {
-			So(shouldReplaceArray([]interface{}{"(( replace ))", "stuff"}), ShouldBeTrue)
-		})
-		Convey("But not if the element is a string with the wrong token", func() {
-			So(shouldReplaceArray([]interface{}{"not a magic token"}), ShouldBeFalse)
-		})
-		Convey("But not if the element is not a string", func() {
-			So(shouldReplaceArray([]interface{}{42}), ShouldBeFalse)
-		})
-		Convey("But not if the slice has no elements", func() {
-			So(shouldReplaceArray([]interface{}{}), ShouldBeFalse)
-		})
-		Convey("Is whitespace agnostic", func() {
-			Convey("No surrounding whitespace", func() {
-				yes := shouldReplaceArray([]interface{}{"((replace))"})
-				So(yes, ShouldBeTrue)
-			})
-			Convey("Surrounding tabs", func() {
-				yes := shouldReplaceArray([]interface{}{"((	replace	))"})
-				So(yes, ShouldBeTrue)
-			})
-			Convey("Multiple surrounding whitespaces", func() {
-				yes := shouldReplaceArray([]interface{}{"((  replace  ))"})
-				So(yes, ShouldBeTrue)
-			})
-		})
-	})
-}
-
-func TestShouldInlineMergeArray(t *testing.T) {
-	Convey("We should inline merge arrays", t, func() {
-		Convey("If the element is a string with the right inline-merge token", func() {
-			So(shouldInlineMergeArray([]interface{}{"(( inline ))", "stuff"}), ShouldBeTrue)
-		})
-		Convey("But not if the element is a string with the wrong token", func() {
-			So(shouldInlineMergeArray([]interface{}{"not a magic token"}), ShouldBeFalse)
-		})
-		Convey("But not if the element is not a string", func() {
-			So(shouldInlineMergeArray([]interface{}{42}), ShouldBeFalse)
-		})
-		Convey("But not if the slice has no elements", func() {
-			So(shouldInlineMergeArray([]interface{}{}), ShouldBeFalse)
-		})
-		Convey("Is whitespace agnostic", func() {
-			Convey("No surrounding whitespace", func() {
-				yes := shouldInlineMergeArray([]interface{}{"((inline))"})
-				So(yes, ShouldBeTrue)
-			})
-			Convey("Surrounding tabs", func() {
-				yes := shouldInlineMergeArray([]interface{}{"((	inline	))"})
-				So(yes, ShouldBeTrue)
-			})
-			Convey("Multiple surrounding whitespaces", func() {
-				yes := shouldInlineMergeArray([]interface{}{"((  inline  ))"})
-				So(yes, ShouldBeTrue)
-			})
-		})
-	})
-}
-
 func TestShouldKeyMergeArrayOfHashes(t *testing.T) {
 	Convey("We should key-based merge arrays of hashes", t, func() {
 		Convey("If the element is a string with the right key-merge token", func() {
@@ -168,20 +106,94 @@ func TestGetArrayModifications(t *testing.T) {
 	}
 
 	shouldBeDelete := func(actual interface{}, _ ...interface{}) string {
-		if !actual.(ModificationDefinition).delete {
+		if actual.(ModificationDefinition).listOp != listOpDelete {
 			return "Result doesn't have marker for delete operation"
 		}
 		return ""
 	}
 
 	shouldBeDefault := func(actual interface{}, _ ...interface{}) string {
-		if actual.(ModificationDefinition).defaultMerge {
+		if actual.(ModificationDefinition).listOp == listOpMergeDefault {
 			return ""
 		}
 		return "Expected defaultMerge to be true"
 	}
 
+	shouldBeMergeOnKey := func(actual interface{}, _ ...interface{}) string {
+		switch actual.(ModificationDefinition).listOp {
+		case listOpMergeOnKey:
+			return ""
+
+		default:
+			return "Expected list operation to be 'merge on key'"
+		}
+	}
+
+	shouldBeReplace := func(actual interface{}, _ ...interface{}) string {
+		switch actual.(ModificationDefinition).listOp {
+		case listOpReplace:
+			return ""
+
+		default:
+			return "Expected list operation to be 'replace'"
+		}
+	}
+
 	Convey("Should recognize string patterns for", t, func() {
+
+		Convey("(( merge ))", func() {
+			//merge test cases go here
+			for input, shouldMatch := range map[string]bool{
+				"(( merge ))": true,
+				"((merge))":   true,
+				"((	merge	))": true,
+				"((  merge  ))":        true,
+				"((     merge))":       true,
+				"(( notmerge ))":       false,
+				"(( mergenot ))":       false,
+				"(( not even merge ))": false,
+				"(( somethingelse ))":  false,
+			} {
+				Convey(fmt.Sprintf("with case %s", input), func() {
+					results := getArrayModifications([]interface{}{input}, false)
+					if shouldMatch {
+						So(results, ShouldHaveLength, 2)
+						So(results[0], shouldBeDefault)
+						So(results[1], shouldBeMergeOnKey)
+					} else {
+						So(results, ShouldHaveLength, 1)
+						So(results[0], shouldBeDefault)
+					}
+				})
+			}
+		})
+
+		Convey("(( replace ))", func() {
+			//replace test cases go here
+			for input, shouldMatch := range map[string]bool{
+				"(( replace ))": true,
+				"((replace))":   true,
+				"((	replace	))": true,
+				"((  replace  ))":        true,
+				"((     replace))":       true,
+				"(( notreplace ))":       false,
+				"(( replacenot ))":       false,
+				"(( not even replace ))": false,
+				"(( somethingelse ))":    false,
+			} {
+				Convey(fmt.Sprintf("with case %s", input), func() {
+					results := getArrayModifications([]interface{}{input}, false)
+					if shouldMatch {
+						So(results, ShouldHaveLength, 2)
+						So(results[0], shouldBeDefault)
+						So(results[1], shouldBeReplace)
+					} else {
+						So(results, ShouldHaveLength, 1)
+						So(results[0], shouldBeDefault)
+					}
+				})
+			}
+		})
 
 		Convey("(( append ))", func() {
 			//append test cases go here
@@ -410,7 +422,7 @@ func TestGetArrayModifications(t *testing.T) {
 	Convey("Don't return an insert if index is obviously out of bounds", t, func() {
 		results := getArrayModifications([]interface{}{"(( insert before -1 ))", "stuff"}, false)
 		So(results, ShouldHaveLength, 1) //Just the default merge
-		So(results[0].defaultMerge, ShouldBeTrue)
+		So(results[0].listOp, ShouldEqual, listOpMergeDefault)
 	})
 
 	Convey("If there are multiple insert token with after/before, different key names, and names (only technical usecase)", t, func() {
@@ -444,7 +456,7 @@ func TestGetArrayModifications(t *testing.T) {
 	Convey("Can specify operators without one at the 0th index", t, func() {
 		results := getArrayModifications([]interface{}{"foo", "(( append ))", "stuff"}, false)
 		So(results, ShouldHaveLength, 2)
-		So(results[0].defaultMerge, ShouldBeTrue)
+		So(results[0].listOp, ShouldEqual, listOpMergeDefault)
 		So(results[1], shouldBeAppend)
 		So(results[0].list, ShouldHaveLength, 1)
 		So(results[1].list, ShouldHaveLength, 1)

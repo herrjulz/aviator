@@ -4,7 +4,11 @@
 [[projects]]
   branch = "master"
   name = "code.cloudfoundry.org/commandrunner"
-  packages = [".","fake_command_runner","linux_command_runner"]
+  packages = [
+    ".",
+    "fake_command_runner",
+    "linux_command_runner"
+  ]
   revision = "501fd662150bcea5a42a9b5c1c283209720788c3"
 
 [[projects]]
@@ -44,9 +48,12 @@
 
 [[projects]]
   name = "github.com/geofffranks/spruce"
-  packages = [".","log"]
-  revision = "9e4dce1aa5cfad08642cd064973b529ab0c2b8eb"
-  version = "v1.17.0"
+  packages = [
+    ".",
+    "log"
+  ]
+  revision = "133dd34c71cd2dd46457e146d2e0e6e525da3ecc"
+  version = "v1.18.2"
 
 [[projects]]
   branch = "v2"
@@ -62,12 +69,44 @@
 
 [[projects]]
   name = "github.com/onsi/ginkgo"
-  packages = [".","config","internal/codelocation","internal/containernode","internal/failer","internal/leafnodes","internal/remote","internal/spec","internal/spec_iterator","internal/specrunner","internal/suite","internal/testingtproxy","internal/writer","reporters","reporters/stenographer","reporters/stenographer/support/go-colorable","reporters/stenographer/support/go-isatty","types"]
+  packages = [
+    ".",
+    "config",
+    "internal/codelocation",
+    "internal/containernode",
+    "internal/failer",
+    "internal/leafnodes",
+    "internal/remote",
+    "internal/spec",
+    "internal/spec_iterator",
+    "internal/specrunner",
+    "internal/suite",
+    "internal/testingtproxy",
+    "internal/writer",
+    "reporters",
+    "reporters/stenographer",
+    "reporters/stenographer/support/go-colorable",
+    "reporters/stenographer/support/go-isatty",
+    "types"
+  ]
   revision = "11459a886d9cd66b319dac7ef1e917ee221372c9"
 
 [[projects]]
   name = "github.com/onsi/gomega"
-  packages = [".","format","internal/assertion","internal/asyncassertion","internal/oraclematcher","internal/testingtsupport","matchers","matchers/support/goraph/bipartitegraph","matchers/support/goraph/edge","matchers/support/goraph/node","matchers/support/goraph/util","types"]
+  packages = [
+    ".",
+    "format",
+    "internal/assertion",
+    "internal/asyncassertion",
+    "internal/oraclematcher",
+    "internal/testingtsupport",
+    "matchers",
+    "matchers/support/goraph/bipartitegraph",
+    "matchers/support/goraph/edge",
+    "matchers/support/goraph/node",
+    "matchers/support/goraph/util",
+    "types"
+  ]
   revision = "dcabb60a477c2b6f456df65037cb6708210fbb02"
 
 [[projects]]
@@ -82,7 +121,10 @@
 
 [[projects]]
   name = "github.com/starkandwayne/goutils"
-  packages = ["ansi","tree"]
+  packages = [
+    "ansi",
+    "tree"
+  ]
   revision = "2c96629058fe59038b1f090194d047ecf0194045"
 
 [[projects]]
@@ -99,7 +141,11 @@
 
 [[projects]]
   name = "golang.org/x/net"
-  packages = ["html","html/atom","html/charset"]
+  packages = [
+    "html",
+    "html/atom",
+    "html/charset"
+  ]
   revision = "66aacef3dd8a676686c7ae3716979581e8b03c47"
 
 [[projects]]
@@ -109,7 +155,25 @@
 
 [[projects]]
   name = "golang.org/x/text"
-  packages = ["encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/gen","internal/tag","internal/utf8internal","language","runes","transform","unicode/cldr"]
+  packages = [
+    "encoding",
+    "encoding/charmap",
+    "encoding/htmlindex",
+    "encoding/internal",
+    "encoding/internal/identifier",
+    "encoding/japanese",
+    "encoding/korean",
+    "encoding/simplifiedchinese",
+    "encoding/traditionalchinese",
+    "encoding/unicode",
+    "internal/gen",
+    "internal/tag",
+    "internal/utf8internal",
+    "language",
+    "runes",
+    "transform",
+    "unicode/cldr"
+  ]
   revision = "bd91bbf73e9a4a801adbfb97133c992678533126"
 
 [[projects]]

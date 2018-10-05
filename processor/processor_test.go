@@ -34,7 +34,7 @@ var _ = Describe("Processor", func() {
 				To:      "integration/tmp/result.yml",
 				ToDir:   "integration/tmp/",
 			}
-			store = filemanager.Store() //new(fakes.FakeFileStore)
+			store = filemanager.Store(true)
 			modifier = new(fakes.FakeModifier)
 		})
 

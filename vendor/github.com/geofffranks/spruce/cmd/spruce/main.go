@@ -13,7 +13,6 @@ import (
 	. "github.com/geofffranks/spruce"
 	. "github.com/geofffranks/spruce/log"
 
-	"regexp"
 	"strings"
 
 	// Use geofffranks forks to persist the fix in https://github.com/go-yaml/yaml/pull/133/commits
@@ -46,11 +45,14 @@ var usage = func() {
 	exit(1)
 }
 
-var handleConcourseQuoting bool
-
 func envFlag(varname string) bool {
 	val := os.Getenv(varname)
 	return val != "" && strings.ToLower(val) != "false" && val != "0"
+}
+
+type jsonOpts struct {
+	Strict bool               `goptions:"--strict, description='Refuse to convert non-string keys to strings'"`
+	Files  goptions.Remainder `goptions:"description='Files to convert to JSON'"`
 }
 
 type mergeOpts struct {
@@ -64,15 +66,12 @@ type mergeOpts struct {
 
 func main() {
 	var options struct {
-		Debug     bool `goptions:"-D, --debug, description='Enable debugging'"`
-		Trace     bool `goptions:"-T, --trace, description='Enable trace mode debugging (very verbose)'"`
-		Version   bool `goptions:"-v, --version, description='Display version information'"`
-		Concourse bool `goptions:"--concourse, description='Pre/Post-process YAML for Concourse CI (handles {{ }} quoting)'"`
-		Action    goptions.Verbs
-		Merge     mergeOpts `goptions:"merge"`
-		JSON      struct {
-			Files goptions.Remainder `goptions:"description='Files to convert to JSON'"`
-		} `goptions:"json"`
+		Debug   bool `goptions:"-D, --debug, description='Enable debugging'"`
+		Trace   bool `goptions:"-T, --trace, description='Enable trace mode debugging (very verbose)'"`
+		Version bool `goptions:"-v, --version, description='Display version information'"`
+		Action  goptions.Verbs
+		Merge   mergeOpts `goptions:"merge"`
+		JSON    jsonOpts `goptions:"json"`
 		Diff struct {
 			Files goptions.Remainder `goptions:"description='Show the semantic differences between two YAML files'"`
 		} `goptions:"diff"`
@@ -91,8 +90,6 @@ func main() {
 		TraceOn = true
 		DebugOn = true
 	}
-
-	handleConcourseQuoting = options.Concourse
 
 	if options.Version {
 		printfStdOut("%s - Version %s\n", os.Args[0], Version)
@@ -120,14 +117,7 @@ func main() {
 			return
 		}
 
-		var output string
-		if handleConcourseQuoting {
-			PrintfStdErr(ansi.Sprintf("@Y{--concourse is deprecated. Consider using built-in spruce operators when merging Concourse YAML files}\n"))
-			output = dequoteConcourse(merged)
-		} else {
-			output = string(merged)
-		}
-		printfStdOut("%s\n", output)
+		printfStdOut("%s\n", string(merged))
 
 	case "vaultinfo":
 		VaultRefs = map[string][]string{}
@@ -144,7 +134,7 @@ func main() {
 		printfStdOut("%s\n", formatVaultRefs())
 	case "json":
 		if len(options.JSON.Files) > 0 {
-			jsons, err := JSONifyFiles(options.JSON.Files)
+			jsons, err := JSONifyFiles(options.JSON.Files, options.JSON.Strict)
 			if err != nil {
 				PrintfStdErr("%s\n", err)
 				exit(2)
@@ -154,7 +144,7 @@ func main() {
 				printfStdOut("%s\n", output)
 			}
 		} else {
-			output, err := JSONifyIO(os.Stdin)
+			output, err := JSONifyIO(os.Stdin, options.JSON.Strict)
 			if err != nil {
 				PrintfStdErr("%s\n", err)
 				exit(2)
@@ -300,10 +290,6 @@ func mergeAllDocs(root map[interface{}]interface{}, paths []string, fallbackAppe
 			}
 		}
 
-		if handleConcourseQuoting {
-			data = quoteConcourse(data)
-		}
-
 		doc, err := parseYAML(data)
 		if err != nil {
 			if isArrayError(err) && goPatchEnabled {
@@ -332,18 +318,6 @@ func mergeAllDocs(root map[interface{}]interface{}, paths []string, fallbackAppe
 	}
 
 	return m.Error()
-}
-
-var concourseRegex = `\{\{([-\w\p{L}]+)\}\}`
-
-func quoteConcourse(input []byte) []byte {
-	re := regexp.MustCompile("(" + concourseRegex + ")")
-	return re.ReplaceAll(input, []byte("\"$1\""))
-}
-
-func dequoteConcourse(input []byte) string {
-	re := regexp.MustCompile("['\"](" + concourseRegex + ")[\"']")
-	return re.ReplaceAllString(string(input), "$1")
 }
 
 func diffFiles(paths []string) (string, bool, error) {

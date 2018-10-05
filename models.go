@@ -5,6 +5,7 @@ import "os"
 type AviatorYaml struct {
 	Spruce []Spruce `yaml:"spruce"`
 	Fly    Fly      `yaml:"fly"`
+	Squash Squash   `yaml:"squash"`
 }
 
 type Spruce struct {
@@ -75,6 +76,16 @@ type Modify struct {
 type PathVal struct {
 	Path  string `yaml:"path"`
 	Value string `yaml:"value"`
+}
+
+type Squash struct {
+	Content []SquashContent `yaml:"content"`
+	To      string          `yaml:"to"`
+}
+
+type SquashContent struct {
+	Files []string `yaml:"files"`
+	Dir   string   `yaml:"dir"`
 }
 
 //go:generate counterfeiter . SpruceProcessor

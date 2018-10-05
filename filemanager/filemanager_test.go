@@ -10,9 +10,14 @@ import (
 var _ = Describe("Filemanager", func() {
 
 	var store *FileManager
+	var allowCurlyBraces bool
 
 	BeforeEach(func() {
-		store = Store()
+		allowCurlyBraces = true
+	})
+
+	JustBeforeEach(func() {
+		store = Store(allowCurlyBraces)
 	})
 
 	Context("Write/ReadFile", func() {
@@ -69,4 +74,18 @@ var _ = Describe("Filemanager", func() {
 	//Expect(err).ToNot(HaveOccurred())
 	//})
 	//})
+
+	Context("When double curly braces are not allowed", func() {
+		BeforeEach(func() {
+			allowCurlyBraces = false
+		})
+
+		It("doesn't unquote curly braces on write", func() {
+			err := store.WriteFile("{{keyE}}", []byte("{{content E}}"))
+			Expect(err).ToNot(HaveOccurred())
+			file, ok := store.ReadFile("{{keyE}}")
+			Expect(ok).To(Equal(true))
+			Expect(string(file)).To(ContainSubstring("{{content E}}"))
+		})
+	})
 })
