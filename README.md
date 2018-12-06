@@ -528,7 +528,7 @@ person:
     modify:
       update: 
       - path: person.name
-      - value: newName
+        value: newName
     to: result.yml
   ```
 
