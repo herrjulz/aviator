@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	// Use geofffranks forks to persist the fix in https://github.com/go-yaml/yaml/pull/133/commits
 	// Also https://github.com/go-yaml/yaml/pull/195
@@ -473,6 +475,7 @@ properties:
 		})
 		Convey("Included yaml file is escaped", func() {
 			os.Setenv("SPRUCE_FILE_BASE_PATH", "../../assets/file_operator")
+			defer os.Unsetenv("SPRUCE_FILE_BASE_PATH")
 			os.Args = []string{"spruce", "merge", "../../assets/file_operator/test.yml"}
 			stdout = ""
 			stderr = ""
@@ -1412,6 +1415,83 @@ name_list:
 			})
 		})
 
+		Convey("Given a Spruce merge using the (( load <location> )) operator", func() {
+			Convey("When the location is a local location", func() {
+				Convey("The local data should be loaded and inserted", func() {
+					os.Setenv("SPRUCE_FILE_BASE_PATH", "../../")
+					defer os.Unsetenv("SPRUCE_FILE_BASE_PATH")
+					os.Args = []string{"spruce", "merge", "../../assets/load/base-local.yml"}
+					stdout = ""
+					stderr = ""
+					main()
+					So(stderr, ShouldEqual, "")
+					So(stdout, ShouldEqual, `yet:
+  another:
+    yaml:
+      structure:
+        load:
+          complex-list:
+          - name: one
+          - name: two
+          map:
+            key: value
+          simple-list:
+          - one
+          - two
+
+`)
+				})
+
+				Convey("That an error is returned if no file can be found", func() {
+					os.Args = []string{"spruce", "merge", "../../assets/load/base-local.yml"}
+					stdout = ""
+					stderr = ""
+					main()
+					So(stderr, ShouldEqual, `1 error(s) detected:
+ - $.yet.another.yaml.structure.load: unable to get any content using location assets/load/other.yml: it is not a file or usable URI
+
+
+`)
+					So(stdout, ShouldEqual, "")
+				})
+			})
+
+			Convey("When the location is a remote location", func() {
+				srv := &http.Server{Addr: ":31337"}
+				defer func() {
+					if srv != nil {
+						srv.Shutdown(nil)
+					}
+				}()
+
+				go func() {
+					http.Handle("/assets/",
+						http.StripPrefix("/assets/",
+							http.FileServer(http.Dir("../../assets/"))))
+
+					srv.ListenAndServe()
+				}()
+				time.Sleep(1 * time.Second)
+
+				Convey("The remote data should be loaded and inserted", func() {
+					os.Args = []string{"spruce", "merge", "../../assets/load/base-remote.yml"}
+					stdout = ""
+					stderr = ""
+					main()
+					So(stderr, ShouldEqual, "")
+					So(stdout, ShouldEqual, `yet:
+  another:
+    yaml:
+      structure:
+        load:
+        - one
+        - two
+
+`)
+				})
+			})
+		})
+
 		Convey("Cherry picking test cases", func() {
 			Convey("Cherry pick just one root level path", func() {
 				os.Args = []string{"spruce", "merge", "--cherry-pick", "properties", "../../assets/cherry-pick/fileA.yml", "../../assets/cherry-pick/fileB.yml"}
@@ -1612,6 +1692,7 @@ releases:
 				So(stdout, ShouldEqual, `params:
   mode: default
   name: sandbox-thing
+  type: thing
 
 `)
 			})
@@ -2063,7 +2144,7 @@ items:
 - add spruce stuff in the beginning of the array
 - name: item7
 - name: item8
-- name: item8
+- name: item9
 key: 10
 key2:
   nested:
@@ -2077,7 +2158,7 @@ spruce_array_grab:
 - add spruce stuff in the beginning of the array
 - name: item7
 - name: item8
-- name: item8
+- name: item9
 
 `)
 			})
@@ -2098,6 +2179,29 @@ spruce_array_grab:
 				main()
 				So(stderr, ShouldContainSubstring, "Root of YAML document is not a hash/map. Tried parsing it as go-patch, but got:")
 				So(stdout, ShouldEqual, "")
+			})
+			Convey("go-patch handles named arrays with :before syntax (#283)", func() {
+				os.Args = []string{"spruce", "merge", "--go-patch", "../../assets/go-patch/base.yml", "../../assets/go-patch/before.yml"}
+				stdout = ""
+				stderr = ""
+				main()
+				So(stderr, ShouldEqual, "")
+				So(stdout, ShouldEqual, `array:
+- 4
+- 5
+- 6
+items:
+- name: item7
+- name: 7.5
+- name: item8
+- name: item9
+key: 1
+key2:
+  nested:
+    super_nested: 2
+  other: 3
+
+`)
 			})
 		})
 		Convey("setting DEFAULT_ARRAY_MERGE_KEY", func() {
@@ -2227,6 +2331,7 @@ func TestExamples(t *testing.T) {
 
 			So(stderr, ShouldEqual, "")
 			So(stdout, ShouldEqual, YAML(expect))
+			So(rc, ShouldEqual, 0)
 		}
 
 		Convey("Basic Example", func() {

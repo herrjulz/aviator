@@ -11,8 +11,10 @@
 - [ips](#-ips-)
 - [join](#-join-)
 - [keys](#-keys-)
+- [load](#-load-)
 - [param](#-param-)
 - [prune](#-prune-)
+- [sort](#-sort-)
 - [static_ips](#-static_ips-)
 - [vault](#-vault-)
 
@@ -29,6 +31,15 @@ see the [array merging documentation][array-merging]:
 - `(( replace ))` - Removes the existing array, and replaces it with the new one.
 - `(( delete ))` - Deletes data at a specific index, or objects identified by the value
   of a specified key.
+
+*Please note:* You cannot use the convenient Spruce path syntax
+(`path.to.your.property`) in case one of the elements (e.g. named entry
+element) contains a dot as part of the actual key. The dot is in line with the
+YAML syntax, however it cannot be used since Spruce uses it as a separator
+internally. This also applies to operators, where it is not immediately obvious
+that a path is used like with the `(( prune ))` operator. As a workaround,
+depending on the actual use-case, it is often possible to replace the Spruce
+operator with a equivalent [go-patch] operator file.
 
 ## Operator Arguments
 
@@ -191,6 +202,44 @@ and it will return an array of all of the keys inside it.
 
 [Example][keys-example]
 
+## (( load ))
+
+Usage: `(( load LITERAL ))`
+
+Similar to the `(( file ))` operator, this operator takes the content of another
+file to insert it into the main tree structure. However, `(( load ))` does not
+use the content as-is, but expects to parse valid YAML (or JSON). Like the
+`(( file ))` operator, you do not have to worry about indentation as Spruce will
+cover that for you.
+
+_Note:_ Spruce will **not** evaluate any Spruce operators that might be in
+the file that is loaded, because any path used by `grab` or similar would be
+ambigious in respect to the document root to be used. If you need to load a
+file with Spruce operators in it, you have to run a pre-processing step to
+evaluate the file first with another Spruce run.
+
+**Example:**
+```
+$ cat <<EOF >list.yml
+---
+- one
+- two
+...
+EOF
+
+$ cat <<EOF >config.yml
+---
+list: (( load "list.yml" ))
+...
+EOF
+
+$ spruce merge config.yml
+list:
+- one
+- two
+
+```
+
 ## (( param ))
 
 Usage: `(( param LITERAL ))`
@@ -207,7 +256,10 @@ Usage: `(( prune ))`
 
 If you have a need to force the cleanup of data from the final output, but don't want
 to rely on the end-user always specifying the necessary `--prune` flags, you can
-make use `(( prune ))`s to clear out the bloated data..
+make use `(( prune ))`s to clear out the bloated data. _Please note:_ Both the CLI
+flag as well as the operator will not work if one path element contains a dot as the
+actual name, e.g. `10.local: (( prune ))` will **not** work. You have to use the
+go-patch equivalent instruction instead.
 
 [Example][prune-example]
 
@@ -275,6 +327,7 @@ look up Vault paths.
 [array-merging]: https://github.com/geofffranks/spruce/blob/master/doc/array-merging.md
 [env-var]:       https://github.com/geofffranks/spruce/blob/master/doc/environment-variables-and-defaults.md
 [vault]:         https://vaultproject.io
+[go-patch]:      https://github.com/cppforlife/go-patch
 
 [calc-example]:       http://play.spruce.cf/#537ceec949163403ff42fc52331d2c26
 [cartesian-example]:  http://play.spruce.cf/#a1bb0cde87c2787b0a46603f3263a70d
