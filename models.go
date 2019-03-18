@@ -99,6 +99,11 @@ type FlyExecuter interface {
 	Execute(interface{}) error
 }
 
+//go:generate counterfeiter . Executor
+type Executor interface {
+	Execute(interface{}) error
+}
+
 //go:generate counterfeiter . SpruceClient
 type SpruceClient interface {
 	MergeWithOpts(MergeConf) ([]byte, error)
@@ -115,11 +120,6 @@ type FileStore interface {
 //go:generate counterfeiter . Validator
 type Validator interface {
 	ValidateSpruce([]Spruce) error
-}
-
-//go:generate counterfeiter . Executor
-type Executor interface {
-	Execute(Fly) error
 }
 
 //go:generate counterfeiter . Modifier
