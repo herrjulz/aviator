@@ -40,7 +40,7 @@ https://github.com/JulzDiverse/aviator/releases/download/v1.1.0/aviator-win
 With `aviator` you can execute different YAML based tools:
 
 - Concourse [fly](https://github.com/concourse/fly)
-- KubeCtl (Comming Soon)
+- Kubernetes [KubeCtl apply](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply) 
 
 ## Usage
 
@@ -556,6 +556,31 @@ Aviator uses [goml](https://github.com/JulzDiverse/goml) as YAML modifier. If yo
 
 ---
 
+### Squash Section
+
+You can squash multiple files into one single YAML file using the `squash` section.
+
+
+#### Squashing specific files
+
+```yaml
+squash:
+  contents:
+  - files:
+    - deployment.yml
+    - service.yml
+  to: app.yml
+```
+
+#### Squash files from a directory
+
+```yaml
+squash:
+  contents:
+    dir: my/dir/
+  to: app.yml
+```
+
 ### Executors
 
 #### The `fly` section (Optional)
@@ -590,6 +615,33 @@ Note, that the generated `pipeline.yml` is used in the `fly` section as `config`
 
 _NOTE: You will need to fly login first, before executing `aviator`_
 
+#### The `kubectl` section
+
+You can automagically `kubectl apply` your squashed or merged (or squashed+merged) Yaml files directly from the `aviator.yml` using the `kubectl` section.
+
+*Supported flags*
+
+- **file**: Name of the file to `kubectl apply`
+- **force**: calls `kubectl apply` with the `--force` flag
+- **dry_run**: calls `kubectl apply` with the `--dry-run` flag
+- **overwrite**: calls `kubectl apply` with the `--overwrite` flag
+- **recursive**: calls the `kubectl apply` with the `--recursive` flag
+- **output**: calls the `kubectl apply` with the `--output=<desired-ouput>` parameter
+
+You can read about the details of the flags [here](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply)
+
+Example:
+
+```yaml
+kubectl
+  apply:
+    file: deployment.yml
+    force: true
+    dry_run: true
+    overwrite: true
+    recursive: true
+    output: yaml
+```
 
 ---
 
