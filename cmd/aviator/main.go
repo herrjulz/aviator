@@ -44,6 +44,12 @@ func main() {
 				err = aviator.ExecuteFly()
 				exitWithError(err)
 			}
+
+			kube := aviator.AviatorYaml.Kube.Apply
+			if kube.File != "" {
+				err = aviator.ExecuteKube()
+				exitWithError(err)
+			}
 		}
 
 		return nil

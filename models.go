@@ -4,8 +4,9 @@ import "os"
 
 type AviatorYaml struct {
 	Spruce []Spruce `yaml:"spruce"`
-	Fly    Fly      `yaml:"fly"`
 	Squash Squash   `yaml:"squash"`
+	Fly    Fly      `yaml:"fly"`
+	Kube   Kube     `yaml:"kubectl"`
 }
 
 type Spruce struct {
@@ -56,6 +57,19 @@ type Fly struct {
 	Expose         bool              `yaml:"expose"`
 	Var            map[string]string `yaml:"vars"`
 	NonInteractive bool              `yaml:"non_interactive"`
+}
+
+type Kube struct {
+	Apply KubeApply `yaml:"apply"`
+}
+
+type KubeApply struct {
+	File      string `yaml:"file"`
+	Force     bool   `yaml:"force"`
+	DryRun    bool   `yaml:"dry_run"`
+	Overwrite bool   `yaml:"no_overwrite"`
+	Recursive bool   `yaml:"recursive"`
+	Output    string `yaml:"output"`
 }
 
 type MergeConf struct {
