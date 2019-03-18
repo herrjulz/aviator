@@ -101,10 +101,15 @@ func concatFileNameWithPath(path string) (string, string) {
 	var fileName, parent string
 	chunked := strings.Split(path, "/")
 	if len(chunked) > 1 {
-		fileName = chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
 		parent = chunked[len(chunked)-2]
+		if parent == ".." {
+			fileName = chunked[len(chunked)-1]
+		} else {
+			fileName = chunked[len(chunked)-2] + "_" + chunked[len(chunked)-1]
+		}
+	} else {
+		fileName = path
 	}
-	fileName = path
 	return fileName, parent
 }
 
