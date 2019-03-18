@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/JulzDiverse/aviator/cockpit"
+	"github.com/JulzDiverse/aviator/cmd/aviator/cockpit"
 	"github.com/JulzDiverse/aviator/validator"
 	"github.com/starkandwayne/goutils/ansi"
 	"github.com/urfave/cli"

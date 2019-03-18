@@ -19,8 +19,9 @@ import (
 
 type Cockpit struct {
 	spruceProcessor aviator.SpruceProcessor
-	flyExecutor     aviator.FlyExecuter
+	flyExecutor     aviator.Executor
 	validator       aviator.Validator
+	kubeExecutor    aviator.Executor
 }
 
 type Aviator struct {
@@ -30,10 +31,11 @@ type Aviator struct {
 
 func Init(
 	spruceProcessor aviator.SpruceProcessor,
-	flyExecuter aviator.FlyExecuter,
+	flyExecuter aviator.Executor,
 	validator aviator.Validator,
+	kubeExecutor aviator.Executor,
 ) *Cockpit {
-	return &Cockpit{spruceProcessor, flyExecuter, validator}
+	return &Cockpit{spruceProcessor, flyExecuter, validator, kubeExecutor}
 }
 
 func New(curlyBraces bool) *Cockpit {
@@ -41,6 +43,7 @@ func New(curlyBraces bool) *Cockpit {
 		spruceProcessor: processor.New(curlyBraces),
 		validator:       validator.New(),
 		flyExecutor:     executor.NewFlyExecutor(),
+		kubeExecutor:    executor.NewKubeExecutor(),
 	}
 }
 
@@ -85,7 +88,7 @@ func (a *Aviator) ProcessSquashPlan() error {
 	store := filemanager.Store(false)
 	fp := processor.FileProcessor{store}
 
-	content := a.AviatorYaml.Squash.Content
+	content := a.AviatorYaml.Squash.Contents
 	for _, c := range content {
 		var squashed []byte
 		if len(c.Files) != 0 {
@@ -104,20 +107,15 @@ func (a *Aviator) ProcessSquashPlan() error {
 		result = append(result, squashed...)
 	}
 
-	err = store.WriteFile(a.AviatorYaml.Squash.To, result)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return store.WriteFile(a.AviatorYaml.Squash.To, result)
 }
 
 func (a *Aviator) ExecuteFly() error {
-	err := a.cockpit.flyExecutor.Execute(a.AviatorYaml.Fly)
-	if err != nil {
-		return err
-	}
-	return nil
+	return a.cockpit.flyExecutor.Execute(a.AviatorYaml.Fly)
+}
+
+func (a *Aviator) ExecuteKube() error {
+	return a.cockpit.kubeExecutor.Execute(a.AviatorYaml.Kube)
 }
 
 func resolveEnvVars(input []byte) ([]byte, error) {
