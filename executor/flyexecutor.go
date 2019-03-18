@@ -50,45 +50,16 @@ func (e *FlyExecutor) Execute(cfg interface{}) error {
 		args = append(args, "-n")
 	}
 
-	err := execCmd("fly", args)
+	err := execCmd("fly", args, e.runner)
 	if err != nil {
 		return err
 	}
 
 	if fly.Expose {
 		args = []string{"-t", fly.Target, "expose-pipeline", "-p", fly.Name}
-		err := execCmd("fly", args)
+		err := execCmd("fly", args, e.runner)
 		if err != nil {
 			return err
-		}
-	}
-	return nil
-}
-
-func (e *FlyExecutor) ExecuteWithCustomRunner(cfg interface{}) error {
-	fly, ok := cfg.(aviator.Fly)
-	if !ok {
-		return errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Fly"))
-	}
-
-	args := []string{
-		"-t", fly.Target, "set-pipeline", "-p", fly.Name, "-c", fly.Config,
-	}
-
-	for _, v := range fly.Vars {
-		args = append(args, "-l", v)
-	}
-
-	err := execCmdWithRunner("fly", args, e.runner)
-	if err != nil {
-		return errors.Wrap(err, ansi.Sprintf("@R{Failed to execute Fly}"))
-	}
-
-	if fly.Expose {
-		args = []string{"-t", fly.Target, "expose-pipeline", "-p", fly.Name}
-		err := execCmdWithRunner("fly", args, e.runner)
-		if err != nil {
-			return errors.Wrap(err, ansi.Sprintf("@R{Failed to execute Fly}"))
 		}
 	}
 	return nil

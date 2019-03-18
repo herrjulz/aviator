@@ -1,8 +1,6 @@
 package executor_test
 
 import (
-	"strings"
-
 	fakesrunner "code.cloudfoundry.org/commandrunner/fake_command_runner"
 	"github.com/JulzDiverse/aviator"
 	. "github.com/JulzDiverse/aviator/executor"
@@ -11,13 +9,20 @@ import (
 )
 
 var _ = Describe("Flyexecutor", func() {
-	var flyExecutor *FlyExecutor
-	var runner *fakesrunner.FakeCommandRunner
-	var fly aviator.Fly
+	var (
+		flyExecutor *FlyExecutor
+		runner      *fakesrunner.FakeCommandRunner
+		fly         aviator.Fly
+		args        []string
+		err         error
+	)
 
 	BeforeEach(func() {
 		runner = fakesrunner.New()
 		flyExecutor = NewFlyExecutorWithCustomRunner(runner)
+		err = flyExecutor.Execute(fly)
+		cmds := runner.ExecutedCommands()
+		args = cmds[0].Args
 	})
 
 	Context("Execute", func() {
@@ -32,21 +37,17 @@ var _ = Describe("Flyexecutor", func() {
 				}
 			})
 
-			It("calls the runner with the right commands", func() {
-				err := flyExecutor.ExecuteWithCustomRunner(fly)
+			It("should not error", func() {
 				Expect(err).ToNot(HaveOccurred())
+			})
 
-				cmds := runner.ExecutedCommands()
-				args := cmds[0].Args
-				argsExpose := cmds[1].Args
-				argsString := strings.Join(args, " ")
-				Expect(argsString).To(Equal(
-					"fly -t target-name set-pipeline -p pipeline-name -c pipeline.yml -l credentials.yml -l props.yml",
-				))
-				argsExposeString := strings.Join(argsExpose, " ")
-				Expect(argsExposeString).To(Equal("fly -t target-name expose-pipeline -p pipeline-name"))
+			It("calls the runner with the right commands", func() {
+				Expect(args).To(ContainElement("target-name"))
+				Expect(args).To(ContainElement("pipeline-name"))
+				Expect(args).To(ContainElement("pipeline.yml"))
+				Expect(args).To(ContainElement("credentials.yml"))
+				Expect(args).To(ContainElement("props.yml"))
 			})
 		})
-
 	})
 })
