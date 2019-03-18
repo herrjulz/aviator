@@ -79,13 +79,14 @@ type PathVal struct {
 }
 
 type Squash struct {
-	Content []SquashContent `yaml:"content"`
-	To      string          `yaml:"to"`
+	Contents []SquashContent `yaml:"contents"`
+	To       string          `yaml:"to"`
 }
 
 type SquashContent struct {
-	Files []string `yaml:"files"`
-	Dir   string   `yaml:"dir"`
+	Files  []string `yaml:"files"`
+	Except []string `yaml:"except"`
+	Dir    string   `yaml:"dir"`
 }
 
 //go:generate counterfeiter . SpruceProcessor

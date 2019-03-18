@@ -34,7 +34,7 @@ func main() {
 			exitWithError(err)
 
 			squash := aviator.AviatorYaml.Squash
-			if len(squash.Content) != 0 {
+			if len(squash.Contents) != 0 {
 				err = aviator.ProcessSquashPlan()
 				exitWithError(err)
 			}
