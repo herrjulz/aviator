@@ -31,6 +31,7 @@ func BeautyfulPrint(opts aviator.MergeConf, to string, warnings []string, verbos
 			sl := strings.Split(w, ":")
 			printf("\t@y{%s}:@Y{%s}\n", sl[0], sl[1])
 		}
-		fmt.Println("\n")
+		fmt.Println()
+		fmt.Println()
 	}
 }
