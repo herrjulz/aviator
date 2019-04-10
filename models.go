@@ -1,6 +1,9 @@
 package aviator
 
-import "os"
+import (
+	"os"
+	"os/exec"
+)
 
 type AviatorYaml struct {
 	Spruce []Spruce `yaml:"spruce"`
@@ -109,14 +112,10 @@ type SpruceProcessor interface {
 	ProcessWithOpts([]Spruce, bool, bool) error
 }
 
-//go:generate counterfeiter . FlyExecuter
-type FlyExecuter interface {
-	Execute(interface{}) error
-}
-
 //go:generate counterfeiter . Executor
 type Executor interface {
-	Execute(interface{}) error
+	Command(interface{}) (*exec.Cmd, error)
+	Execute(*exec.Cmd, interface{}) error
 }
 
 //go:generate counterfeiter . SpruceClient

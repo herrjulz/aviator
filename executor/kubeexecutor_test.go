@@ -1,7 +1,8 @@
 package executor_test
 
 import (
-	fakesrunner "code.cloudfoundry.org/commandrunner/fake_command_runner"
+	"os/exec"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -14,19 +15,18 @@ var _ = Describe("Kubeexecutor", func() {
 	var (
 		kubeExec *KubeExecutor
 		kubeCtl  aviator.Kube
-		runner   *fakesrunner.FakeCommandRunner
 		args     []string
+		cmd      *exec.Cmd
 		err      error
 	)
 
 	Context("For a given kubectl apply config", func() {
 
 		JustBeforeEach(func() {
-			runner = new(fakesrunner.FakeCommandRunner)
-			kubeExec = NewKubeExecutorWithCustomRunner(runner)
-			err = kubeExec.Execute(kubeCtl)
-			cmds := runner.ExecutedCommands()
-			args = cmds[0].Args
+			cmd, err = kubeExec.Command(kubeCtl)
+			Expect(err).ToNot(HaveOccurred())
+
+			args = cmd.Args
 		})
 
 		Context("with only a file to apply", func() {
@@ -37,10 +37,6 @@ var _ = Describe("Kubeexecutor", func() {
 						File: "kube.yaml",
 					},
 				}
-			})
-
-			It("shouldn't error when executing the command", func() {
-				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("should apply the given file", func() {

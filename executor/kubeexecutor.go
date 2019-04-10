@@ -1,36 +1,20 @@
 package executor
 
 import (
+	"os/exec"
 	"reflect"
 
-	"code.cloudfoundry.org/commandrunner"
-	"code.cloudfoundry.org/commandrunner/linux_command_runner"
 	"github.com/JulzDiverse/aviator"
 	"github.com/pkg/errors"
 	"github.com/starkandwayne/goutils/ansi"
 )
 
-type KubeExecutor struct {
-	runner commandrunner.CommandRunner
-}
+type KubeExecutor struct{}
 
-func NewKubeExecutorWithCustomRunner(runner commandrunner.CommandRunner) *KubeExecutor {
-	return &KubeExecutor{
-		runner,
-	}
-}
-
-func NewKubeExecutor() *KubeExecutor {
-	return &KubeExecutor{
-		runner: linux_command_runner.New(),
-		//runner: windows_command_runner.New(false),
-	}
-}
-
-func (e *KubeExecutor) Execute(cfg interface{}) error {
+func (e KubeExecutor) Command(cfg interface{}) (*exec.Cmd, error) {
 	kube, ok := cfg.(aviator.Kube)
 	if !ok {
-		return errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Kube"))
+		return &exec.Cmd{}, errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Kube"))
 	}
 
 	apply := kube.Apply
@@ -59,5 +43,9 @@ func (e *KubeExecutor) Execute(cfg interface{}) error {
 		args = append(args, "--output", apply.Output)
 	}
 
-	return execCmd("kubectl", args, e.runner)
+	return exec.Command("kubectl", args...), nil
+}
+
+func (e KubeExecutor) Execute(cmd *exec.Cmd, _ interface{}) error {
+	return execCmd(cmd)
 }

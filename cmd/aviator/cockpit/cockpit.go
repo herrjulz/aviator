@@ -42,8 +42,8 @@ func New(curlyBraces bool) *Cockpit {
 	return &Cockpit{
 		spruceProcessor: processor.New(curlyBraces),
 		validator:       validator.New(),
-		flyExecutor:     executor.NewFlyExecutor(),
-		kubeExecutor:    executor.NewKubeExecutor(),
+		flyExecutor:     executor.FlyExecutor{},
+		kubeExecutor:    executor.KubeExecutor{},
 	}
 }
 
@@ -111,11 +111,19 @@ func (a *Aviator) ProcessSquashPlan() error {
 }
 
 func (a *Aviator) ExecuteFly() error {
-	return a.cockpit.flyExecutor.Execute(a.AviatorYaml.Fly)
+	cmd, err := a.cockpit.flyExecutor.Command(a.AviatorYaml.Fly)
+	if err != nil {
+		return err
+	}
+	return a.cockpit.flyExecutor.Execute(cmd, a.AviatorYaml.Fly)
 }
 
 func (a *Aviator) ExecuteKube() error {
-	return a.cockpit.kubeExecutor.Execute(a.AviatorYaml.Kube)
+	cmd, err := a.cockpit.kubeExecutor.Command(a.AviatorYaml.Kube)
+	if err != nil {
+		return err
+	}
+	return a.cockpit.kubeExecutor.Execute(cmd, a.AviatorYaml.Kube)
 }
 
 func resolveEnvVars(input []byte) ([]byte, error) {

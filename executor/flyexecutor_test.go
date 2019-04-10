@@ -1,7 +1,8 @@
 package executor_test
 
 import (
-	fakesrunner "code.cloudfoundry.org/commandrunner/fake_command_runner"
+	"os/exec"
+
 	"github.com/JulzDiverse/aviator"
 	. "github.com/JulzDiverse/aviator/executor"
 	. "github.com/onsi/ginkgo"
@@ -11,18 +12,16 @@ import (
 var _ = Describe("Flyexecutor", func() {
 	var (
 		flyExecutor *FlyExecutor
-		runner      *fakesrunner.FakeCommandRunner
 		fly         aviator.Fly
 		args        []string
+		cmd         *exec.Cmd
 		err         error
 	)
 
-	BeforeEach(func() {
-		runner = fakesrunner.New()
-		flyExecutor = NewFlyExecutorWithCustomRunner(runner)
-		err = flyExecutor.Execute(fly)
-		cmds := runner.ExecutedCommands()
-		args = cmds[0].Args
+	JustBeforeEach(func() {
+		flyExecutor = &FlyExecutor{}
+		cmd, err = flyExecutor.Command(fly)
+		args = cmd.Args
 	})
 
 	Context("Execute", func() {
@@ -37,7 +36,7 @@ var _ = Describe("Flyexecutor", func() {
 				}
 			})
 
-			It("should not error", func() {
+			It("shouldn't error", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 

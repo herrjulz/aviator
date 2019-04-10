@@ -2,36 +2,20 @@ package executor
 
 import (
 	"fmt"
+	"os/exec"
 	"reflect"
 
-	"code.cloudfoundry.org/commandrunner"
-	"code.cloudfoundry.org/commandrunner/linux_command_runner"
 	"github.com/JulzDiverse/aviator"
 	"github.com/pkg/errors"
 	"github.com/starkandwayne/goutils/ansi"
 )
 
-type FlyExecutor struct {
-	runner commandrunner.CommandRunner
-}
+type FlyExecutor struct{}
 
-func NewFlyExecutorWithCustomRunner(runner commandrunner.CommandRunner) *FlyExecutor {
-	return &FlyExecutor{
-		runner,
-	}
-}
-
-func NewFlyExecutor() *FlyExecutor {
-	return &FlyExecutor{
-		runner: linux_command_runner.New(),
-		//runner: windows_command_runner.New(false),
-	}
-}
-
-func (e *FlyExecutor) Execute(cfg interface{}) error {
+func (e FlyExecutor) Command(cfg interface{}) (*exec.Cmd, error) {
 	fly, ok := cfg.(aviator.Fly)
 	if !ok {
-		return errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Fly"))
+		return &exec.Cmd{}, errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Fly"))
 	}
 
 	args := []string{
@@ -50,17 +34,28 @@ func (e *FlyExecutor) Execute(cfg interface{}) error {
 		args = append(args, "-n")
 	}
 
-	err := execCmd("fly", args, e.runner)
+	return exec.Command("fly", args...), nil
+}
+
+func (e FlyExecutor) Execute(cmd *exec.Cmd, cfg interface{}) error {
+	fly, ok := cfg.(aviator.Fly)
+	if !ok {
+		return errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Fly"))
+	}
+
+	err := execCmd(cmd)
 	if err != nil {
 		return err
 	}
 
 	if fly.Expose {
-		args = []string{"-t", fly.Target, "expose-pipeline", "-p", fly.Name}
-		err := execCmd("fly", args, e.runner)
+		args := []string{"-t", fly.Target, "expose-pipeline", "-p", fly.Name}
+		cmd = exec.Command("fly", args...)
+		err := execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }

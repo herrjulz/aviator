@@ -2,16 +2,30 @@
 package aviatorfakes
 
 import (
+	"os/exec"
 	"sync"
 
 	"github.com/JulzDiverse/aviator"
 )
 
 type FakeExecutor struct {
-	ExecuteStub        func(interface{}) error
+	CommandStub        func(interface{}) (*exec.Cmd, error)
+	commandMutex       sync.RWMutex
+	commandArgsForCall []struct {
+		arg1 interface{}
+	}
+	commandReturns struct {
+		result1 *exec.Cmd
+		result2 error
+	}
+	commandReturnsOnCall map[int]struct {
+		result1 *exec.Cmd
+		result2 error
+	}
+	ExecuteStub        func(*exec.Cmd) error
 	executeMutex       sync.RWMutex
 	executeArgsForCall []struct {
-		arg1 interface{}
+		arg1 *exec.Cmd
 	}
 	executeReturns struct {
 		result1 error
@@ -23,11 +37,62 @@ type FakeExecutor struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeExecutor) Execute(arg1 interface{}) error {
+func (fake *FakeExecutor) Command(arg1 interface{}) (*exec.Cmd, error) {
+	fake.commandMutex.Lock()
+	ret, specificReturn := fake.commandReturnsOnCall[len(fake.commandArgsForCall)]
+	fake.commandArgsForCall = append(fake.commandArgsForCall, struct {
+		arg1 interface{}
+	}{arg1})
+	fake.recordInvocation("Command", []interface{}{arg1})
+	fake.commandMutex.Unlock()
+	if fake.CommandStub != nil {
+		return fake.CommandStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fake.commandReturns.result1, fake.commandReturns.result2
+}
+
+func (fake *FakeExecutor) CommandCallCount() int {
+	fake.commandMutex.RLock()
+	defer fake.commandMutex.RUnlock()
+	return len(fake.commandArgsForCall)
+}
+
+func (fake *FakeExecutor) CommandArgsForCall(i int) interface{} {
+	fake.commandMutex.RLock()
+	defer fake.commandMutex.RUnlock()
+	return fake.commandArgsForCall[i].arg1
+}
+
+func (fake *FakeExecutor) CommandReturns(result1 *exec.Cmd, result2 error) {
+	fake.CommandStub = nil
+	fake.commandReturns = struct {
+		result1 *exec.Cmd
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeExecutor) CommandReturnsOnCall(i int, result1 *exec.Cmd, result2 error) {
+	fake.CommandStub = nil
+	if fake.commandReturnsOnCall == nil {
+		fake.commandReturnsOnCall = make(map[int]struct {
+			result1 *exec.Cmd
+			result2 error
+		})
+	}
+	fake.commandReturnsOnCall[i] = struct {
+		result1 *exec.Cmd
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeExecutor) Execute(arg1 *exec.Cmd) error {
 	fake.executeMutex.Lock()
 	ret, specificReturn := fake.executeReturnsOnCall[len(fake.executeArgsForCall)]
 	fake.executeArgsForCall = append(fake.executeArgsForCall, struct {
-		arg1 interface{}
+		arg1 *exec.Cmd
 	}{arg1})
 	fake.recordInvocation("Execute", []interface{}{arg1})
 	fake.executeMutex.Unlock()
@@ -46,7 +111,7 @@ func (fake *FakeExecutor) ExecuteCallCount() int {
 	return len(fake.executeArgsForCall)
 }
 
-func (fake *FakeExecutor) ExecuteArgsForCall(i int) interface{} {
+func (fake *FakeExecutor) ExecuteArgsForCall(i int) *exec.Cmd {
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
 	return fake.executeArgsForCall[i].arg1
@@ -74,6 +139,8 @@ func (fake *FakeExecutor) ExecuteReturnsOnCall(i int, result1 error) {
 func (fake *FakeExecutor) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.commandMutex.RLock()
+	defer fake.commandMutex.RUnlock()
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
