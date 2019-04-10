@@ -3,18 +3,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:72eac7eaebf2fc6ea62af8a605d5dcf9cf21c5187e5322975c1419c645a36895"
-  name = "code.cloudfoundry.org/commandrunner"
-  packages = [
-    ".",
-    "fake_command_runner",
-    "linux_command_runner",
-  ]
-  pruneopts = ""
-  revision = "501fd662150bcea5a42a9b5c1c283209720788c3"
-
-[[projects]]
-  branch = "master"
   digest = "1:ba4dc4d27a654d6fd5572c672728f27cdea4878b87521548429823dae48e9319"
   name = "github.com/JulzDiverse/goml"
   packages = ["."]
@@ -227,9 +215,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "code.cloudfoundry.org/commandrunner",
-    "code.cloudfoundry.org/commandrunner/fake_command_runner",
-    "code.cloudfoundry.org/commandrunner/linux_command_runner",
     "github.com/JulzDiverse/goml",
     "github.com/JulzDiverse/mingoak",
     "github.com/JulzDiverse/osenv",
