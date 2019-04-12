@@ -14,10 +14,13 @@ import (
 )
 
 var _ = Describe("Printer", func() {
-	var opts aviator.MergeConf
-	var expected string
-	var warnings []string
-	var to string
+	var (
+		opts     aviator.MergeConf
+		expected string
+		warnings []string
+		to       string
+	)
+
 	BeforeEach(func() {
 		opts = aviator.MergeConf{
 			Files: []string{"file", "file2"},
