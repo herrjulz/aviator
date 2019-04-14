@@ -18,20 +18,37 @@ func (e FlyExecutor) Command(cfg interface{}) (*exec.Cmd, error) {
 		return &exec.Cmd{}, errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Fly"))
 	}
 
-	args := []string{
-		"-t", fly.Target, "set-pipeline", "-p", fly.Name, "-c", fly.Config,
-	}
+	var args []string
+	if fly.ValidatePipeline {
+		args = []string{"validate-pipeline", "-c", fly.Config}
 
-	for _, v := range fly.Vars {
-		args = append(args, "-l", v)
-	}
+		if fly.Strict {
+			args = append(args, "--strict")
+		}
 
-	for k, v := range fly.Var {
-		args = append(args, "-v", fmt.Sprintf("%s=%s", k, v))
-	}
+	} else if fly.FormatPipeline {
+		args = []string{"format-pipeline", "-c", fly.Config}
 
-	if fly.NonInteractive == true {
-		args = append(args, "-n")
+		if fly.Write {
+			args = append(args, "--write")
+		}
+
+	} else {
+		args = []string{
+			"-t", fly.Target, "set-pipeline", "-p", fly.Name, "-c", fly.Config,
+		}
+
+		for _, v := range fly.Vars {
+			args = append(args, "-l", v)
+		}
+
+		for k, v := range fly.Var {
+			args = append(args, "-v", fmt.Sprintf("%s=%s", k, v))
+		}
+
+		if fly.NonInteractive {
+			args = append(args, "-n")
+		}
 	}
 
 	return exec.Command("fly", args...), nil

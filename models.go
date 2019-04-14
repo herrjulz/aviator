@@ -60,6 +60,14 @@ type Fly struct {
 	Expose         bool              `yaml:"expose"`
 	Var            map[string]string `yaml:"vars"`
 	NonInteractive bool              `yaml:"non_interactive"`
+
+	//Validate Pipeline
+	ValidatePipeline bool `yaml:"validate_pipeline"`
+	Strict           bool `yaml:"strict"`
+
+	//Format Pipeline
+	FormatPipeline bool `yaml:"format_pipeline"`
+	Write          bool `yaml:"write"`
 }
 
 type Kube struct {
