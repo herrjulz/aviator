@@ -6,39 +6,7 @@ Aviator is a tool to merge YAML files in a convenient fashion based on a configu
 
 If you have to handle rather complex YAML files (for BOSH or Concourse), you just provide the flight plan (`aviator.yml`), the Aviator flies you there.
 
-- [Aviator](#aviator)
-	- [Installation](#installation)
-		- [OS X](#os-x)
-		- [Linux](#linux)
-		- [Windows (NOT TESTED)](#windows-not-tested)
-	- [Executors](#executors)
-	- [Usage](#usage)
-	- [Configure an `aviator.yml`](#configure-an-aviatoryml)
-		- [Spruce Section](#spruce-section)
-			- [Base (`string`)](#base-string)
-			- [Prune (`Array`)](#prune-array)
-			- [cherry_pick (`array`)](#cherrypick-array)
-			- [go_patch (`bool`)](#gopatch-bool)
-			- [Merge (`Array`)](#merge-array)
-			- [skip_eval (`bool`)](#skipeval-bool)
-			- [To (`string`)](#to-string)
-			- [ForEach](#foreach)
-			- [Read From & Write To Internal Variables](#read-from-write-to-internal-variables)
-			- [Environment Variables](#environment-variables)
-			- [Variables](#variables)
-			- [Modifier](#modifier)
-		- [Squash Section](#squash-section)
-			- [Squashing specific files](#squashing-specific-files)
-			- [Squash files from a directory](#squash-files-from-a-directory)
-		- [Executors](#executors)
-			- [The `fly` section (Optional)](#the-fly-section-optional)
-			- [The `kubectl` section](#the-kubectl-section)
-		- [CLI Options](#cli-options)
-			- [`--curly-braces`](#-curly-braces)
-			- [`--silent`](#-silent)
-			- [`--verbose`](#-verbose)
-			- [`--var`](#-var)
-- [Development](#development)
+
 
 <!-- /TOC -->
 
@@ -93,6 +61,33 @@ $ aviator -f myAviatorFile.yml
 ```
 
 ## Configure an `aviator.yml`
+
+- [Configure an `aviator.yml`](#configure-an-aviatoryml)
+	- [Spruce Section](#spruce-section)
+		- [Base (`string`)](#base-string)
+		- [Prune (`Array`)](#prune-array)
+		- [cherry_pick (`array`)](#cherrypick-array)
+		- [go_patch (`bool`)](#gopatch-bool)
+		- [Merge (`Array`)](#merge-array)
+		- [skip_eval (`bool`)](#skipeval-bool)
+		- [To (`string`)](#to-string)
+		- [ForEach](#foreach)
+		- [Read From & Write To Internal Variables](#read-from-write-to-internal-variables)
+		- [Environment Variables](#environment-variables)
+		- [Variables](#variables)
+		- [Modifier](#modifier)
+	- [Squash Section](#squash-section)
+		- [Squashing specific files](#squashing-specific-files)
+		- [Squash files from a directory](#squash-files-from-a-directory)
+	- [Executors](#executors)
+		- [The `fly` section (Optional)](#the-fly-section-optional)
+		- [The `kubectl` section](#the-kubectl-section)
+	- [CLI Options](#cli-options)
+		- [`--curly-braces`](#-curly-braces)
+		- [`--silent`](#-silent)
+		- [`--verbose`](#-verbose)
+		- [`--var`](#-var)
+- [Development](#development)
 
 Aviator provides a verbose style of configuration. It is the result of configuring a spruce merge plan and optionally an execution plan (e.g `fly`).
 
