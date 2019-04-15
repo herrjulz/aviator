@@ -72,7 +72,7 @@ $ aviator -f myAviatorFile.yml
 		- [skip_eval (`bool`)](#skipeval-bool)
 		- [To (`string`)](#to-string)
 		- [ForEach](#foreach)
-		- [Read From & Write To Internal Variables](#read-from-write-to-internal-variables)
+		- [Read From and Write To Internal Data Store](#read-from-and-write-to-internal-datastore)
 		- [Environment Variables](#environment-variables)
 		- [Variables](#variables)
 		- [Modifier](#modifier)
@@ -429,9 +429,9 @@ spruce:
 ```
 ---
 
-#### Read From & Write To Internal Variables
+#### Read From and Write To Internal Datatsore
 
-Sometimes it is required to do more than one merge step, which creates intermediate YAML files. In this case you can save merge results to internal variables which are defined in double courly braces `{{var}}`. You can read from & write to such a variable. Internal variables also work as directories and can be used with `to_dir`.
+Sometimes it is required to do more than one merge step, which creates intermediate YAML files. In this case you can save merge results to internal datastore/cache which you can write/read by surrounding your location with double courly braces `{{file|dir}}`. Internal cache also work as directories and can be used with `to_dir`.
 
 Example:
 
