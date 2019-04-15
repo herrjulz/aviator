@@ -577,7 +577,7 @@ squash:
 ```yaml
 squash:
   contents:
-    dir: my/dir/
+  - dir: my/dir/
   to: app.yml
 ```
 
@@ -594,8 +594,14 @@ If you want to merge and set Concourse pipeline YAML files on the fly, you can s
 - **vars (map):** Map of variables (--var)
 - **non_interactive (bool):** Enables non-interactive mode (-n)
 - **expose (bool):** Exposes the pipeline (expose-pipeline)
+- **validate_pipeline (bool):** Validate local pipeline configuration (failes on errors)
+- **strict (bool):** causes `validate_pipeline` to fail on errors AND warnings
+- **format_pipeline (bool):** format a pipeline config in a "canonical" form (prints to stdout).
+- **write:** update the formatted pipeline config file in-place.
 
-Example:
+More detailed description of the flags can be found [here](https://concourse-ci.org/pipelines.html)
+
+Example - set-pipeline:
 
 ```yaml
 fly:
@@ -611,13 +617,30 @@ fly:
   expose: true
 ```
 
-Note, that the generated `pipeline.yml` is used in the `fly` section as `config`.
+Example - validate-pipeline:
+
+```yaml
+fly:
+  config: myconfig.yml
+  validate_pipeline: true
+  strict: true
+```
+
+Example - format-pipeline:
+
+```yaml
+fly:
+  config: myconfig.yml
+  format_pipeline: true
+  write: true
+```
+
 
 _NOTE: You will need to fly login first, before executing `aviator`_
 
 #### The `kubectl` section
 
-You can automagically `kubectl apply` your squashed or merged (or squashed+merged) Yaml files directly from the `aviator.yml` using the `kubectl` section.
+Execute `kubectl apply` based on a Yaml file from `aviator.yml`:
 
 *Supported flags*
 
@@ -674,5 +697,5 @@ $ go get github.com/JulzDiverse/aviator
 Navigate to `aviator` directory
 
 ```
-$ glide install
+$ dep ensure 
 ```
