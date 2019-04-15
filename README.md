@@ -6,9 +6,11 @@ Aviator is a tool to merge YAML files in a convenient fashion based on a configu
 
 If you have to handle rather complex YAML files (for BOSH or Concourse), you just provide the flight plan (`aviator.yml`), the Aviator flies you there.
 
+**Reads:**
 
+- [Using Aviator for Concourse Pipelines](https://medium.com/@julian.skupnjak/create-a-concourse-pipeline-for-your-cloud-foundry-apps-with-ease-98ceaa055be7)
+- [Using Aviator for Kubernetes](https://medium.com/@julian.skupnjak/an-alternative-to-helm-aviator-7099d50f2d28)
 
-<!-- /TOC -->
 
 ## Installation
 
