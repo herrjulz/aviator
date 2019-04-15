@@ -6,7 +6,41 @@ Aviator is a tool to merge YAML files in a convenient fashion based on a configu
 
 If you have to handle rather complex YAML files (for BOSH or Concourse), you just provide the flight plan (`aviator.yml`), the Aviator flies you there.
 
+- [Aviator](#aviator)
+	- [Installation](#installation)
+		- [OS X](#os-x)
+		- [Linux](#linux)
+		- [Windows (NOT TESTED)](#windows-not-tested)
+	- [Executors](#executors)
+	- [Usage](#usage)
+	- [Configure an `aviator.yml`](#configure-an-aviatoryml)
+		- [Spruce Section](#spruce-section)
+			- [Base (`string`)](#base-string)
+			- [Prune (`Array`)](#prune-array)
+			- [cherry_pick (`array`)](#cherrypick-array)
+			- [go_patch (`bool`)](#gopatch-bool)
+			- [Merge (`Array`)](#merge-array)
+			- [skip_eval (`bool`)](#skipeval-bool)
+			- [To (`string`)](#to-string)
+			- [ForEach](#foreach)
+			- [Read From & Write To Internal Variables](#read-from-write-to-internal-variables)
+			- [Environment Variables](#environment-variables)
+			- [Variables](#variables)
+			- [Modifier](#modifier)
+		- [Squash Section](#squash-section)
+			- [Squashing specific files](#squashing-specific-files)
+			- [Squash files from a directory](#squash-files-from-a-directory)
+		- [Executors](#executors)
+			- [The `fly` section (Optional)](#the-fly-section-optional)
+			- [The `kubectl` section](#the-kubectl-section)
+		- [CLI Options](#cli-options)
+			- [`--curly-braces`](#-curly-braces)
+			- [`--silent`](#-silent)
+			- [`--verbose`](#-verbose)
+			- [`--var`](#-var)
+- [Development](#development)
 
+<!-- /TOC -->
 
 ## Installation
 
@@ -40,7 +74,7 @@ https://github.com/JulzDiverse/aviator/releases/download/v1.3.0/aviator-win
 With `aviator` you can execute different YAML based tools:
 
 - Concourse [fly](https://github.com/concourse/fly)
-- Kubernetes [KubeCtl apply](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply) 
+- Kubernetes [KubeCtl apply](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply)
 
 ## Usage
 
@@ -467,7 +501,7 @@ You can provide variables to aviator files using the `--var` flag. Basic CLI usa
 
 In you aviator file you need to specify the name of the variable you want to interpolate. The syntax for a variable is the following `(( varName ))` (note the space before and after the variable name!)
 
-Example: 
+Example:
 
 ```yaml
 ---
@@ -489,7 +523,7 @@ Values for aviator variables can be multi-line
 
 #### Modifier
 
-With modifier you can modify the resulting (merged) YAML file. You can either delete, set, or update a property. The modifier will always be applied on the result. If you use `for_each` it will be applied on each `for_each` merge step. 
+With modifier you can modify the resulting (merged) YAML file. You can either delete, set, or update a property. The modifier will always be applied on the result. If you use `for_each` it will be applied on each `for_each` merge step.
 
 Consider a resulting YAML from a merge process `result.yml`, which has a property `person.name`:
 
@@ -509,12 +543,12 @@ person:
         files:
         - top.yml
     modify:
-      delete: 
+      delete:
       - "person.name"
     to: result.yml
   ```
 
-  It deletes a property only if it exists. There will be no error if a proerty does NOT exist. 
+  It deletes a property only if it exists. There will be no error if a proerty does NOT exist.
 
 2. the property can be updated:
 
@@ -526,7 +560,7 @@ person:
         files:
         - top.yml
     modify:
-      update: 
+      update:
       - path: person.name
         value: newName
     to: result.yml
@@ -544,7 +578,7 @@ person:
         files:
         - top.yml
     modify:
-      set: 
+      set:
       - path: person.name
         value: NewName
     to: result.yml
@@ -552,7 +586,7 @@ person:
 
   Set updates or adds a property to an array. If a property exists it will be overwritten, if the property does not exist it will be added (works only for maps not arrays).
 
-Aviator uses [goml](https://github.com/JulzDiverse/goml) as YAML modifier. If you want to read more about `update`, `delete`, and `set`, check the README. 
+Aviator uses [goml](https://github.com/JulzDiverse/goml) as YAML modifier. If you want to read more about `update`, `delete`, and `set`, check the README.
 
 ---
 
@@ -672,15 +706,15 @@ kubectl
 
 #### `--curly-braces`
 
-Some YAML based tools (like concourse in the past) are using `{{}}` sytnax. This is not YAML conform. Using the `--curly-braces` option you can allow this syntax. 
+Some YAML based tools (like concourse in the past) are using `{{}}` sytnax. This is not YAML conform. Using the `--curly-braces` option you can allow this syntax.
 
 #### `--silent`
 
-This option will output no infromation to stdout. 
+This option will output no infromation to stdout.
 
 #### `--verbose`
 
-This option prints which files are excluded from a merge. 
+This option prints which files are excluded from a merge.
 
 #### `--var`
 
@@ -697,5 +731,5 @@ $ go get github.com/JulzDiverse/aviator
 Navigate to `aviator` directory
 
 ```
-$ dep ensure 
+$ dep ensure
 ```
