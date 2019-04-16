@@ -72,6 +72,13 @@ func (e FlyExecutor) Execute(cmd *exec.Cmd, cfg interface{}) error {
 		if err != nil {
 			return err
 		}
+	} else {
+		args := []string{"-t", fly.Target, "hide-pipeline", "-p", fly.Name}
+		cmd = exec.Command("fly", args...)
+		err := execCmd(cmd)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
