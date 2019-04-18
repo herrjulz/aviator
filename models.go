@@ -122,8 +122,8 @@ type SpruceProcessor interface {
 
 //go:generate counterfeiter . Executor
 type Executor interface {
-	Command(interface{}) (*exec.Cmd, error)
-	Execute(*exec.Cmd, interface{}) error
+	Command(interface{}) ([]*exec.Cmd, error)
+	Execute([]*exec.Cmd) error
 }
 
 //go:generate counterfeiter . SpruceClient

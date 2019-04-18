@@ -15,18 +15,19 @@ var _ = Describe("Kubeexecutor", func() {
 	var (
 		kubeExec *KubeExecutor
 		kubeCtl  aviator.Kube
+		cmds     []*exec.Cmd
 		args     []string
-		cmd      *exec.Cmd
 		err      error
 	)
 
 	Context("For a given kubectl apply config", func() {
 
 		JustBeforeEach(func() {
-			cmd, err = kubeExec.Command(kubeCtl)
+			kubeExec = &KubeExecutor{}
+			cmds, err = kubeExec.Command(kubeCtl)
 			Expect(err).ToNot(HaveOccurred())
 
-			args = cmd.Args
+			args = cmds[0].Args
 		})
 
 		Context("with only a file to apply", func() {
@@ -92,7 +93,7 @@ var _ = Describe("Kubeexecutor", func() {
 			})
 
 			It("should add the '--recursive' flag to the kubectl call", func() {
-				Expect(args).To(ContainElement("--recursive"))
+				Expect(args).To(ContainElement("--recursive=true"))
 			})
 		})
 

@@ -11,10 +11,10 @@ import (
 
 type KubeExecutor struct{}
 
-func (e KubeExecutor) Command(cfg interface{}) (*exec.Cmd, error) {
+func (e KubeExecutor) Command(cfg interface{}) ([]*exec.Cmd, error) {
 	kube, ok := cfg.(aviator.Kube)
 	if !ok {
-		return &exec.Cmd{}, errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Kube"))
+		return []*exec.Cmd{}, errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Kube"))
 	}
 
 	apply := kube.Apply
@@ -35,17 +35,23 @@ func (e KubeExecutor) Command(cfg interface{}) (*exec.Cmd, error) {
 		args = append(args, "--overwrite")
 	}
 
-	if apply.Recursive {
-		args = append(args, "--recursive")
+	if apply.Validate {
+		args = append(args, "--validate")
 	}
 
 	if apply.Output != "" {
 		args = append(args, "--output", apply.Output)
 	}
 
-	return exec.Command("kubectl", args...), nil
+	return []*exec.Cmd{exec.Command("kubectl", args...)}, nil
 }
 
-func (e KubeExecutor) Execute(cmd *exec.Cmd, _ interface{}) error {
-	return execCmd(cmd)
+func (e KubeExecutor) Execute(cmds []*exec.Cmd) error {
+	for _, c := range cmds {
+		err := execCmd(c)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -9,23 +9,23 @@ import (
 )
 
 type FakeExecutor struct {
-	CommandStub        func(interface{}) (*exec.Cmd, error)
+	CommandStub        func(interface{}) ([]*exec.Cmd, error)
 	commandMutex       sync.RWMutex
 	commandArgsForCall []struct {
 		arg1 interface{}
 	}
 	commandReturns struct {
-		result1 *exec.Cmd
+		result1 []*exec.Cmd
 		result2 error
 	}
 	commandReturnsOnCall map[int]struct {
-		result1 *exec.Cmd
+		result1 []*exec.Cmd
 		result2 error
 	}
-	ExecuteStub        func(*exec.Cmd) error
+	ExecuteStub        func([]*exec.Cmd) error
 	executeMutex       sync.RWMutex
 	executeArgsForCall []struct {
-		arg1 *exec.Cmd
+		arg1 []*exec.Cmd
 	}
 	executeReturns struct {
 		result1 error
@@ -37,7 +37,7 @@ type FakeExecutor struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeExecutor) Command(arg1 interface{}) (*exec.Cmd, error) {
+func (fake *FakeExecutor) Command(arg1 interface{}) ([]*exec.Cmd, error) {
 	fake.commandMutex.Lock()
 	ret, specificReturn := fake.commandReturnsOnCall[len(fake.commandArgsForCall)]
 	fake.commandArgsForCall = append(fake.commandArgsForCall, struct {
@@ -66,35 +66,40 @@ func (fake *FakeExecutor) CommandArgsForCall(i int) interface{} {
 	return fake.commandArgsForCall[i].arg1
 }
 
-func (fake *FakeExecutor) CommandReturns(result1 *exec.Cmd, result2 error) {
+func (fake *FakeExecutor) CommandReturns(result1 []*exec.Cmd, result2 error) {
 	fake.CommandStub = nil
 	fake.commandReturns = struct {
-		result1 *exec.Cmd
+		result1 []*exec.Cmd
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeExecutor) CommandReturnsOnCall(i int, result1 *exec.Cmd, result2 error) {
+func (fake *FakeExecutor) CommandReturnsOnCall(i int, result1 []*exec.Cmd, result2 error) {
 	fake.CommandStub = nil
 	if fake.commandReturnsOnCall == nil {
 		fake.commandReturnsOnCall = make(map[int]struct {
-			result1 *exec.Cmd
+			result1 []*exec.Cmd
 			result2 error
 		})
 	}
 	fake.commandReturnsOnCall[i] = struct {
-		result1 *exec.Cmd
+		result1 []*exec.Cmd
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeExecutor) Execute(arg1 *exec.Cmd) error {
+func (fake *FakeExecutor) Execute(arg1 []*exec.Cmd) error {
+	var arg1Copy []*exec.Cmd
+	if arg1 != nil {
+		arg1Copy = make([]*exec.Cmd, len(arg1))
+		copy(arg1Copy, arg1)
+	}
 	fake.executeMutex.Lock()
 	ret, specificReturn := fake.executeReturnsOnCall[len(fake.executeArgsForCall)]
 	fake.executeArgsForCall = append(fake.executeArgsForCall, struct {
-		arg1 *exec.Cmd
-	}{arg1})
-	fake.recordInvocation("Execute", []interface{}{arg1})
+		arg1 []*exec.Cmd
+	}{arg1Copy})
+	fake.recordInvocation("Execute", []interface{}{arg1Copy})
 	fake.executeMutex.Unlock()
 	if fake.ExecuteStub != nil {
 		return fake.ExecuteStub(arg1)
@@ -111,7 +116,7 @@ func (fake *FakeExecutor) ExecuteCallCount() int {
 	return len(fake.executeArgsForCall)
 }
 
-func (fake *FakeExecutor) ExecuteArgsForCall(i int) *exec.Cmd {
+func (fake *FakeExecutor) ExecuteArgsForCall(i int) []*exec.Cmd {
 	fake.executeMutex.RLock()
 	defer fake.executeMutex.RUnlock()
 	return fake.executeArgsForCall[i].arg1

@@ -118,19 +118,19 @@ func (a *Aviator) ProcessSquashPlan(silent bool) error {
 }
 
 func (a *Aviator) ExecuteFly() error {
-	cmd, err := a.cockpit.flyExecutor.Command(a.AviatorYaml.Fly)
+	cmds, err := a.cockpit.flyExecutor.Command(a.AviatorYaml.Fly)
 	if err != nil {
 		return err
 	}
-	return a.cockpit.flyExecutor.Execute(cmd, a.AviatorYaml.Fly)
+	return a.cockpit.flyExecutor.Execute(cmds)
 }
 
 func (a *Aviator) ExecuteKube() error {
-	cmd, err := a.cockpit.kubeExecutor.Command(a.AviatorYaml.Kube)
+	cmds, err := a.cockpit.kubeExecutor.Command(a.AviatorYaml.Kube)
 	if err != nil {
 		return err
 	}
-	return a.cockpit.kubeExecutor.Execute(cmd, a.AviatorYaml.Kube)
+	return a.cockpit.kubeExecutor.Execute(cmds)
 }
 
 func resolveEnvVars(input []byte) ([]byte, error) {

@@ -10,76 +10,83 @@ import (
 	"github.com/starkandwayne/goutils/ansi"
 )
 
+const (
+	setPipelineCmd      = "set-pipeline"
+	validatePipelineCmd = "validate-pipeline"
+	formatPipelineCmd   = "format-pipeline"
+	exposePipelineCmd   = "expose-pipeline"
+	hidePipelineCmd     = "hide-pipeline"
+
+	configFlag         = "--config"
+	pipelineFlag       = "--pipeline"
+	targetFlag         = "--target"
+	writeFlag          = "--write"
+	strictFlag         = "--strict"
+	loadVarsFromFlag   = "--load-vars-from"
+	varFlag            = "--var"
+	nonInteractiveFlag = "--non-interactive"
+)
+
 type FlyExecutor struct{}
 
-func (e FlyExecutor) Command(cfg interface{}) (*exec.Cmd, error) {
+func (e FlyExecutor) Command(cfg interface{}) ([]*exec.Cmd, error) {
 	fly, ok := cfg.(aviator.Fly)
 	if !ok {
-		return &exec.Cmd{}, errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Fly"))
+		return []*exec.Cmd{}, errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Fly"))
 	}
 
 	var args []string
 	if fly.ValidatePipeline {
-		args = []string{"validate-pipeline", "-c", fly.Config}
+		args = []string{validatePipelineCmd, configFlag, fly.Config}
 
 		if fly.Strict {
-			args = append(args, "--strict")
+			args = append(args, strictFlag)
 		}
 
 	} else if fly.FormatPipeline {
-		args = []string{"format-pipeline", "-c", fly.Config}
+		args = []string{formatPipelineCmd, configFlag, fly.Config}
 
 		if fly.Write {
-			args = append(args, "--write")
+			args = append(args, writeFlag)
 		}
 
 	} else {
 		args = []string{
-			"-t", fly.Target, "set-pipeline", "-p", fly.Name, "-c", fly.Config,
+			targetFlag, fly.Target, setPipelineCmd, pipelineFlag, fly.Name, configFlag, fly.Config,
 		}
 
 		for _, v := range fly.Vars {
-			args = append(args, "-l", v)
+			args = append(args, loadVarsFromFlag, v)
 		}
 
 		for k, v := range fly.Var {
-			args = append(args, "-v", fmt.Sprintf("%s=%s", k, v))
+			args = append(args, varFlag, fmt.Sprintf("%s=%s", k, v))
 		}
 
 		if fly.NonInteractive {
-			args = append(args, "-n")
+			args = append(args, nonInteractiveFlag)
 		}
 	}
 
-	return exec.Command("fly", args...), nil
+	var exposeArgs []string
+	if fly.Expose {
+		exposeArgs = []string{targetFlag, fly.Target, exposePipelineCmd, pipelineFlag, fly.Name}
+	} else {
+		exposeArgs = []string{targetFlag, fly.Target, hidePipelineCmd, pipelineFlag, fly.Name}
+	}
+
+	return []*exec.Cmd{
+		exec.Command("fly", args...),
+		exec.Command("fly", exposeArgs...),
+	}, nil
 }
 
-func (e FlyExecutor) Execute(cmd *exec.Cmd, cfg interface{}) error {
-	fly, ok := cfg.(aviator.Fly)
-	if !ok {
-		return errors.New(ansi.Sprintf("@R{Type Assertion failed! Cannot assert %s to %s}", reflect.TypeOf(cfg), "aviator.Fly"))
-	}
-
-	err := execCmd(cmd)
-	if err != nil {
-		return err
-	}
-
-	if fly.Expose {
-		args := []string{"-t", fly.Target, "expose-pipeline", "-p", fly.Name}
-		cmd = exec.Command("fly", args...)
-		err := execCmd(cmd)
-		if err != nil {
-			return err
-		}
-	} else {
-		args := []string{"-t", fly.Target, "hide-pipeline", "-p", fly.Name}
-		cmd = exec.Command("fly", args...)
-		err := execCmd(cmd)
+func (e FlyExecutor) Execute(cmds []*exec.Cmd) error {
+	for _, c := range cmds {
+		err := execCmd(c)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
