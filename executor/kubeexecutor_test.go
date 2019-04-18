@@ -112,5 +112,22 @@ var _ = Describe("Kubeexecutor", func() {
 				Expect(args).To(ContainElement("--overwrite"))
 			})
 		})
+
+		Context("When 'kustomize' is set to true", func() {
+
+			BeforeEach(func() {
+				kubeCtl = aviator.Kube{
+					aviator.KubeApply{
+						File:      "kustomize/dir",
+						Kustomize: true,
+					},
+				}
+			})
+
+			It("should call apply with --kustomize instead -f", func() {
+				Expect(args).To(ContainElement("--kustomize"))
+				Expect(args).To(ContainElement("kustomize/dir"))
+			})
+		})
 	})
 })

@@ -81,6 +81,8 @@ type KubeApply struct {
 	Overwrite bool   `yaml:"no_overwrite"`
 	Recursive bool   `yaml:"recursive"`
 	Output    string `yaml:"output"`
+	Kustomize bool   `yaml:"kustomize"`
+	Validate  bool   `yaml:"validate"`
 }
 
 type MergeConf struct {
