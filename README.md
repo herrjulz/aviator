@@ -2,14 +2,14 @@
 
 [![GoDoc](https://godoc.org/github.com/JulzDiverse/aviator/cockpit?status.svg)](https://godoc.org/github.com/JulzDiverse/aviator/cockpit)
 
-Aviator is a tool to merge YAML files in a convenient fashion based on a configuration file called `aviator.yml`. The merge itself utilizes Spruce for the merge and therefore enables you to use all the Spruce operators in your YAML files.
+Aviator is a tool to template & merge YAML files in a convenient fashion based on a configuration file called `aviator.yml`. Aviator utilizes [Spruce](https://github.com/geofffranks/spruce) for templating and merging and therefore enables you to use all the Spruce operators in your YAML files.
 
-If you have to handle rather complex YAML files (for BOSH or Concourse), you just provide the flight plan (`aviator.yml`), the Aviator flies you there.
+If you have to handle rather complex YAML files (for Kubernetes, Concourse, or Bosh), you just provide the flight plan (`aviator.yml`), the Aviator flies you there.
 
 **Reads:**
 
 - [Using Aviator for Concourse Pipelines](https://medium.com/@julian.skupnjak/create-a-concourse-pipeline-for-your-cloud-foundry-apps-with-ease-98ceaa055be7)
-- [Using Aviator for Kubernetes](https://medium.com/@julian.skupnjak/an-alternative-to-helm-aviator-7099d50f2d28)
+- [Using Aviator as a alternitive to Helm](https://medium.com/@julian.skupnjak/an-alternative-to-helm-aviator-7099d50f2d28)
 
 
 ## Installation
@@ -38,13 +38,6 @@ $ wget -O /usr/bin/aviator https://github.com/JulzDiverse/aviator/releases/downl
 ```
 https://github.com/JulzDiverse/aviator/releases/download/v1.4.0/aviator-win
 ```
-
-## Executors
-
-With `aviator` you can execute different YAML based tools:
-
-- Concourse [fly](https://github.com/concourse/fly)
-- Kubernetes [KubeCtl apply](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply)
 
 ## Usage
 
@@ -82,12 +75,14 @@ $ aviator -f myAviatorFile.yml
 		- [Squashing specific files](#squashing-specific-files)
 		- [Squash files from a directory](#squash-files-from-a-directory)
 	- [Executors](#executors)
-		- [The `fly` section (Optional)](#the-fly-section-optional)
-		- [The `kubectl` section](#the-kubectl-section)
+		- [The `kubectl` section](#kubectl-executor)
+		- [The `fly` section](#fly-executor)
+    - [The Generic Executor](#generic-executor)
 	- [CLI Options](#cli-options)
 		- [`--curly-braces`](#-curly-braces)
 		- [`--silent`](#-silent)
 		- [`--verbose`](#-verbose)
+		- [`--dry-run`](#-dry-run)
 		- [`--var`](#-var)
 - [Development](#development)
 
@@ -614,9 +609,57 @@ squash:
 
 ### Executors
 
-#### The `fly` section (Optional)
+Executors execute executables installed on the OS that Aviator is running on. The following three executors are currently supported by Aviator:
 
-If you want to merge and set Concourse pipeline YAML files on the fly, you can specify additionally the `fly` section. If Aviator find this section it will _automagically_ execute fly for you if the following configurations are set:
+- `kubectl` Executor
+- `fly` Executor
+- Generic Executor: Runs an any specified executable. 
+
+#### `kubectl` executor 
+
+Execute `kubectl apply` with the following options: 
+
+*Supported flags*
+
+- **file**: Name of the file to `kubectl apply`
+- **force**: calls `kubectl apply` with the `--force` flag
+- **dry_run**: calls `kubectl apply` with the `--dry-run` flag
+- **overwrite**: calls `kubectl apply` with the `--overwrite` flag
+- **recursive**: calls the `kubectl apply` with the `--recursive` flag
+- **output**: calls the `kubectl apply` with the `--output=<desired-ouput>` parameter
+- **kustomize**: calls the `kubectl apply` with the `--kustomazation/-k` flag rather than with `--filename/-f`.
+  - Read more about `kubectl apply` + kustomization [here](https://github.com/kubernetes-sigs/kustomize) and [here](https://kubectl.docs.kubernetes.io/pages/app_management/apply.html)
+
+You can read about the details of the flags of `kubectl apply` [here](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply)
+
+Example:
+
+```yaml
+kubectl
+  apply:
+    file: deployment.yml
+    force: true
+    dry_run: true
+    overwrite: true
+    recursive: true
+    output: yaml
+```
+
+**Kustomize Example:**
+
+When `kustomize` flag in aviator is set to true it will call `kubectl apply` with the `--kustomization/-k` flag, which expects a directory path. The directory paht needs to be specified in the `file` property of `kubectl.apply`:
+
+```yaml
+kubectl:
+  apply:
+    file: kustomization/path/
+    kustomize: true
+```
+
+#### Fly Executor
+
+An executor for the Concourse Fly CLI. The supported commands are `set-pipeline`, `validate-pipeline`, `format-pipeline`, and `expose-pipeline/hide-pipeline`.
+The `set-pipeline` and `hide-pipeline` commands are executed by default. Here is the list of commands and flags that can be used with `aviator`:
 
 - **name**: Name of the pipeline
 - **target**: Target short name (`fly` target)
@@ -669,33 +712,41 @@ fly:
 
 _NOTE: You will need to fly login first, before executing `aviator`_
 
-#### The `kubectl` section
+#### Generic Executor
 
-Execute `kubectl apply` based on a Yaml file from `aviator.yml`:
-
-*Supported flags*
-
-- **file**: Name of the file to `kubectl apply`
-- **force**: calls `kubectl apply` with the `--force` flag
-- **dry_run**: calls `kubectl apply` with the `--dry-run` flag
-- **overwrite**: calls `kubectl apply` with the `--overwrite` flag
-- **recursive**: calls the `kubectl apply` with the `--recursive` flag
-- **output**: calls the `kubectl apply` with the `--output=<desired-ouput>` parameter
-
-You can read about the details of the flags [here](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#apply)
-
-Example:
+The Generic Executor executes any specified executable. Here is how to define an Generic Executor in the `aviator.yml`:
 
 ```yaml
-kubectl
-  apply:
-    file: deployment.yml
-    force: true
-    dry_run: true
-    overwrite: true
-    recursive: true
-    output: yaml
+exec:
+- executable: some-executable # required
+  global_options: # optional
+  - name: --option
+    value: option-value
+  command: # optional
+    name: command-name
+    options:
+    - name: --command-option
+      value: command-option-value
+  args:
+  - arg1
+  - arg2
 ```
+
+This will executed as `$ some-executable --option option-value command-name --command-option command-option-value arg1 arg2`
+
+Example: `cp`
+
+```yaml
+exec:
+- executable: cp
+  global_options:
+  - name: -r
+  args:
+  - dir/
+  - destination/
+```
+
+This calls `cp` as follows: `$ cp -r dir/ destination/`
 
 ---
 
@@ -712,6 +763,10 @@ This option will output no infromation to stdout.
 #### `--verbose`
 
 This option prints which files are excluded from a merge.
+
+#### `--dry-run`
+
+This option prints contents to `stdout` rather than writing it to files. This flag also omits any defined executor.
 
 #### `--var`
 
