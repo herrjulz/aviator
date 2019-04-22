@@ -26,29 +26,48 @@ func main() {
 			aviatorYml, err := ioutil.ReadFile(aviatorFile)
 			exitWithError(err)
 
-			cockpit := cockpit.New(c.Bool("curly-braces"))
-			aviator, err := cockpit.NewAviator(aviatorYml, varsMap)
+			cockpit := cockpit.New(
+				c.Bool("curly-braces"),
+				c.Bool("dry-run"),
+			)
+
+			aviator, err := cockpit.NewAviator(
+				aviatorYml,
+				varsMap,
+				c.Bool("silent"),
+				c.Bool("verbose"),
+				c.Bool("dry-run"),
+			)
+
 			handleError(err)
 
-			err = aviator.ProcessSprucePlan(c.Bool("verbose"), c.Bool("silent"))
+			err = aviator.ProcessSprucePlan()
 			exitWithError(err)
 
 			squash := aviator.AviatorYaml.Squash
 			if len(squash.Contents) != 0 {
-				err = aviator.ProcessSquashPlan(c.Bool("silent"))
+				err = aviator.ProcessSquashPlan()
 				exitWithError(err)
 			}
 
-			fly := aviator.AviatorYaml.Fly
-			if fly.Name != "" && fly.Target != "" && fly.Config != "" {
-				err = aviator.ExecuteFly()
-				exitWithError(err)
-			}
+			if !c.Bool("dry-run") {
+				fly := aviator.AviatorYaml.Fly
+				if fly.Name != "" && fly.Target != "" && fly.Config != "" {
+					err = aviator.ExecuteFly()
+					exitWithError(err)
+				}
 
-			kube := aviator.AviatorYaml.Kube.Apply
-			if kube.File != "" {
-				err = aviator.ExecuteKube()
-				exitWithError(err)
+				kube := aviator.AviatorYaml.Kube.Apply
+				if kube.File != "" {
+					err = aviator.ExecuteKube()
+					exitWithError(err)
+				}
+
+				exec := aviator.AviatorYaml.Exec
+				if len(exec) != 0 {
+					err = aviator.ExecuteGeneric()
+					exitWithError(err)
+				}
 			}
 		}
 

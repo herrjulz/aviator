@@ -1,6 +1,7 @@
 package filemanager
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 
 type FileManager struct {
 	CurlyBraces bool
+	DryRun      bool
 	root        *mingoak.Dir
 }
 
@@ -22,9 +24,9 @@ var re = regexp.MustCompile("(" + quoteRegex + ")")
 var dere = regexp.MustCompile("['\"](" + quoteRegex + ")[\"']")
 var store *FileManager
 
-func Store(curlyBraces bool) *FileManager {
+func Store(curlyBraces, dryRun bool) *FileManager {
 	if store == nil {
-		store = &FileManager{curlyBraces, mingoak.MkRoot()}
+		store = &FileManager{curlyBraces, dryRun, mingoak.MkRoot()}
 	}
 	return store
 }
@@ -63,16 +65,19 @@ func (ds *FileManager) WriteFile(key string, file []byte) error {
 
 	if re.MatchString(key) {
 		key = getKeyFromRegexp(key)
-		//if _, err := ds.root.ReadFile(key); err == nil {
-		//return errors.New(fmt.Sprintf("file %s in virtual filestore already exists", key))
-		//}
 		ds.root.MkDirAll(getPathFromFilePath(key))
 		ds.root.WriteFile(key, []byte(file))
 	} else {
 		createNonExistingDirs(key)
-		err := ioutil.WriteFile(key, file, 0644)
-		if err != nil {
-			ansi.Errorf("@R{Error writing file} @m{%s}: %s\n", key, err.Error())
+
+		if !ds.DryRun {
+			err := ioutil.WriteFile(key, file, 0644)
+			if err != nil {
+				ansi.Errorf("@R{Error writing file} @m{%s}: %s\n", key, err.Error())
+			}
+		} else {
+			ansi.Printf("\n@C{RESULT:}\n")
+			fmt.Println(string(file))
 		}
 	}
 	return nil

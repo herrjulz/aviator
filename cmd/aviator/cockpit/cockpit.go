@@ -20,35 +20,37 @@ import (
 
 type Cockpit struct {
 	spruceProcessor aviator.SpruceProcessor
-	flyExecutor     aviator.Executor
 	validator       aviator.Validator
+
+	flyExecutor     aviator.Executor
 	kubeExecutor    aviator.Executor
+	genericExecutor aviator.Executor
 }
 
 type Aviator struct {
 	cockpit     *Cockpit
 	AviatorYaml *aviator.AviatorYaml
+
+	silent  bool
+	verbose bool
+	dryRun  bool
+
+	executor *executor.Executor
 }
 
-func Init(
-	spruceProcessor aviator.SpruceProcessor,
-	flyExecuter aviator.Executor,
-	validator aviator.Validator,
-	kubeExecutor aviator.Executor,
-) *Cockpit {
-	return &Cockpit{spruceProcessor, flyExecuter, validator, kubeExecutor}
-}
-
-func New(curlyBraces bool) *Cockpit {
+func New(curlyBraces, dryRun bool) *Cockpit {
 	return &Cockpit{
-		spruceProcessor: processor.New(curlyBraces),
+
+		spruceProcessor: processor.New(curlyBraces, dryRun),
 		validator:       validator.New(),
+
 		flyExecutor:     executor.FlyExecutor{},
 		kubeExecutor:    executor.KubeExecutor{},
+		genericExecutor: executor.GenericExecutor{},
 	}
 }
 
-func (c *Cockpit) NewAviator(aviatorYml []byte, varsMap map[string]string) (*Aviator, error) {
+func (c *Cockpit) NewAviator(aviatorYml []byte, varsMap map[string]string, silent, verbose bool, dryRun bool) (*Aviator, error) {
 	var aviator aviator.AviatorYaml
 	aviatorYml, err := resolveEnvVars(aviatorYml)
 	if err != nil {
@@ -71,23 +73,30 @@ func (c *Cockpit) NewAviator(aviatorYml []byte, varsMap map[string]string) (*Avi
 		return nil, err
 	}
 
-	return &Aviator{c, &aviator}, nil
+	return &Aviator{
+		c,
+		&aviator,
+		silent,
+		verbose,
+		dryRun,
+		executor.New(silent),
+	}, nil
 }
 
-func (a *Aviator) ProcessSprucePlan(verbose bool, silent bool) error {
-	err := a.cockpit.spruceProcessor.ProcessWithOpts(a.AviatorYaml.Spruce, verbose, silent)
+func (a *Aviator) ProcessSprucePlan() error {
+	err := a.cockpit.spruceProcessor.ProcessWithOpts(a.AviatorYaml.Spruce, a.verbose, a.silent, a.dryRun)
 	if err != nil {
 		return errors.Wrap(err, "Processing Spruce Plan FAILED")
 	}
 	return nil
 }
 
-func (a *Aviator) ProcessSquashPlan(silent bool) error {
+func (a *Aviator) ProcessSquashPlan() error {
 	var err error
 	var result []byte
 	paths := []string{}
 
-	store := filemanager.Store(false)
+	store := filemanager.Store(false, a.dryRun)
 	fp := processor.FileProcessor{store}
 
 	content := a.AviatorYaml.Squash.Contents
@@ -110,7 +119,7 @@ func (a *Aviator) ProcessSquashPlan(silent bool) error {
 		result = append(result, squashed...)
 	}
 
-	if !silent {
+	if !a.silent {
 		printer.AnsiPrintSquash(paths, a.AviatorYaml.Squash.To)
 	}
 
@@ -122,7 +131,7 @@ func (a *Aviator) ExecuteFly() error {
 	if err != nil {
 		return err
 	}
-	return a.cockpit.flyExecutor.Execute(cmds)
+	return a.executor.Execute(cmds)
 }
 
 func (a *Aviator) ExecuteKube() error {
@@ -130,7 +139,15 @@ func (a *Aviator) ExecuteKube() error {
 	if err != nil {
 		return err
 	}
-	return a.cockpit.kubeExecutor.Execute(cmds)
+	return a.executor.Execute(cmds)
+}
+
+func (a *Aviator) ExecuteGeneric() error {
+	cmds, err := a.cockpit.genericExecutor.Command(a.AviatorYaml.Exec)
+	if err != nil {
+		return err
+	}
+	return a.executor.Execute(cmds)
 }
 
 func resolveEnvVars(input []byte) ([]byte, error) {

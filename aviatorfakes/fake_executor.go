@@ -22,17 +22,6 @@ type FakeExecutor struct {
 		result1 []*exec.Cmd
 		result2 error
 	}
-	ExecuteStub        func([]*exec.Cmd) error
-	executeMutex       sync.RWMutex
-	executeArgsForCall []struct {
-		arg1 []*exec.Cmd
-	}
-	executeReturns struct {
-		result1 error
-	}
-	executeReturnsOnCall map[int]struct {
-		result1 error
-	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -88,66 +77,11 @@ func (fake *FakeExecutor) CommandReturnsOnCall(i int, result1 []*exec.Cmd, resul
 	}{result1, result2}
 }
 
-func (fake *FakeExecutor) Execute(arg1 []*exec.Cmd) error {
-	var arg1Copy []*exec.Cmd
-	if arg1 != nil {
-		arg1Copy = make([]*exec.Cmd, len(arg1))
-		copy(arg1Copy, arg1)
-	}
-	fake.executeMutex.Lock()
-	ret, specificReturn := fake.executeReturnsOnCall[len(fake.executeArgsForCall)]
-	fake.executeArgsForCall = append(fake.executeArgsForCall, struct {
-		arg1 []*exec.Cmd
-	}{arg1Copy})
-	fake.recordInvocation("Execute", []interface{}{arg1Copy})
-	fake.executeMutex.Unlock()
-	if fake.ExecuteStub != nil {
-		return fake.ExecuteStub(arg1)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.executeReturns.result1
-}
-
-func (fake *FakeExecutor) ExecuteCallCount() int {
-	fake.executeMutex.RLock()
-	defer fake.executeMutex.RUnlock()
-	return len(fake.executeArgsForCall)
-}
-
-func (fake *FakeExecutor) ExecuteArgsForCall(i int) []*exec.Cmd {
-	fake.executeMutex.RLock()
-	defer fake.executeMutex.RUnlock()
-	return fake.executeArgsForCall[i].arg1
-}
-
-func (fake *FakeExecutor) ExecuteReturns(result1 error) {
-	fake.ExecuteStub = nil
-	fake.executeReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeExecutor) ExecuteReturnsOnCall(i int, result1 error) {
-	fake.ExecuteStub = nil
-	if fake.executeReturnsOnCall == nil {
-		fake.executeReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.executeReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
 func (fake *FakeExecutor) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.commandMutex.RLock()
 	defer fake.commandMutex.RUnlock()
-	fake.executeMutex.RLock()
-	defer fake.executeMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

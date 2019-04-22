@@ -15,7 +15,7 @@ var _ = Describe("Spruce", func() {
 
 	BeforeEach(func() {
 		spruce = NewWithFileFilemanager(
-			filemanager.Store(true), true,
+			filemanager.Store(true, false), true,
 		)
 	})
 

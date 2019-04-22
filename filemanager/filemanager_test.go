@@ -17,7 +17,7 @@ var _ = Describe("Filemanager", func() {
 	})
 
 	JustBeforeEach(func() {
-		store = Store(allowCurlyBraces)
+		store = Store(allowCurlyBraces, false)
 	})
 
 	Context("Write/ReadFile", func() {

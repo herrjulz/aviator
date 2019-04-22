@@ -19,12 +19,13 @@ type FakeSpruceProcessor struct {
 	processReturnsOnCall map[int]struct {
 		result1 error
 	}
-	ProcessWithOptsStub        func([]aviator.Spruce, bool, bool) error
+	ProcessWithOptsStub        func([]aviator.Spruce, bool, bool, bool) error
 	processWithOptsMutex       sync.RWMutex
 	processWithOptsArgsForCall []struct {
 		arg1 []aviator.Spruce
 		arg2 bool
 		arg3 bool
+		arg4 bool
 	}
 	processWithOptsReturns struct {
 		result1 error
@@ -89,7 +90,7 @@ func (fake *FakeSpruceProcessor) ProcessReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeSpruceProcessor) ProcessWithOpts(arg1 []aviator.Spruce, arg2 bool, arg3 bool) error {
+func (fake *FakeSpruceProcessor) ProcessWithOpts(arg1 []aviator.Spruce, arg2 bool, arg3 bool, arg4 bool) error {
 	var arg1Copy []aviator.Spruce
 	if arg1 != nil {
 		arg1Copy = make([]aviator.Spruce, len(arg1))
@@ -101,11 +102,12 @@ func (fake *FakeSpruceProcessor) ProcessWithOpts(arg1 []aviator.Spruce, arg2 boo
 		arg1 []aviator.Spruce
 		arg2 bool
 		arg3 bool
-	}{arg1Copy, arg2, arg3})
-	fake.recordInvocation("ProcessWithOpts", []interface{}{arg1Copy, arg2, arg3})
+		arg4 bool
+	}{arg1Copy, arg2, arg3, arg4})
+	fake.recordInvocation("ProcessWithOpts", []interface{}{arg1Copy, arg2, arg3, arg4})
 	fake.processWithOptsMutex.Unlock()
 	if fake.ProcessWithOptsStub != nil {
-		return fake.ProcessWithOptsStub(arg1, arg2, arg3)
+		return fake.ProcessWithOptsStub(arg1, arg2, arg3, arg4)
 	}
 	if specificReturn {
 		return ret.result1
@@ -119,10 +121,10 @@ func (fake *FakeSpruceProcessor) ProcessWithOptsCallCount() int {
 	return len(fake.processWithOptsArgsForCall)
 }
 
-func (fake *FakeSpruceProcessor) ProcessWithOptsArgsForCall(i int) ([]aviator.Spruce, bool, bool) {
+func (fake *FakeSpruceProcessor) ProcessWithOptsArgsForCall(i int) ([]aviator.Spruce, bool, bool, bool) {
 	fake.processWithOptsMutex.RLock()
 	defer fake.processWithOptsMutex.RUnlock()
-	return fake.processWithOptsArgsForCall[i].arg1, fake.processWithOptsArgsForCall[i].arg2, fake.processWithOptsArgsForCall[i].arg3
+	return fake.processWithOptsArgsForCall[i].arg1, fake.processWithOptsArgsForCall[i].arg2, fake.processWithOptsArgsForCall[i].arg3, fake.processWithOptsArgsForCall[i].arg4
 }
 
 func (fake *FakeSpruceProcessor) ProcessWithOptsReturns(result1 error) {

@@ -12,11 +12,13 @@ import (
 
 var _ = Describe("Processor", func() {
 
-	var processor *Processor
-	var spruceConfig []aviator.Spruce
-	var spruceClient *fakes.FakeSpruceClient
-	var store *filemanager.FileManager //*fakes.FakeFileStore
-	var modifier *fakes.FakeModifier
+	var (
+		processor    *Processor
+		spruceConfig []aviator.Spruce
+		spruceClient *fakes.FakeSpruceClient
+		store        *filemanager.FileManager //*fakes.FakeFileStore
+		modifier     *fakes.FakeModifier
+	)
 
 	Describe("Process", func() {
 
@@ -34,7 +36,7 @@ var _ = Describe("Processor", func() {
 				To:      "integration/tmp/result.yml",
 				ToDir:   "integration/tmp/",
 			}
-			store = filemanager.Store(true)
+			store = filemanager.Store(true, false)
 			modifier = new(fakes.FakeModifier)
 		})
 

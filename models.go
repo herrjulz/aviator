@@ -6,10 +6,11 @@ import (
 )
 
 type AviatorYaml struct {
-	Spruce []Spruce `yaml:"spruce"`
-	Squash Squash   `yaml:"squash"`
-	Fly    Fly      `yaml:"fly"`
-	Kube   Kube     `yaml:"kubectl"`
+	Spruce []Spruce     `yaml:"spruce"`
+	Squash Squash       `yaml:"squash"`
+	Fly    Fly          `yaml:"fly"`
+	Kube   Kube         `yaml:"kubectl"`
+	Exec   []Executable `yaml:"exec"`
 }
 
 type Spruce struct {
@@ -116,16 +117,32 @@ type SquashContent struct {
 	Dir    string   `yaml:"dir"`
 }
 
+type Executable struct {
+	Executable    string   `yaml:"executable"`
+	GlobalOptions []Option `yaml:"global_options"`
+	Command       Command  `yaml:"command"`
+	Args          []string `yaml:"args"`
+}
+
+type Option struct {
+	Name  string `yaml:"name"`
+	Value string `yaml:"value"`
+}
+
+type Command struct {
+	Name    string   `yaml:"name"`
+	Options []Option `yaml:"options"`
+}
+
 //go:generate counterfeiter . SpruceProcessor
 type SpruceProcessor interface {
 	Process([]Spruce) error
-	ProcessWithOpts([]Spruce, bool, bool) error
+	ProcessWithOpts([]Spruce, bool, bool, bool) error
 }
 
 //go:generate counterfeiter . Executor
 type Executor interface {
 	Command(interface{}) ([]*exec.Cmd, error)
-	Execute([]*exec.Cmd) error
 }
 
 //go:generate counterfeiter . SpruceClient

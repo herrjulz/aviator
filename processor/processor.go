@@ -33,27 +33,27 @@ func NewTestProcessor(spruceClient aviator.SpruceClient, store aviator.FileStore
 	}
 }
 
-func New(curlyBraces bool) *Processor {
+func New(curlyBraces, dryRun bool) *Processor {
 	return &Processor{
-		store:        filemanager.Store(curlyBraces),
-		spruceClient: spruce.New(curlyBraces),
+		store:        filemanager.Store(curlyBraces, dryRun),
+		spruceClient: spruce.New(curlyBraces, dryRun),
 		modifier:     modifier.New(),
 	}
 }
 
 func (p *Processor) Process(config []aviator.Spruce) error {
-	return p.ProcessWithOpts(config, false, false)
+	return p.ProcessWithOpts(config, false, false, false)
 }
 
 func (p *Processor) ProcessVerbose(config []aviator.Spruce) error {
-	return p.ProcessWithOpts(config, true, false)
+	return p.ProcessWithOpts(config, true, false, false)
 }
 
 func (p *Processor) ProcessSilent(config []aviator.Spruce) error {
-	return p.ProcessWithOpts(config, false, true)
+	return p.ProcessWithOpts(config, false, true, false)
 }
 
-func (p *Processor) ProcessWithOpts(config []aviator.Spruce, verbose bool, silent bool) error {
+func (p *Processor) ProcessWithOpts(config []aviator.Spruce, verbose, silent, dryRun bool) error {
 	p.verbose, p.silent = verbose, silent
 	var err error
 	for _, cfg := range config {

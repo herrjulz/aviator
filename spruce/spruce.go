@@ -22,10 +22,10 @@ var concourseRegex = `(\{\{|\+\+)([-\_\.\/\w\p{L}\/]+)(\}\}|\+\+)`
 var re = regexp.MustCompile("(" + concourseRegex + ")")
 var dere = regexp.MustCompile("['\"](" + concourseRegex + ")[\"']")
 
-func New(curlyBraces bool) *SpruceClient {
+func New(curlyBraces, dryRun bool) *SpruceClient {
 	return &SpruceClient{
 		curlyBraces,
-		filemanager.Store(curlyBraces),
+		filemanager.Store(curlyBraces, dryRun),
 	}
 }
 

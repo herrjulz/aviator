@@ -68,13 +68,3 @@ func (e KubeExecutor) Command(cfg interface{}) ([]*exec.Cmd, error) {
 
 	return []*exec.Cmd{exec.Command("kubectl", args...)}, nil
 }
-
-func (e KubeExecutor) Execute(cmds []*exec.Cmd) error {
-	for _, c := range cmds {
-		err := execCmd(c)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}

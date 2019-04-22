@@ -41,6 +41,10 @@ func getFlags() []cli.Flag {
 			Name:  "curly-braces, b",
 			Usage: "allow {{}} syntax in yaml files",
 		},
+		cli.BoolFlag{
+			Name:  "dry-run, d",
+			Usage: "print files to stdout, executors will be omitted",
+		},
 	}
 	return flags
 }

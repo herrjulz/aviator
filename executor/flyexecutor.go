@@ -80,13 +80,3 @@ func (e FlyExecutor) Command(cfg interface{}) ([]*exec.Cmd, error) {
 		exec.Command("fly", exposeArgs...),
 	}, nil
 }
-
-func (e FlyExecutor) Execute(cmds []*exec.Cmd) error {
-	for _, c := range cmds {
-		err := execCmd(c)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
