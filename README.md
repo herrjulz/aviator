@@ -79,11 +79,11 @@ $ aviator -f myAviatorFile.yml
 		- [The `fly` executor](#fly-executor)
 		- [The Generic Executor](#generic-executor)
 	- [CLI Options](#cli-options)
-		- [`--curly-braces`](#-curly-braces)
-		- [`--silent`](#-silent)
-		- [`--verbose`](#-verbose)
-		- [`--dry-run`](#-dry-run)
-		- [`--var`](#-var)
+		- [`--curly-braces`](#--curly-braces)
+		- [`--silent`](#--silent)
+		- [`--verbose`](#--verbose)
+		- [`--dry-run`](#--dry-run)
+		- [`--var`](#--var)
 - [Development](#development)
 
 Aviator provides a verbose style of configuration. It is the result of configuring a spruce merge plan and optionally an execution plan (e.g `fly`).
