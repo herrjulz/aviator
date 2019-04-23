@@ -40,6 +40,7 @@ func (e *Executor) execCmd(cmd *exec.Cmd) error {
 	if !e.silent {
 		cmd.Stdout = os.Stdout
 	}
+	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
