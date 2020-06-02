@@ -683,6 +683,7 @@ fly:
   target: myFlyTarget
   config: pipeline.yml
   non_interactive: true
+  check_creds: true
   load_vars_from:
   - credentials.yml
   vars:
