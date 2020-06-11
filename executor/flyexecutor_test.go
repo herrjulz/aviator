@@ -30,11 +30,12 @@ var _ = Describe("Flyexecutor", func() {
 		Context("for a given fly config", func() {
 			BeforeEach(func() {
 				fly = aviator.Fly{
-					Name:   "pipeline-name",
-					Target: "target-name",
-					Config: "pipeline.yml",
-					Expose: true,
-					Vars:   []string{"credentials.yml", "props.yml"},
+					Name:       "pipeline-name",
+					Target:     "target-name",
+					Config:     "pipeline.yml",
+					CheckCreds: true,
+					Expose:     true,
+					Vars:       []string{"credentials.yml", "props.yml"},
 				}
 			})
 
@@ -65,6 +66,10 @@ var _ = Describe("Flyexecutor", func() {
 				Expect(args).To(ContainElement("--load-vars-from"))
 				Expect(args).To(ContainElement("credentials.yml"))
 				Expect(args).To(ContainElement("props.yml"))
+			})
+
+			It("generates the set-pipeline command including the '--check-creds' flag", func() {
+				Expect(args).To(ContainElement("--check-creds"))
 			})
 
 			It("should create the expose command with pipeline name", func() {
