@@ -61,6 +61,7 @@ type Fly struct {
 	Expose         bool              `yaml:"expose"`
 	Var            map[string]string `yaml:"vars"`
 	NonInteractive bool              `yaml:"non_interactive"`
+	CheckCreds     bool              `yaml:"check_creds"`
 
 	//Validate Pipeline
 	ValidatePipeline bool `yaml:"validate_pipeline"`

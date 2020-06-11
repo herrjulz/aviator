@@ -25,6 +25,7 @@ const (
 	loadVarsFromFlag   = "--load-vars-from"
 	varFlag            = "--var"
 	nonInteractiveFlag = "--non-interactive"
+	checkCredsFlag     = "--check-creds"
 )
 
 type FlyExecutor struct{}
@@ -65,6 +66,10 @@ func (e FlyExecutor) Command(cfg interface{}) ([]*exec.Cmd, error) {
 
 		if fly.NonInteractive {
 			args = append(args, nonInteractiveFlag)
+		}
+
+		if fly.CheckCreds {
+			args = append(args, checkCredsFlag)
 		}
 	}
 
