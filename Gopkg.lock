@@ -33,6 +33,63 @@
   revision = "93a54c2584a8b78856230ea1d31cfa2b61693721"
 
 [[projects]]
+  digest = "1:0282b253b2bfb86a55e3ab6c6a2ddaea8852a3c0fc8121a8c9a6ff6efd3a352b"
+  name = "github.com/aws/aws-sdk-go"
+  packages = [
+    "aws",
+    "aws/awserr",
+    "aws/awsutil",
+    "aws/client",
+    "aws/client/metadata",
+    "aws/corehandlers",
+    "aws/credentials",
+    "aws/credentials/ec2rolecreds",
+    "aws/credentials/endpointcreds",
+    "aws/credentials/processcreds",
+    "aws/credentials/stscreds",
+    "aws/csm",
+    "aws/defaults",
+    "aws/ec2metadata",
+    "aws/endpoints",
+    "aws/request",
+    "aws/session",
+    "aws/signer/v4",
+    "internal/context",
+    "internal/ini",
+    "internal/sdkio",
+    "internal/sdkmath",
+    "internal/sdkrand",
+    "internal/sdkuri",
+    "internal/shareddefaults",
+    "internal/strings",
+    "internal/sync/singleflight",
+    "private/protocol",
+    "private/protocol/json/jsonutil",
+    "private/protocol/jsonrpc",
+    "private/protocol/query",
+    "private/protocol/query/queryutil",
+    "private/protocol/rest",
+    "private/protocol/xml/xmlutil",
+    "service/secretsmanager",
+    "service/secretsmanager/secretsmanageriface",
+    "service/ssm",
+    "service/ssm/ssmiface",
+    "service/sts",
+    "service/sts/stsiface",
+  ]
+  pruneopts = ""
+  revision = "8e96fdf94cdefd46f17f156bfb1a6d251e99fdee"
+  version = "v1.31.15"
+
+[[projects]]
+  branch = "master"
+  digest = "1:42b3a2d7ba0b73167c36afd915f282013dba0b9dbe4516027aaaa314fb86ac52"
+  name = "github.com/cloudfoundry-community/vaultkv"
+  packages = ["."]
+  pruneopts = ""
+  revision = "343c0e6fc506c7561969fab1c0a262235120edd3"
+
+[[projects]]
   branch = "master"
   digest = "1:4807773e1f31b4b1fdd99e4e91a7612933a9bcd40a4e8f6172bd4ddd25054861"
   name = "github.com/cppforlife/go-patch"
@@ -49,15 +106,15 @@
   revision = "c9320f076de50350542482dfe99e66c8732a426f"
 
 [[projects]]
-  digest = "1:1746e861d547b6b9d40783b3daa3332c4607c90e8269e258e7083d0a48e85933"
+  digest = "1:e10cc8dd722ca93b47a8ad42c00b0df163ad23c97abcffa78262a0a97cee4f3e"
   name = "github.com/geofffranks/spruce"
   packages = [
     ".",
     "log",
   ]
   pruneopts = ""
-  revision = "9c2210a0fce198841248268f429b82c3acec7ffc"
-  version = "v1.19.2"
+  revision = "137955922872688b29413709a62df5cdf40e8b34"
+  version = "v1.25.3"
 
 [[projects]]
   branch = "v2"
@@ -66,6 +123,13 @@
   packages = ["."]
   pruneopts = ""
   revision = "9f2fe4b6f2957db3a5e43179ecfa1a10fd3bc2f9"
+
+[[projects]]
+  digest = "1:13fe471d0ed891e8544eddfeeb0471fd3c9f2015609a1c000aefdedf52a19d40"
+  name = "github.com/jmespath/go-jmespath"
+  packages = ["."]
+  pruneopts = ""
+  revision = "c2b33e84"
 
 [[projects]]
   digest = "1:420bb8eabfa6dff0cb5c8e786489a420e7e9d93a8b1d83882cce70c5a5b9bc3e"

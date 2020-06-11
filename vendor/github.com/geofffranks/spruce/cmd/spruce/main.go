@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"sort"
 
 	"github.com/cppforlife/go-patch/patch"
+	"github.com/homeport/dyff/pkg/dyff"
+	"github.com/gonvenience/ytbx"
 	"github.com/mattn/go-isatty"
 	"github.com/starkandwayne/goutils/ansi"
 
@@ -50,8 +55,14 @@ func envFlag(varname string) bool {
 	return val != "" && strings.ToLower(val) != "false" && val != "0"
 }
 
+type YamlFile struct {
+	Path   string
+	Reader io.ReadCloser
+}
+
 type jsonOpts struct {
 	Strict bool               `goptions:"--strict, description='Refuse to convert non-string keys to strings'"`
+	Help   bool               `goptions:"--help, -h"`
 	Files  goptions.Remainder `goptions:"description='Files to convert to JSON'"`
 }
 
@@ -61,7 +72,9 @@ type mergeOpts struct {
 	CherryPick     []string           `goptions:"--cherry-pick, description='The opposite of prune, specify keys to cherry-pick from final output (may be specified more than once)'"`
 	FallbackAppend bool               `goptions:"--fallback-append, description='Default merge normally tries to key merge, then inline. This flag says do an append instead of an inline.'"`
 	EnableGoPatch  bool               `goptions:"--go-patch, description='Enable the use of go-patch when parsing files to be merged'"`
-	Files          goptions.Remainder `goptions:"description='Merges file2.yml through fileN.yml on top of file1.yml. To read STDIN, specify a filename of \\'-\\'.'"`
+	MultiDoc       bool               `goptions:"--multi-doc, -m, description='Treat multi-doc yaml as multiple files.'"`
+	Help           bool               `goptions:"--help, -h"`
+	Files          goptions.Remainder `goptions:"description='List of files to merge. To read STDIN, specify a filename of \\'-\\'.'"`
 }
 
 func main() {
@@ -71,6 +84,7 @@ func main() {
 		Version bool `goptions:"-v, --version, description='Display version information'"`
 		Action  goptions.Verbs
 		Merge   mergeOpts `goptions:"merge"`
+		Fan     mergeOpts `goptions:"fan"`
 		JSON    jsonOpts  `goptions:"json"`
 		Diff    struct {
 			Files goptions.Remainder `goptions:"description='Show the semantic differences between two YAML files'"`
@@ -89,6 +103,11 @@ func main() {
 	if envFlag("TRACE") || options.Trace {
 		TraceOn = true
 		DebugOn = true
+	}
+
+	if options.JSON.Help || options.Merge.Help || options.Fan.Help {
+		usage()
+		return
 	}
 
 	if options.Version {
@@ -119,6 +138,27 @@ func main() {
 
 		printfStdOut("%s\n", string(merged))
 
+	case "fan":
+		trees, err := cmdFanEval(options.Fan)
+		if err != nil {
+			PrintfStdErr("%s\n", err.Error())
+			exit(2)
+			return
+		}
+
+		for _, tree := range trees {
+			TRACE("Converting the following data back to YML:")
+			TRACE("%#v", tree)
+			merged, err := yaml.Marshal(tree)
+			if err != nil {
+				PrintfStdErr("Unable to convert merged result back to YAML: %s\nData:\n%#v", err.Error(), tree)
+				exit(2)
+				return
+			}
+
+			printfStdOut("---\n%s\n", string(merged))
+		}
+
 	case "vaultinfo":
 		VaultRefs = map[string][]string{}
 		SkipVault = true
@@ -133,23 +173,13 @@ func main() {
 
 		printfStdOut("%s\n", formatVaultRefs())
 	case "json":
-		if len(options.JSON.Files) > 0 {
-			jsons, err := JSONifyFiles(options.JSON.Files, options.JSON.Strict)
-			if err != nil {
-				PrintfStdErr("%s\n", err)
-				exit(2)
-				return
-			}
-			for _, output := range jsons {
-				printfStdOut("%s\n", output)
-			}
-		} else {
-			output, err := JSONifyIO(os.Stdin, options.JSON.Strict)
-			if err != nil {
-				PrintfStdErr("%s\n", err)
-				exit(2)
-				return
-			}
+		jsons, err := cmdJSONEval(options.JSON)
+		if err != nil {
+			PrintfStdErr("%s\n", err)
+			exit(2)
+			return
+		}
+		for _, output := range jsons {
 			printfStdOut("%s\n", output)
 		}
 
@@ -194,13 +224,20 @@ func parseGoPatch(data []byte) (patch.Ops, error) {
 	}
 	return ops, nil
 }
+
 func parseYAML(data []byte) (map[interface{}]interface{}, error) {
 	y, err := simpleyaml.NewYaml(data)
 	if err != nil {
 		return nil, err
 	}
 
+	if empty_y, _ :=  simpleyaml.NewYaml([]byte{}); *y == *empty_y {
+		DEBUG("YAML doc is empty, creating empty hash/map")
+		return make(map[interface{}]interface{}), nil
+	}
+
 	doc, err := y.Map()
+
 	if err != nil {
 		if _, arrayErr := y.Array(); arrayErr == nil {
 			return nil, RootIsArrayError{msg: ansi.Sprintf("@R{Root of YAML document is not a hash/map}: %s\n", err)}
@@ -211,21 +248,168 @@ func parseYAML(data []byte) (map[interface{}]interface{}, error) {
 	return doc, nil
 }
 
-func cmdMergeEval(options mergeOpts) (map[interface{}]interface{}, error) {
-	if len(options.Files) < 1 {
-		options.Files = append(options.Files, "-")
+func loadYamlFile(file string) (YamlFile, error) {
+	var target YamlFile
+	if file == "-" {
+		target = YamlFile{Reader: os.Stdin, Path: "-"}
+	} else {
+		f, err := os.Open(file)
+		if err != nil {
+			return YamlFile{}, ansi.Errorf("@R{Error reading file} @m{%s}: %s", file, err.Error())
+		}
+		target = YamlFile{Path: file, Reader: f}
 	}
+	return target, nil
+}
 
-	root := make(map[interface{}]interface{})
+func splitLoadYamlFile(file string) ([]YamlFile, error) {
+	docs := []YamlFile{}
 
-	err := mergeAllDocs(root, options.Files, options.FallbackAppend, options.EnableGoPatch)
+	yamlFile, err := loadYamlFile(file)
 	if err != nil {
 		return nil, err
 	}
 
-	ev := &Evaluator{Tree: root, SkipEval: options.SkipEval}
-	err = ev.Run(options.Prune, options.CherryPick)
-	return ev.Tree, err
+	fileData, err := readFile(&yamlFile)
+	if err != nil {
+		return nil, err
+	}
+
+	rawDocs := bytes.Split(fileData, []byte("\n---\n"))
+	// strip off empty document created if the first three bytes of the file are the doc separator
+	// keeps the indexing correct for when used with error messages
+	if len(rawDocs[0]) == 0 {
+		rawDocs = rawDocs[1:]
+	}
+
+	for i, docBytes := range rawDocs {
+		buf := bytes.NewBuffer(docBytes)
+		doc := YamlFile{Path: fmt.Sprintf("%s[%d]", yamlFile.Path, i), Reader: ioutil.NopCloser(buf)}
+		docs = append(docs, doc)
+	}
+	return docs, nil
+}
+
+func cmdMergeEval(options mergeOpts) (map[interface{}]interface{}, error) {
+	files := []YamlFile{}
+
+	if len(options.Files) < 1 {
+		stdinInfo, err := os.Stdin.Stat()
+		if err != nil {
+			return nil, ansi.Errorf("@R{Error statting STDIN} - Bailing out: %s\n", err.Error())
+		}
+
+		if stdinInfo.Mode()&os.ModeCharDevice != 0 {
+			return nil, ansi.Errorf("@R{Error reading STDIN}: no data found. Did you forget to pipe data to STDIN, or specify yaml files to merge?")
+		}
+
+		options.Files = append(options.Files, "-")
+	}
+
+	for _, file := range options.Files {
+		if options.MultiDoc {
+			docs, err := splitLoadYamlFile(file)
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, docs...)
+		} else {
+			yamlFile, err := loadYamlFile(file)
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, yamlFile)
+		}
+	}
+
+	ev, err := mergeAllDocs(files, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return ev.Tree, nil
+}
+
+func cmdFanEval(options mergeOpts) ([]map[interface{}]interface{}, error) {
+	stdinInfo, err := os.Stdin.Stat()
+	if err != nil {
+		return nil, ansi.Errorf("@R{Error statting STDIN} - Bailing out: %s\n", err.Error())
+	}
+	if stdinInfo.Mode()&os.ModeCharDevice == 0 {
+		options.Files = append(options.Files, "-")
+	}
+
+	if len(options.Files) == 0 {
+		return nil, ansi.Errorf("@R{Missing Input:} You must specify at least a source document to spruce fan. If no files are specified, STDIN is used. Using STDIN for source and target docs only works with -m.")
+	}
+
+	roots := []map[interface{}]interface{}{}
+	sourcePath := options.Files[0]
+	options.Files = options.Files[1:]
+
+	docs := []YamlFile{}
+	source := YamlFile{}
+	if options.MultiDoc {
+		sourceDocs, err := splitLoadYamlFile(sourcePath)
+		if err != nil {
+			return nil, err
+		}
+		// only the first yaml document of the source will be treated as actual source, all others
+		// will be treated as target documents
+		source = sourceDocs[0]
+		docs = append(sourceDocs[1:], docs...)
+	} else {
+		source, err = loadYamlFile(sourcePath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, file := range options.Files {
+		yamlDocs, err := splitLoadYamlFile(file)
+		if err != nil {
+			return nil, err
+		}
+		docs = append(docs, yamlDocs...)
+	}
+
+	sourceBytes, err := readFile(&source)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(docs) < 1 {
+		return nil, ansi.Errorf("@R{Missing Input:} You must specify at least one target document to spruce fan. If no files are specified, STDIN is used. Using STDIN for source and target docs only works with -m.")
+	}
+
+	for _, doc := range docs {
+		sourceBuffer := bytes.NewBuffer(sourceBytes)
+		source = YamlFile{Path: source.Path, Reader: ioutil.NopCloser(sourceBuffer)}
+		ev, err := mergeAllDocs([]YamlFile{source, doc}, options)
+		if err != nil {
+			return nil, err
+		}
+		roots = append(roots, ev.Tree)
+	}
+
+	return roots, nil
+}
+
+func cmdJSONEval(options jsonOpts) ([]string, error) {
+	stdinInfo, err := os.Stdin.Stat()
+	if err != nil {
+		return nil, ansi.Errorf("@R{Error statting STDIN} - Bailing out: %s\n", err.Error())
+	}
+	if stdinInfo.Mode()&os.ModeCharDevice == 0 {
+		options.Files = append(options.Files, "-")
+	}
+
+	output, err := JSONifyFiles(options.Files, options.Strict)
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
 }
 
 type yamlVaultSecret struct {
@@ -262,63 +446,81 @@ func formatVaultRefs() string {
 	return string(output)
 }
 
-func mergeAllDocs(root map[interface{}]interface{}, paths []string, fallbackAppend bool, goPatchEnabled bool) error {
-	m := &Merger{AppendByDefault: fallbackAppend}
-	for _, path := range paths {
-		DEBUG("Processing file '%s'", path)
-		var data []byte
-		var err error
+func readFile(file *YamlFile) ([]byte, error) {
+	var data []byte
+	var err error
 
-		if path == "-" {
-			stat, err := os.Stdin.Stat()
+	if file.Path == "-" {
+		file.Path = "STDIN"
+		stat, err := os.Stdin.Stat()
+		if err != nil {
+			return nil, ansi.Errorf("@R{Error statting STDIN} - Bailing out: %s\n", err.Error())
+		}
+		if stat.Mode()&os.ModeCharDevice == 0 {
+			data, err = ioutil.ReadAll(os.Stdin)
 			if err != nil {
-				return ansi.Errorf("@R{Error statting STDIN} - Bailing out: %s\n", err.Error())
+				return nil, ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", file.Path, err.Error())
 			}
-			if stat.Mode()&os.ModeCharDevice == 0 {
-				data, err = ioutil.ReadAll(os.Stdin)
-				if err != nil {
-					return ansi.Errorf("@R{Error reading STDIN}: %s\n", err.Error())
-				}
-			}
-			if len(data) == 0 {
-				return ansi.Errorf("@R{Error reading STDIN}: no data found. Did you forget to pipe data to STDIN, or specify yaml files to merge?")
-			}
-			path = "STDIN"
-		} else {
-			data, err = ioutil.ReadFile(path)
-			if err != nil {
-				return ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", path, err.Error())
-			}
+		}
+	} else {
+		data, err = ioutil.ReadAll(file.Reader)
+		if err != nil {
+			return nil, ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", file.Path, err.Error())
+		}
+	}
+	if len(data) == 0 && file.Path == "STDIN" {
+		return nil, ansi.Errorf("@R{Error reading STDIN}: no data found. Did you forget to pipe data to STDIN, or specify yaml files to merge?")
+	}
+
+	return data, nil
+}
+
+func mergeAllDocs(files []YamlFile, options mergeOpts) (*Evaluator, error) {
+	m := &Merger{AppendByDefault: options.FallbackAppend}
+	root := make(map[interface{}]interface{})
+
+	for _, file := range files {
+		DEBUG("Processing file '%s'", file.Path)
+
+		data, err := readFile(&file)
+		if err != nil {
+			return nil, err
 		}
 
 		doc, err := parseYAML(data)
 		if err != nil {
-			if isArrayError(err) && goPatchEnabled {
+			if isArrayError(err) && options.EnableGoPatch {
 				DEBUG("Detected root of document as an array. Attempting go-patch parsing")
 				ops, err := parseGoPatch(data)
 				if err != nil {
-					return ansi.Errorf("@m{%s}: @R{%s}\n", path, err.Error())
+					return nil, ansi.Errorf("@m{%s}: @R{%s}\n", file.Path, err.Error())
 				}
 				newObj, err := ops.Apply(root)
 				if err != nil {
-					return ansi.Errorf("@m{%s}: @R{%s}\n", path, err.Error())
+					return nil, ansi.Errorf("@m{%s}: @R{%s}\n", file.Path, err.Error())
 				}
 				if newRoot, ok := newObj.(map[interface{}]interface{}); !ok {
-					return ansi.Errorf("@m{%s}: @R{Unable to convert go-patch output into a hash/map for further merging|\n", path)
+					return nil, ansi.Errorf("@m{%s}: @R{Unable to convert go-patch output into a hash/map for further merging|\n", file.Path)
 				} else {
 					root = newRoot
 				}
 			} else {
-				return ansi.Errorf("@m{%s}: @R{%s}\n", path, err.Error())
+				return nil, ansi.Errorf("@m{%s}: @R{%s}\n", file.Path, err.Error())
 			}
 		} else {
 			m.Merge(root, doc)
 		}
 		tmpYaml, _ := yaml.Marshal(root) // we don't care about errors for debugging
-		TRACE("Current data after processing '%s':\n%s", path, tmpYaml)
+		TRACE("Current data after processing '%s':\n%s", file.Path, tmpYaml)
 	}
 
-	return m.Error()
+	if m.Error() != nil {
+		return nil, m.Error()
+	}
+
+	ev := &Evaluator{Tree: root, SkipEval: options.SkipEval}
+	err := ev.Run(options.Prune, options.CherryPick)
+	return ev, err
 }
 
 func diffFiles(paths []string) (string, bool, error) {
@@ -326,33 +528,29 @@ func diffFiles(paths []string) (string, bool, error) {
 		return "", false, ansi.Errorf("incorrect number of files given to diffFiles(); please file a bug report")
 	}
 
-	data, err := ioutil.ReadFile(paths[0])
+	from, to, err := ytbx.LoadFiles(paths[0], paths[1])
 	if err != nil {
-		return "", false, ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", paths[0], err)
-	}
-	a, err := parseYAML(data)
-	if err != nil {
-		return "", false, ansi.Errorf("@m{%s}: @R{%s}\n", paths[0], err)
+		return "", false, err
 	}
 
-	data, err = ioutil.ReadFile(paths[1])
+	report, err := dyff.CompareInputFiles(from, to)
 	if err != nil {
-		return "", false, ansi.Errorf("@R{Error reading file} @m{%s}: %s\n", paths[1], err)
-	}
-	b, err := parseYAML(data)
-	if err != nil {
-		return "", false, ansi.Errorf("@m{%s}: @R{%s}\n", paths[1], err)
+		return "", false, err
 	}
 
-	d, err := Diff(a, b)
-	if err != nil {
-		return "", false, ansi.Errorf("@R{Failed to diff} @m{%s} -> @m{%s}: %s\n", paths[0], paths[1], err)
+	reportWriter := &dyff.HumanReport{
+		Report:            report,
+		DoNotInspectCerts: false,
+		NoTableStyle:      false,
+		ShowBanner:        false,
 	}
 
-	if !d.Changed() {
-		return ansi.Sprintf("@G{both files are semantically equivalent; no differences found!}\n"), false, nil
-	}
-	return d.String("$"), true, nil
+	var buf bytes.Buffer
+	out := bufio.NewWriter(&buf)
+	reportWriter.WriteReport(out)
+	out.Flush()
+
+	return buf.String(), len(report.Diffs) > 0, nil
 }
 
 type RootIsArrayError struct {
