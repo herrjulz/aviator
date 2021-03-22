@@ -26,6 +26,7 @@ const (
 	varFlag            = "--var"
 	nonInteractiveFlag = "--non-interactive"
 	checkCredsFlag     = "--check-creds"
+	teamFlag           = "--team"
 )
 
 type FlyExecutor struct{}
@@ -62,6 +63,10 @@ func (e FlyExecutor) Command(cfg interface{}) ([]*exec.Cmd, error) {
 
 		for k, v := range fly.Var {
 			args = append(args, varFlag, fmt.Sprintf("%s=%s", k, v))
+		}
+
+		if fly.TeamName {
+			args = append(args, teamFlag, fly.TeamName)
 		}
 
 		if fly.NonInteractive {

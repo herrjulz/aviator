@@ -672,6 +672,7 @@ The `set-pipeline` and `hide-pipeline` commands are executed by default. Here is
 - **strict (bool):** causes `validate_pipeline` to fail on errors AND warnings
 - **format_pipeline (bool):** format a pipeline config in a "canonical" form (prints to stdout).
 - **write:** update the formatted pipeline config file in-place.
+- **team_name (string):** the team name to fly for set-pipeline
 
 More detailed description of the flags can be found [here](https://concourse-ci.org/pipelines.html)
 
@@ -681,6 +682,7 @@ Example - set-pipeline:
 fly:
   name: myPipelineName
   target: myFlyTarget
+  team_name: concourse-team
   config: pipeline.yml
   non_interactive: true
   check_creds: true
