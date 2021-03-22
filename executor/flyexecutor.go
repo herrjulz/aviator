@@ -65,7 +65,7 @@ func (e FlyExecutor) Command(cfg interface{}) ([]*exec.Cmd, error) {
 			args = append(args, varFlag, fmt.Sprintf("%s=%s", k, v))
 		}
 
-		if fly.TeamName {
+		if fly.TeamName != "" {
 			args = append(args, teamFlag, fly.TeamName)
 		}
 
