@@ -1,3 +1,0 @@
-green:
-  woot: (( inject meta.template ))
-  color: green

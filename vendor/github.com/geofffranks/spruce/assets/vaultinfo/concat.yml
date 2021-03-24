@@ -1,7 +1,0 @@
-meta:
-  prefix: imaprefix
-
-foo:
-  bar: (( vault meta.prefix "/beep:boop" ))
-  wom: (( vault meta.prefix "/hello:world" ))
-  bat: (( vault meta.prefix "/cup:cake" ))

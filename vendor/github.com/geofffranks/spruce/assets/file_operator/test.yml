@@ -1,7 +1,0 @@
----
-meta:
-  filename: test.yml
-
-content:
-  meta_test:
-    stuff: (( file meta.filename ))
