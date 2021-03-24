@@ -781,8 +781,18 @@ You can provide variables to the aviator file.
 $ go get github.com/JulzDiverse/aviator
 ```
 
-Navigate to `aviator` directory
+## Build Aviator
+
+To build the aviator binary you can navigate to `cmd/aviator`:
 
 ```
-$ dep ensure
+$ cd ./cmd/aviator`
 ```
+
+Now you can build with the go cli:
+
+```
+$ go build 
+```
+
+For more information on the `$ go build` command run `$ go help build`. 
