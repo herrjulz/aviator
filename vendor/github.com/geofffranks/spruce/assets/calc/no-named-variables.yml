@@ -1,4 +1,0 @@
----
-jobs:
-- name: one
-  instances: (( calc "2 * pi * r" ))

@@ -1,4 +1,0 @@
----
-jobs:
-- (( delete name "ccdb" ))
-- (( delete "dea" ))

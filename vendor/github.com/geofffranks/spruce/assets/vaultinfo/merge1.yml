@@ -1,2 +1,0 @@
-foo: (( vault "secret/foo:bar" ))
-bar: (( vault "secret/beep:boop" ))

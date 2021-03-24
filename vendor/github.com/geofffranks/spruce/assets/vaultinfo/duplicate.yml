@@ -1,3 +1,0 @@
-meta:
-  foo: (( vault "secret/bar:beep" ))
-  otherfoo: (( vault "secret/bar:beep" ))

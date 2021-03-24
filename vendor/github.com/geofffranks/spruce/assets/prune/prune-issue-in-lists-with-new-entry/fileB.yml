@@ -1,5 +1,0 @@
----
-list:
-- name: D
-  release: D
-  version: (( prune ))

@@ -1,3 +1,0 @@
-jobs:
-- name: thing1
-  curlies: {{my-variable_123}}

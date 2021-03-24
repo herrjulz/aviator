@@ -1,3 +1,0 @@
-foo: (( defer grab thing )) # (( grab thing ))
-grab: beep # beep
-thing: boop # boop

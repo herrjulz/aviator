@@ -1,2 +1,0 @@
-properties:
-  api_servers: (( grab jobs.api_z1.networks.net1.static_ips ))

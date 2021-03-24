@@ -1,2 +1,0 @@
-a: (( concat "a" b ))
-b: (( concat a "b" ))
