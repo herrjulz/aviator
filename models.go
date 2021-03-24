@@ -57,6 +57,7 @@ type Fly struct {
 	Name           string            `yaml:"name"`
 	Target         string            `yaml:"target"`
 	Config         string            `yaml:"config"`
+	TeamName       string            `yaml:"team_name"`
 	Vars           []string          `yaml:"load_vars_from"`
 	Expose         bool              `yaml:"expose"`
 	Var            map[string]string `yaml:"vars"`

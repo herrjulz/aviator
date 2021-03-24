@@ -35,6 +35,7 @@ var _ = Describe("Flyexecutor", func() {
 					Config:     "pipeline.yml",
 					CheckCreds: true,
 					Expose:     true,
+					TeamName:   "team-name",
 					Vars:       []string{"credentials.yml", "props.yml"},
 				}
 			})
@@ -50,6 +51,11 @@ var _ = Describe("Flyexecutor", func() {
 			It("generates the set-pipeline command with the 'target' flag and the right target", func() {
 				Expect(args).To(ContainElement("--target"))
 				Expect(args).To(ContainElement("target-name"))
+			})
+
+			It("generates the set-pipeline command with the 'team' flag and the right target", func() {
+				Expect(args).To(ContainElement("--team"))
+				Expect(args).To(ContainElement("team-name"))
 			})
 
 			It("generates the set-pipeline command with the 'pipeline' flag and the right pipeline", func() {
