@@ -11,7 +11,7 @@ require (
 	github.com/cloudfoundry-community/vaultkv v0.0.0-20200311151509-343c0e6fc506 // indirect
 	github.com/cppforlife/go-patch v0.2.0
 	github.com/geofffranks/simpleyaml v0.0.0-20161109204137-c9320f076de5
-	github.com/geofffranks/spruce v1.25.3
+	github.com/geofffranks/spruce v1.27.0
 	github.com/geofffranks/yaml v0.0.0-20161117152608-9f2fe4b6f295 // indirect
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0

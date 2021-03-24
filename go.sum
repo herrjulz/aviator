@@ -28,6 +28,8 @@ github.com/geofffranks/simpleyaml v0.0.0-20161109204137-c9320f076de5 h1:5AjbNPs5
 github.com/geofffranks/simpleyaml v0.0.0-20161109204137-c9320f076de5/go.mod h1:EoVmbOOR2VpnWfvsZ1wVdjvUbitLYk1SYxGTssyjW4s=
 github.com/geofffranks/spruce v1.25.3 h1:hih37D5rLDA4NOogNXBIaOeEbig0z5MKrwjQr7AbEOM=
 github.com/geofffranks/spruce v1.25.3/go.mod h1:Qwj9M87FO9WQBf0ZwvOar6UsaDQQLl0HLanrJeSPv/8=
+github.com/geofffranks/spruce v1.27.0 h1:Mz/n6CjFVemIVXigtmzErXAzls9NcUNnfbfNEdR9r1U=
+github.com/geofffranks/spruce v1.27.0/go.mod h1:Qwj9M87FO9WQBf0ZwvOar6UsaDQQLl0HLanrJeSPv/8=
 github.com/geofffranks/yaml v0.0.0-20161117152608-9f2fe4b6f295 h1:CxigGHNaNtLTrnMveo9CjJjgXTuZpbLvuOvY/+c1v8g=
 github.com/geofffranks/yaml v0.0.0-20161117152608-9f2fe4b6f295/go.mod h1:+Qu4YOxbpR+Dn8JVzOTjJKWt3EZkEQD918wX+CkNcbE=
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
