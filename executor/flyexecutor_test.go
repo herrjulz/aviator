@@ -84,6 +84,8 @@ var _ = Describe("Flyexecutor", func() {
 				Expect(exposeArgs).To(ContainElement("target-name"))
 				Expect(exposeArgs).To(ContainElement("--pipeline"))
 				Expect(exposeArgs).To(ContainElement("pipeline-name"))
+				Expect(exposeArgs).To(ContainElement("--team"))
+				Expect(exposeArgs).To(ContainElement("team-name"))
 			})
 		})
 
