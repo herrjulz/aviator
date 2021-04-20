@@ -81,8 +81,14 @@ func (e FlyExecutor) Command(cfg interface{}) ([]*exec.Cmd, error) {
 	var exposeArgs []string
 	if fly.Expose {
 		exposeArgs = []string{targetFlag, fly.Target, exposePipelineCmd, pipelineFlag, fly.Name}
+		if fly.TeamName != "" {
+			exposeArgs = append(exposeArgs, teamFlag, fly.TeamName)
+		}
 	} else {
 		exposeArgs = []string{targetFlag, fly.Target, hidePipelineCmd, pipelineFlag, fly.Name}
+		if fly.TeamName != "" {
+			exposeArgs = append(exposeArgs, teamFlag, fly.TeamName)
+		}
 	}
 
 	return []*exec.Cmd{
