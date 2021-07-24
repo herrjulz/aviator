@@ -95,8 +95,8 @@ spruce:
 - base: path/to/base.yml
   merge:
   - with:
-    files:
-    - top.yml
+      files:
+      - top.yml
   to: result.yml
 ```
 
@@ -199,10 +199,10 @@ spruce:
 - base: path/to/base.yml
   merge:
   - with:
-    files:
-    - top.yml
-    - top2.yml
-    - top3.yml
+      files:
+      - top.yml
+      - top2.yml
+      - top3.yml
     in_dir: path/to/
     skip_non_existing: true
   to: result.yml
