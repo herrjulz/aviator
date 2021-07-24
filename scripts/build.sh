@@ -1,22 +1,22 @@
 #!/bin/bash
 
-set -e pipefail
+set -euo pipefail
 
-readonly scriptname=$(basename -- $0)
-readonly basedir=$(dirname $scriptname)
+readonly basedir="$(cd "$(dirname "$0")"/.. && pwd)"
+readonly cmd_dir="$basedir/cmd/aviator"
 
 readonly aviator_darwin="aviator-darwin-amd64"
 readonly aviator_linux="aviator-linux-amd64"
 readonly aviator_win="aviator-win"
 
 main(){
-	pushd $basedir/cmd/aviator
+	pushd $cmd_dir
 	  go_build "darwin" "$aviator_darwin"
 	  go_build "linux" "$aviator_linux"
 	  go_build "windows" "$aviator_win"
 	popd
 
-	get_shasum "$basedir/cmd/aviator/$aviator_darwin"
+	get_shasum "$cmd_dir/$aviator_darwin"
 }
 
 go_build(){
