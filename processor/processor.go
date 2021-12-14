@@ -134,6 +134,10 @@ func (p *Processor) walk(cfg aviator.Spruce, outer string) error {
 	regex := getRegexp(cfg.ForEach.Regexp)
 	for _, f := range sl {
 		filename, parent := concatFileNameWithPath(f)
+		if except(cfg.ForEach.Except, getFileName(f)) {
+			p.warnings = append(p.warnings, "SKIPPED: "+getFileName(f))
+			continue
+		}
 		match := enableMatching(cfg.ForEach, parent)
 		matched, _ := regexp.MatchString(regex, filename)
 		if strings.Contains(outer, match) && matched {
