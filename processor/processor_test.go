@@ -490,6 +490,29 @@ var _ = Describe("Processor", func() {
 						Expect(len(mergeOpts.Files)).To(Equal(5))
 					})
 				})
+
+				Context("'In' in combination with 'subdirs' and 'except'", func() {
+					It("should run a merge for each file in the directory specified in 'for_each.in' and its subdirs, except those specified in 'except'.. its even more complicated", func() {
+						cfg.Merge[0].With.Files = []string{"fake1", "fake2"}
+						cfg.ForEach.In = "integration/yamls/addons/"
+						cfg.ForEach.SubDirs = true
+						cfg.ForEach.Except = "fake2"
+						cfg.ForEach.ForAll = "integration/yamls/"
+
+						spruceConfig = []aviator.Spruce{cfg}
+						spruceClient = new(fakes.FakeSpruceClient)
+						processor = NewTestProcessor(spruceClient, store, modifier)
+
+						err := processor.ProcessSilent(spruceConfig)
+						Expect(err).ToNot(HaveOccurred())
+
+						cc := spruceClient.MergeWithOptsCallCount()
+						Expect(cc).To(Equal(8))
+
+						mergeOpts := spruceClient.MergeWithOptsArgsForCall(0)
+						Expect(len(mergeOpts.Files)).To(Equal(4))
+					})
+				})
 			})
 		})
 	})
